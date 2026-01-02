@@ -1,0 +1,16 @@
+##########################################################################################
+##
+##  meteo alarm ...
+##
+##########################################################################################
+
+
+##  https://www.home-assistant.io/integrations/meteoalarm
+
+
+binary_sensor:
+  - platform: meteoalarm
+    country: "france"
+    province: "charante-maritime"
+    
+    

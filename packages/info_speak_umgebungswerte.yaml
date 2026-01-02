@@ -1,0 +1,82 @@
+##########################################################################################
+##
+##  Informationen über die Umgebungswerte wie Wetterwarnungen etc.
+##
+##########################################################################################
+
+
+##  https://www.home-assistant.io/integrations/meteoalarm
+
+
+automation:
+- id: 'info_trigger_temperature_above_15'
+  alias: "INFO L - Temperature above 15 (info_speak_umgebungswerte)"
+  mode: single
+  description: 'INFO - Temperature above 15'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.netatmo_garten_temperatur
+      attribute: temperature
+      above: 15
+      value_template: "{{ states('sensor.netatmo_garten_temperatur')}}"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.netatmo_garten_temperatur
+      above: 15
+      value_template: "{{ states('sensor.netatmo_garten_temperatur')}}"
+  action:
+    - service: script.notify_dispatch
+      data:
+        prio: L
+        title: "Temperatur Information"
+        message: >
+            Achtung! Es ist angenehm warm draussen.
+            Aussen Temperatur  {{ states('sensor.netatmo_garten_temperatur')}} °C
+
+
+
+- id: 'info_trigger_temperature_below_2'
+  alias: "INFO A - Temperature below 2  (info_speak_umgebungswerte)"
+  mode: single
+  description: ""
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.netatmo_garten_temperatur
+      value_template: "{{ states('sensor.netatmo_garten_temperatur')}}"
+      below: 2
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.netatmo_garten_temperatur
+      value_template: "{{ states('sensor.netatmo_garten_temperatur' )}}"
+      below: 2
+  action:
+    - service: script.notify_dispatch
+      data:
+        prio: A
+        title: "Temperatur Information"
+        message:  >
+          Achtung! Es ist kalt draussen. Denk an den Wasserschlauch und so
+          Aussen Temperatur  {{ states('sensor.netatmo_garten_temperatur')}} °C
+
+
+
+
+- id: 'info_trigger_windspeed_above_40'
+  alias: "INFO M - Wind speed > 40 (info_speak_umgebungswerte)"
+  description: ""
+  mode: single
+  trigger:
+    - platform: numeric_state
+      entity_id: weather.dallikon
+      attribute: wind_speed
+      above: 40
+  condition:
+  action:
+    - service: script.notify_dispatch
+      data:
+        prio: M
+        title: "Information Windgeschwindigkeit"
+        message:  >
+          Achtung! Windgeschindigkeit ist über 40 Stunden Kilometer
+
+

@@ -1,0 +1,654 @@
+#
+#
+#
+# template Alarm Template
+# https://www.home-assistant.io/integrations/alarm_control_panel.template/
+#
+#
+#
+#
+
+#
+# Wenn dies neu ist muss HA neu gestartet werden damit die entity_id erkannt wird.
+#
+
+
+alarm_control_panel:
+  - platform: manual
+    name: my_alarm
+    code: !secret alarm_code
+    code_arm_required: true     # (optional, default: true)   If true, the code is required to arm the alarm.
+    arming_time: 10             # (optional, default: 60)     The time in seconds of the ‘arming’ state before effecting a state change.
+    delay_time: 10              # (optional, default: 60)     The time in seconds of the ‘pending’ state before triggering the alarm.
+    trigger_time: 20           # (optional, default: 120)    The time in seconds of the ‘triggered’ state in which the alarm is firing. 
+    armed_custom_bypass:
+      arming_time: 10           # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
+      trigger_time: 20         # (optional)                  State specific setting for trigger_time (all states except triggered)
+      delay_time: 10            # (optional)                  State specific setting for delay_time (all states except triggered)
+    armed_home:
+      arming_time: 5            # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
+      trigger_time: 10         # (optional)                  State specific setting for trigger_time (all states except triggered)
+      delay_time: 5             # (optional)                  State specific setting for delay_time (all states except triggered)
+    armed_away:
+      arming_time: 10           # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
+      trigger_time: 10         # (optional)                  State specific setting for trigger_time (all states except triggered)
+      delay_time: 10            # (optional)                  State specific setting for delay_time (all states except triggered)
+    armed_night:
+      arming_time: 10           # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
+      trigger_time: 10         # (optional)                  State specific setting for trigger_time (all states except triggered)
+      delay_time: 10            # (optional)                  State specific setting for delay_time (all states except triggered)
+    armed_vacation:
+      arming_time: 10           # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
+      trigger_time: 10         # (optional)                  State specific setting for trigger_time (all states except triggered)
+      delay_time: 10            # (optional)                  State specific setting for delay_time (all states except triggered)
+    disarmed:
+      # arming_time: 60         # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
+      trigger_time: 0           # (optional)                  State specific setting for trigger_time (all states except triggered)
+      delay_time: 10            # (optional)                  State specific setting for delay_time (all states except triggered)
+    # triggered:
+    #   arming_time: 0            # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
+    #   trigger_time: 0           # (optional)                  State specific setting for trigger_time (all states except triggered)
+    #  delay_time: 0             # (optional)                  State specific setting for delay_time (all states except triggered)
+  
+
+
+input_boolean:
+  global_motion_no_switch_light:
+    name: No light on motion
+    initial: off
+
+input_text:
+  alarm_trigger_sensor:
+    name: last triggered Sensor
+    initial: none
+
+
+sensor:
+  - platform: template
+    sensors:
+      template_motion_sensor_light_brightness:
+        friendly_name: Motion Sensor Brightness pct
+        unit_of_measurement : 'brightness'
+        value_template: >-
+          {% if states.input_select.time_of_day.state == 'Afternoon' %}
+            100
+          {% elif states.input_select.time_of_day.state == 'Evening' %}
+            50
+          {% elif states.input_select.time_of_day.state == 'Night' %}
+            1
+          {% elif states.input_select.time_of_day.state == 'Morning' %}
+            {% if now().hour <= 5 %}
+              5
+            {% elif now().hour <= 6 %}
+              10
+            {% elif now().hour <= 7 %}
+              30
+            {% elif now().hour <= 8 %}
+              60
+            {% elif now().hour <= 9 %}
+              70
+            {% else %}
+              100
+            {% endif %} 
+          {% else %}
+            5
+          {% endif %}
+          
+
+group:
+  alarm_sensor_group:       #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Alarm Sensors ALL (Dynamic - label alarm_sensor....) (alarm_ha_presense_simulation)"
+    entities:
+      - sensor.ms1_bewegung
+  alarm_sensor_group_near:       #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Alarm Sensors NEAR (Dynamic - label alarm_sensor_near) (alarm_ha_presense_simulation)"
+    entities:
+      - sensor.ms1_bewegung
+  alarm_sensor_group_far:       #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Alarm Sensors FAR (Dynamic - label alarm_sensor_far) (alarm_ha_presense_simulation)"
+    entities:
+      - sensor.ms1_bewegung
+
+
+
+##########################################################################################
+##
+##  Manipulate lights ............. by usto 
+##
+##########################################################################################
+automation:
+  - id: alarm_sensor_update_group
+    alias: "Alarm Sensor – Update Entity Group for sensors  (alarm_ha_alarm)"
+    mode: single
+
+    trigger:
+      # Update group on Home Assistant start
+      - platform: homeassistant
+        event: start
+
+      # Periodic refresh to catch label changes
+      - platform: time_pattern
+        minutes: "/5"
+
+    action:
+      #
+      # ------------------------------------------------------------------
+      # Combined group: NEAR + FAR
+      # ------------------------------------------------------------------
+      #
+      - service: group.set
+        data:
+          object_id: alarm_sensor_group
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for e in label_entities('ALARM_SENSOR_NEAR') %}
+              {% set ns.list = ns.list + [e] %}
+            {% endfor %}
+            {% for e in label_entities('ALARM_SENSOR_FAR') %}
+              {% if e not in ns.list %}
+                {% set ns.list = ns.list + [e] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.list }}
+      #
+      # ------------------------------------------------------------------
+      # NEAR group only
+      # ------------------------------------------------------------------
+      #
+      - service: group.set
+        data:
+          object_id: alarm_sensor_group_near
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for e in label_entities('ALARM_SENSOR_NEAR') %}
+              {% set ns.list = ns.list + [e] %}
+            {% endfor %}
+            {{ ns.list }}
+      #
+      # ------------------------------------------------------------------
+      # FAR group only
+      # ------------------------------------------------------------------
+      #
+      - service: group.set
+        data:
+          object_id: alarm_sensor_group_far
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for e in label_entities('ALARM_SENSOR_FAR') %}
+              {% set ns.list = ns.list + [e] %}
+            {% endfor %}
+            {{ ns.list }}
+
+
+
+  - id: 'alarm_arming'
+    alias: "ALARM arming (alarm_ha_alarm)"
+    description: ""
+    trigger:
+      - platform: state
+        entity_id:
+          - alarm_control_panel.my_alarm
+        to: arming
+    condition: []
+    action:
+      - service: notify.persistent_notification
+        metadata: {}
+        data:
+          title: my_alarm
+          message: Arming
+      - service: notify.sony
+        data:
+          title: My_Alarm
+          message: "Arming"
+          data:
+            fontsize: large
+            position: center
+            duration: 5
+            transparency: 50%
+            color: red
+    mode: single
+
+  - id: 'alarm_presence_somebody_is_coming_home_disarmed'
+    alias: "ALARM presence somebody is coming home diasrmed (alarm_ha_alarm)"
+    description: ''
+    mode: single
+    trigger:
+    ## Nobody at home #############################################
+      - platform: state
+        entity_id:
+          - binary_sensor.template_occupied_home_1
+        to: "on"
+    action:
+      - service: alarm_control_panel.alarm_disarm
+        data:
+          code: !secret alarm_code
+          entity_id: alarm_control_panel.my_alarm
+      - service: notify.persistent_notification
+        metadata: {}
+        data:
+          title: my_alarm
+          message: disarmed
+      - service: script.notify_dispatch
+        data:
+          prio: L
+          title: "Alarmanlage disarmed"
+          message: >
+            Jemand ist zu Hause angekommen. Die Alarmanlage wurde deaktiviert.
+      - service: script.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: script.alarm_turn_presence_simulation_off
+
+  - id: 'alarm_presence_somebody_is_leaving_armed'
+    alias: "ALARM presence somebody is leaving armed (alarm_ha_alarm)"
+    description: ''
+    mode: single
+    trigger:
+    ## Nobody at home #############################################
+      - platform: state
+        entity_id:
+          - binary_sensor.template_occupied_home_1
+        to: "off"
+#      - platform: state
+#        entity_id: group.family
+#        to: not_home
+#      - platform: state
+#        entity_id: group.family
+#        to: unavailable
+#      - platform: state
+#        entity_id: group.family
+#        to: unknown
+#      - platform: state
+#        entity_id: group.family
+#        to: away
+    condition:
+    action:
+      - service: alarm_control_panel.alarm_arm_away
+        data:
+          code: !secret alarm_code
+          entity_id: alarm_control_panel.my_alarm
+      - service: notify.persistent_notification
+        metadata: {}
+        data:
+          title: my_alarm
+          message: Armed away
+      - service: script.notify_dispatch
+        data:
+          prio: L
+          title: "Alarmanlage armed"
+          message: >
+            Niemand ist mehr zu Hause! Die Alarmanlage wurde aktiviert.
+      - service: script.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: script.alarm_turn_presence_simulation_on
+
+  - id: 'alarm_send_notification_when_alarm_triggered'
+    alias: "ALARM send notification when alarm triggered (alarm_ha_alarm)"
+    trigger:
+      - platform: state
+        entity_id: alarm_control_panel.my_alarm
+        to: 'triggered'
+    action:
+      - service: script.turn_on
+        entity_id: script.alarm_security_alarm_triggered
+      - service: light.turn_on
+        data:
+          brightness_pct: 100
+          color_name: 'red'
+        entity_id: light.alarm
+      - service: script.notify_dispatch
+        data:
+          prio: H
+          title: "Alarmanlage ausgelöst"
+          message: >
+            ALARM! The alarm has been triggered - sensor: {{ states.input_text.alarm_trigger_sensor.state }}
+      - service: script.turn_on
+        entity_id: script.alarm_security_alarm_triggered
+
+
+  - id: 'alarm_trigger_with_motion_sensors'
+    alias: "ALARM trigger with motion sensor (alarm_ha_alarm)"
+    trigger:
+    - platform: state
+      entity_id: binary_sensor.ms1_bewegung
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.ms2_bewegung
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.ms3_bewegung
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.ms4_bewegung
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.ms5_bewegung
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.ms6_bewegung
+      to: 'open'
+    - platform: state
+      entity_id: binary_sensor.ms7_bewegung
+      to: 'on'
+    condition:
+      condition: or
+      conditions:
+      - condition: state
+        entity_id: alarm_control_panel.my_alarm
+        state: armed_home
+      - condition: state
+        entity_id: alarm_control_panel.my_alarm
+        state: armed_away
+    action:
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.alarm_trigger_sensor
+      data:
+        value: "{{ trigger.entity_id }}"
+    - service: alarm_control_panel.alarm_trigger
+      entity_id: alarm_control_panel.my_alarm
+
+
+#
+#
+# this generates errors
+#
+#
+#  - id: 'alarm_send_notification_when_alarm_is_disarmed'
+#    alias: alarm_send_notification_when_alarm_is_disarmed
+#    trigger:
+#      - platform: state
+#        entity_id: alarm_control_panel.my_alarm
+#        to: 'disarmed'
+#    action:
+#      - service: script.turn_on
+#        entity_id: script.alarm_security_alarm_disarmed
+#      - service: notify.notify
+#        data:
+#          message: "ALARM! The alarm is Disarmed at {{ states('sensor.date_time') }}"
+#      - service: light.turn_on
+#        data:
+#          brightness_pct: 10
+#          color_name: 'green'
+#        entity_id: light.alarm
+#      - service: script.turn_on
+#        entity_id: alarm_turn_presence_simulation_off
+#      - service: notify.sony
+#        data:
+#          title: Security System
+#          message: "ALARM! The alarm is Disarmed at {{ states('sensor.date_time') }}"
+#          data:
+#            fontsize: large
+#            position: top-right
+#            duration: 5
+#            transparency: 95%
+#            color: green
+
+  - id: 'alarm_send_notification_when_alarm_is_in_pending_status'
+    alias: 'ALARM send notification when alarm is in pending status (alarm_ha_alarm)'
+    trigger:
+      - platform: state
+        entity_id: alarm_control_panel.my_alarm
+        to: 'pending'
+    action:
+      - service: light.turn_on
+        data:
+          brightness_pct: 100
+          color_name: 'orange'
+        entity_id: light.alarm
+      - service: script.notify_dispatch
+        data:
+          prio: M
+          title: "Alarmanlage pending"
+          message: >
+            ALARM! Die Alarmanlage ist im status pending um {{ states('sensor.time') }}
+
+
+  - id: alarm_send_notification_when_alarm_is_disarmed
+    alias: "ALARM send notification when alarm is disarmed (alarm_ha_alarm)"
+    description: alarm_send_notification_when_alarm_is_disarmed
+    mode: single
+    trigger:
+      - platform: state
+        entity_id:
+          - alarm_control_panel.my_alarm
+        to: disarmed
+    condition: []
+    action:
+      - service: script.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: script.alarm_turn_presence_simulation_off
+      - service: script.turn_on
+        entity_id: script.alarm_security_alarm_disarmed
+      - service: script.notify_dispatch
+        data:
+          prio: L
+          title: "Alarmanlage disarmed "
+          message: >
+            ALARM! Die Alarmanlage ist ausgeschaltet seit {{ states('sensor.time') }}
+      - service: script.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: script.alarm_turn_presence_simulation_off
+
+
+  - id: alarm_send_notification_when_alarm_is_armed_in_away_mode
+    alias: "ALARM send notification when alarm is armed in away mode (alarm_ha_alarm)"
+    description: alarm_send_notification_when_alarm_is_armed_in_away_mode
+    mode: single
+    trigger:
+      - platform: state
+        entity_id:
+          - alarm_control_panel.my_alarm
+        to: armed_away
+    condition: []
+    action:
+      - service: script.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: script.alarm_turn_presence_simulation_on
+      - service: script.notify_dispatch
+        data:
+          prio: L
+          title: "Alarmanlage armed away"
+          message: >
+            ALARM! Die Alarmanlage ist scharf Status: abwesend seit {{ states('sensor.time') }}
+      - service: script.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: script.alarm_turn_presence_simulation_on
+
+#
+#
+# this generates errors
+#
+#
+#  - id: 'alarm_send_notification_when_alarm_is_armed_in_away_mode'
+#    alias: alarm_send_notification_when_alarm_is_armed_in_away_mode
+#    trigger:
+#      - platform: state
+#        entity_id: alarm_control_panel.my_alarm
+#        to: 'armed_away'
+#    action:
+#      - service: script.turn_on
+#        entity_id: script.alarm_security_alarm_armed
+#      - service: notify.notify
+#        data:
+#          message: "ALARM! The alarm is armed in Away mode {{ states('sensor.date_time') }}"      
+#      - service: light.turn_on
+#        data:
+#          brightness_pct: 100
+#          color_name: 'green'
+#        entity_id: light.alarm
+#      - service: script.turn_on
+#        entity_id: alarm_turn_presence_simulation_on
+#      - service: notify.sony
+#        data:
+#          title: Security System
+#          message: "ALARM! The alarm is armed in Away mode {{ states('sensor.date_time') }}"
+#          data:
+#            fontsize: large
+#            position: center
+#            duration: 5
+#            transparency: 50%
+#            color: red
+
+  - id: 'alarm_send_notification_when_alarm_is_armed_in_home_mode'
+    alias: "ALARM send notification when alarm is armed in home mode (alarm_ha_alarm)"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: alarm_control_panel.my_alarm
+        to: 'armed_home'
+    action:
+      - service: script.turn_on
+        entity_id: script.alarm_security_alarm_armed
+      - service: script.notify_dispatch
+        data:
+          prio: L
+          title: "Alarmanlage armed zu Hause"
+          message: >
+            ALARM! Die Alarmanlage ist scharf Status: zu Hause seit {{ states('sensor.time') }}
+      - service: light.turn_on
+        data:
+          brightness_pct: 10
+          color_name: 'green'
+        entity_id: light.alarm
+      - service: script.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: script.alarm_turn_presence_simulation_on
+
+#
+#
+# this generates errors
+#
+#      - service: notify.sony
+#        data:
+#          title: Security System
+#          message: ALARM! The alarm is armed in Home mode {{ states('sensor.date_time') }}
+#          data:
+#            fontsize: large
+#            position: center
+#            duration: 5
+#            transparency: 50%
+#            color: red
+
+script:
+  play_radio_media_speakers:
+    alias: "play_radio_media_speakers  (alarm_ha_alarm)"
+    sequence:
+    - service: media_player.turn_on
+      data_template:
+        entity_id: '{{ speakers }}'
+    - service: media_player.volume_set
+      data_template:
+        entity_id: '{{ speakers }}'
+        volume_level: '{{ volume }}'
+    - service: media_player.play_media
+      data_template:
+        entity_id: '{{ speakers }}'
+        media_content_id: '{{ stream }}'
+        media_content_type: audio/mp3
+    mode: parallel
+    max: 10
+    
+    
+  alarm_turn_presence_simulation_on:
+    alias: "alarm_turn_presence_simulation_on (alarm_ha_alarm)"
+    sequence:
+      - service: presence_simulation.start
+    mode: single
+  alarm_turn_presence_simulation_off:
+    alias: "alarm_turn_presence_simulation_off (alarm_ha_alarm)"
+    sequence:
+      - service: presence_simulation.stop
+    mode: single
+
+
+  alarm_security_alarm_triggered:
+    alias: "alarm_security_alarm_triggered (alarm_ha_alarm)"
+    sequence:
+    - service: script.notify_dispatch
+      data:
+        prio: A
+        title: "Alarmanlage armed zu Hause"
+        message: >
+          ALARM! Die Alarmanlage ist scharf Status: zu Hause seit {{ states('sensor.time') }}
+        mp3: "http://ad1000.main.arpa:8123/local/mp3/two dogs barking - 30 sec - 128k.mp3"
+
+    - service: script.turn_on
+      data:
+        variables:
+          volume: 0.6
+          media: two dogs barking - 30 sec - 64k.mp3
+          speakers: media_player.schlafzimmer
+      entity_id: script.play_song_media_speakers
+    - delay: '5'
+    - scene: scene.alarm_alles_hell
+    - service: script.turn_on
+      data:
+        variables:
+          volume: 0.3
+          media: Stoellchen - Alarm - 15 Sekunden Countdown - 120s - 64k.mp3
+          speakers: media_player.stereo,media_player.schlafzimmer
+      entity_id: script.play_song_media_speakers
+    mode: restart
+
+
+  alarm_security_alarm_disarmed:
+    alias: "alarm_security_alarm_disarmed (alarm_ha_alarm)"
+    sequence:
+    - service: script.turn_off
+      data: {}
+      entity_id: script.alarm_security_alarm_triggered
+    - service: media_player.media_stop
+      target:
+        entity_id: media_player.stereo
+    - service: media_player.media_stop
+      target:
+        entity_id: media_player.schlafzimmer        
+    - service: script.turn_on
+      data:
+        variables:
+          volume: 0.2
+          media: Stoellchen - ok disarmed - 4s - 64k.mp3
+          speakers: media_player.stereo,media_player.schlafzimmer
+      entity_id: script.play_song_media_speakers
+    - service: script.turn_on
+      data:
+        variables:
+          volume: 0.2
+          media: Stoellchen - ok disarmed - 4s - 64k.mp3
+          speakers: media_player.stereo,media_player.schlafzimmer
+      entity_id: script.play_song_media_speakers
+    mode: single
+
+  alarm_security_alarm_armed:
+    alias: "alarm_security_alarm_armed (alarm_ha_alarm)"
+    sequence:
+    - service: script.turn_on
+      data:
+        variables:
+          volume: 0.2
+          media: Stoellchen - ok armed - 6s - 64k.mp3
+          speakers: media_player.stereo,media_player.schlafzimmer
+      entity_id: script.play_song_media_speakers
+    mode: single
+
+
+## ---------------------------------------------------------------------------------------
+##
+## Security Stuff END
+##
+## ---------------------------------------------------------------------------------------
+

@@ -1,0 +1,11 @@
+##########################################################################################
+##
+##  usto stuff for bluetooth tracking stuff ...
+##
+##########################################################################################
+
+
+## https://www.home-assistant.io/integrations/bluetooth_le_tracker/
+
+device_tracker:
+  - platform: bluetooth_le_tracker

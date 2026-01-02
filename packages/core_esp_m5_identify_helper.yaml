@@ -1,0 +1,365 @@
+##########################################################################################
+##
+##  usto stuff for m5-identify ...
+##
+##########################################################################################
+
+##########################################################################################
+##
+##  Info to display ............. by usto
+##
+##########################################################################################
+
+
+
+input_select:
+  m5_identify_color:
+    name: Ident-Farbe
+    options:
+      - use_local
+      - "Red"
+      - "Orange"
+      - "Amber"
+      - "Yellow"
+      - "Lime"
+      - "Green"
+      - "Mint"
+      - "Cyan"
+      - "Sky"
+      - "Blue"
+      - "Indigo"
+      - "Violet"
+      - "Purple"
+      - "Magenta"
+      - "Pink"
+      - "Rose"
+      - "Brown"
+      - "Grey"
+      - "White"
+    initial: use_local
+    icon: mdi:palette
+
+  m5_ident_pattern:
+    name: Blinkmuster
+    options:
+      - Kurz (200ms)
+      - Standard (300ms)
+      - Lang (500ms)
+      - Nur 1x
+    initial: Standard (300ms)
+    icon: mdi:animation
+
+input_boolean:
+  identify_all_devices:
+    name: Identifizierung aktivieren
+    icon: mdi:radar
+    initial: true       # Startet standardmäßig auf "on"
+
+
+  m5_ident_disable_local:
+    name: Lokales Blinken deaktivieren
+    icon: mdi:flash-off
+
+  m5_ident_enable_local:
+    name: Lokales Blinken aktivieren
+    icon: mdi:flash
+
+  identity_alive_home_status:
+    name: "Identity Alive Home Status"
+    icon: mdi:home-account
+
+input_button:
+  m5_ident_trigger:
+    name: Synchrones Blinken starten
+    icon: mdi:led-on
+
+
+
+automation:
+  - id: sync_identity_alive_home_status
+    alias: "Sync Identity Alive Home Status mit person.thomas"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: person.thomas
+        from: "not_home"
+        to: "home"
+      - platform: state
+        entity_id: person.thomas
+        from: "home"
+        to: "not_home"
+      - platform: state
+        entity_id: person.thomas
+        from: "home"
+        to: "unknown"
+      - platform: state
+        entity_id: person.thomas
+        from: "home"
+        to: "unavailable"
+      - platform: state
+        entity_id: person.thomas
+        from: "unavailable"
+        to: "home"
+      - platform: state
+        entity_id: person.thomas
+        from: "unknown"
+        to: "home"
+
+    action:
+      - choose:
+          # Wenn Thomas nach Hause kommt → Schalter AUS
+          - conditions:
+              - condition: state
+                entity_id: person.thomas
+                state: "home"
+            sequence:
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.identity_alive_home_status
+
+          # Wenn Thomas weg ist (not_home / unknown / etc.) → Schalter EIN
+          - conditions:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: person.thomas
+                    state: "home"
+            sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.identity_alive_home_status
+                  
+  - id: trigger_identify_script_all_esphome_synchron_comp
+    alias: "Trigger identify script on all ESPHome devices synchrone complementaer"
+    mode: single
+    initial_state: false   # 👈 DAS deaktiviert die Automation beim Start    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    trigger:
+      - platform: time_pattern
+        seconds: "/30"
+    condition:
+      - condition: state
+        entity_id: input_boolean.identify_all_devices
+        state: "off"
+    action:
+      - variables:
+          # Berechne Farbe 2 wie bisher
+          red: "{{ (255 / 23 * now().hour) | round(0, 'floor') | int }}"
+          green: "{{ (255 / 59 * now().minute) | round(0, 'floor') | int }}"
+          blue: "{{ (255 / 59 * now().second) | round(0, 'floor') | int }}"
+          # Komplementärfarbe (255 - x)
+          comp_red: "{{ 255 - red }}"
+          comp_green: "{{ 255 - green }}"
+          comp_blue: "{{ 255 - blue }}"
+          # Reihenfolge der Geräte wie bisher
+          entity_list: >
+            {{ states.switch
+              | selectattr('entity_id', 'search', '_identify_active$')
+              | map(attribute='entity_id')
+              | map('replace', 'switch.', '')
+              | map('replace', '_identify_active', '')
+              | list }}
+          delay_step: 2
+      - repeat:
+          for_each: "{{ entity_list }}"
+          sequence:
+            - variables:
+                index_from_end: "{{ (entity_list | count - 1) - repeat.index + 1  }}"
+                start_delay: "{{ delay_step * index_from_end }}"
+                sequence_json: >-
+                  {{ start_delay }},
+                  1,250,35,0,0,255,
+                  1,250,35,{{ red }},{{ green }},{{ blue }},
+                  1,250,35,{{ comp_red }},{{ comp_green }},{{ comp_blue }}
+            - service_template: "esphome.{{ repeat.item }}_play_color_sequence"
+              data:
+                sequence_json: "{{ sequence_json }}"
+
+
+
+  - id: trigger_identify_script_all_esphome_synchron
+    alias: "Trigger identify script on all ESPHome devices synchrone"
+    mode: queued
+    initial_state: true   # 👈 DAS deaktiviert die Automation beim Start    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # initial_state: false   # 👈 DAS deaktiviert die Automation beim Start
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+
+    condition:
+    condition:
+      - condition: state
+        entity_id: input_boolean.identify_all_devices
+        state: "on"
+
+      # Neue kombinierte Bedingung:
+      - condition: or
+        conditions:
+          # Fall 1: Nicht zu Hause → immer ausführen
+          - condition: state
+            entity_id: input_boolean.identity_alive_home_status
+            state: "on"
+
+          # Fall 2: Zu Hause → nur wenn Sonne höher als -5°
+          - condition: and
+            conditions:
+              - condition: state
+                entity_id: input_boolean.identity_alive_home_status
+                state: "off"
+              - condition: numeric_state
+                entity_id: sun.sun
+                attribute: elevation
+                above: -5
+
+    action:
+      - variables:
+          red: "{{ (255 / 23 * now().hour) | round(0, 'floor') | int }}"
+          green: "{{ (255 / 59 * now().minute) | round(0, 'floor') | int }}"
+          blue: "{{ (255 / 59 * now().second) | round(0, 'floor') | int }}"
+          # brightness: "{{ (now().second * 4.25) | round(0, 'floor') | int }}"  # Wertebereich 0–255
+          # brightness: "{{ 100 | int }}"  # Wertebereich 0-100 wird aber auf 0-1 umgesetzt
+          # brightness in der nacht auf 100 wenn niemand zu hause ist- Monitoring aehnlicher zustand....
+          brightness: >
+            {% if state_attr('sun.sun', 'elevation') > 0 %}
+              100
+            {% elif is_state('input_boolean.identity_alive_home_status', 'off') %}
+              20
+            {% else %}
+              100
+            {% endif %}
+          repcount: 4
+          on_ms: 500
+          off_ms: 250
+          delay_step: 2 
+          entity_list: >
+            {{ states.switch
+              | selectattr('entity_id', 'search', '_identify_active$')
+              | map(attribute='entity_id')
+              | map('replace', 'switch.', '')
+              | map('replace', '_identify_active', '')
+              | list }}
+      - repeat:
+          for_each: "{{ entity_list }}"
+          sequence:
+            - variables:
+                index_from_end: "{{ (entity_list | count - 1) - repeat.index + 1  }}"
+            - service_template: "esphome.{{ repeat.item }}_check_identify_state"
+              data:
+                r: "{{ red }}"
+                g: "{{ green }}"
+                b: "{{ blue }}"
+                brightness: "{{ brightness }}"
+                repeat: "{{ repcount }}"
+                on_ms: "{{ on_ms }}"
+                off_ms: "{{ off_ms }}"
+                start_delay: "{{ delay_step * index_from_end }}"
+
+
+## this script doesn't fire - condition is off 
+  - id: trigger_identify_script_all_esphome_synchron_old
+    alias: "Trigger identify script on all ESPHome devices synchrone old"
+    mode: queued
+    initial_state: false   # 👈 DAS deaktiviert die Automation beim Start
+    trigger:
+      - platform: time_pattern
+        seconds: "/5"
+    condition:
+      - condition: state
+        entity_id: input_boolean.identify_all_devices
+        state: "on"
+    action:
+      - variables:
+          red: "{{ (255 / 23 * now().hour) | round(0, 'floor') | int }}"
+          green: "{{ (255 / 59 * now().minute) | round(0, 'floor') | int }}"
+          blue: "{{ (255 / 59 * now().second) | round(0, 'floor') | int }}"
+          repcount: 1
+          on_ms: 350
+          off_ms: 50
+          delay_step: 2 
+          entity_list: >
+            {{ states.switch
+              | selectattr('entity_id', 'search', '_identify_active$')
+              | map(attribute='entity_id')
+              | map('replace', 'switch.', '')
+              | map('replace', '_identify_active', '')
+              | list }}
+      - repeat:
+          for_each: "{{ entity_list }}"
+          sequence:
+            - variables:
+                index_from_end: "{{ (entity_list | count - 1) - repeat.index + 1  }}"
+            - service_template: "esphome.{{ repeat.item }}_check_identify_state"
+              data:
+                r: "{{ red }}"
+                g: "{{ green }}"
+                b: "{{ blue }}"
+                repeat: "{{ repcount }}"
+                on_ms: "{{ on_ms }}"
+                off_ms: "{{ off_ms }}"
+                start_delay: "{{ delay_step * index_from_end }}"
+
+
+
+
+#
+#  off neuer script oben
+#  - id: trigger_identify_script_all_esphome_synchron_standard
+#    alias: "Trigger identify script on all ESPHome devices synchrone standard"
+#    mode: queued
+#    initial_state: false   # 👈 DAS deaktiviert die Automation beim Start
+#    trigger:
+#      - platform: time_pattern
+#        seconds: "/5"  # alle 5 Sekunden
+#    condition:
+#      - condition: state
+#        entity_id: input_boolean.identify_all_devices
+#        state: "on"
+#    action:
+#      - repeat:
+#          for_each: >
+#            {{ states.switch
+#              | selectattr('entity_id', 'search', '_identify_active$')
+#              | map(attribute='entity_id')
+#              | map('replace', 'switch.', '')
+#              | map('replace', '_identify_active', '')
+#              | list }}
+#          sequence:
+#            - service: "esphome.{{ repeat.item }}_check_identify_state"
+#    mode: single
+#
+
+  - id: 'm5_synced_identify_lights_mqtt_off_memory_problem'
+    alias: m5_synced_identify_lights_mqtt_off_memory_problem
+    mode: single
+    description: |
+      Sendet eine MQTT-Nachricht an alle M5-Geräte zur synchronen Blinkausführung.
+      Optionen:
+        - `color`: gewünschte Farbe (z. B. "Red", "Green", "Blue", etc.)
+        - `use_local_color`: wenn `true`, wird die lokal eingestellte Farbe genutzt
+        - `disable_local_blink`: schaltet autonomen Blinker ab (optional)
+        - `enable_local_blink`: aktiviert den autonomen Blinker (optional)
+        - `pause`, `duration`: Zeiten für das Blinken in Millisekunden
+        - `repeats`: Anzahl der Blinkwiederholungen
+
+    trigger:
+      - platform: time
+        at: "12:00:00"  # Beispielzeit für geplante Auslösung
+    condition: []
+    action:
+      - service: mqtt.publish
+        data:
+          topic: identify/sync/blink
+          qos: 0
+          payload: >
+            {
+              "pause": 300,
+              "duration": 300,
+              "repeats": 5,
+              "use_local_color": true,
+              "disable_local_blink": true
+            }
+
+
+
+
+
+

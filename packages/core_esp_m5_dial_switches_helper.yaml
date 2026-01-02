@@ -1,0 +1,684 @@
+
+##########################################################################################
+##
+##  usto stuff for m5-Dial ...
+##
+##########################################################################################
+
+##########################################################################################
+##
+##  Info to display ............. by usto
+##
+##########################################################################################
+
+##
+## this must be checked in every send to mobile .....
+##
+##  input_boolean, group and scripts are set file :   usto_set_notify_info_display_speak.yaml
+## 
+##  Initial should not be set the have the same value after a restart than before
+##
+
+##            {{ (state_attr( (state_attr (  'sensor.person_tracker_1' ,'person_1' )|string ),'device_trackers')[0] |string).replace('device_tracker','sensor')  }}_geocoded_location
+##            {{ (state_attr( (state_attr (  'sensor.person_tracker_1' ,'person_2' )|string ),'device_trackers')[0] |string).replace('device_tracker','sensor')  }}_geocoded_location
+##            {{ states_attr (sensor.person_tracker_1,'device_2_geo' ) }}
+
+group:
+  ## Switches
+  m5_switches:
+    entities:
+      - group.m5_switches_wohnzimmer
+      - group.m5_switches_buero
+      - group.m5_switches_kueche
+
+  m5_switches_wohnzimmer:
+    name: Wohnzimmer
+    entities:
+      - switch.faketv
+      - switch.sideboard_steckdose_2 # lichterkette
+      - switch.sideboard_steckdose_3 # tromsoe
+      - switch.sideboard_steckdose_4 # tromsoe
+      - switch.tv_steckdose_1  # sony
+      - switch.tv_steckdose_2  # sony
+      - switch.tv_steckdose_3  # sony
+      - switch.tv_steckdose_4  # sony
+      - switch.ch1555_3plug_3_steckdose_1
+      - switch.ch1555_3plug_3_steckdose_2
+      - switch.ch1555_3plug_3_steckdose_3
+      - switch.ch1555_3plug_3_steckdose_4
+
+  m5_switches_buero:
+    name: Buero
+    entities:
+      - switch.ch1555_3plug_2_steckdose_1
+      - switch.ch1555_3plug_3_steckdose_1
+      - switch.ch1555_3plug_4_steckdose_1
+      - switch.ch1555_3plug_5_steckdose_1
+      - switch.ch1555_3plug_6_steckdose_1
+      - switch.eles_smart_plug_1_steckdose_1
+      - switch.eles_smart_plug_2_steckdose_1
+      - switch.eles_smart_plug_3_steckdose_1
+      - switch.eles_smart_plug_4_steckdose_1
+      - switch.eles_smart_plug_5_steckdose_1
+      - switch.eles_smart_plug_6_steckdose_1
+
+  m5_switches_kueche:
+    name: Kueche
+    entities:
+      - switch.plug_coffee
+
+
+  m5_switches_test:
+    name: Test 1
+    entities:
+      - group.m5_switches_test2
+      - group.m5_switches_test3
+      - group.m5_switches_test4
+  m5_switches_test2:
+    name: Test 2
+    entities:
+      - switch.eles_smart_plug_5_steckdose_1
+  m5_switches_test3:
+    name: Test 3
+    entities:
+      - switch.ch1555_3plug_6_steckdose_1
+  m5_switches_test4:
+    name: Test 4
+    entities:
+      - switch.plug_coffee    # bianca - matter device
+
+automation:
+  - id: 'm5dial_get_switches_mqtt'
+    alias: m5dial_get_switches_mqtt
+    mode: queued
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.m5dial_01_status
+        to: "on"
+      - platform: homeassistant
+        event: start
+        ## Request von m5dial 
+      - platform: mqtt
+        topic: m5dial/+/request/switches/rooms/
+      - platform: mqtt
+        topic: m5dial/+/request/switches/room/
+      - platform: mqtt
+        topic: m5dial/+/request/switches/device/
+    action:
+      - variables:
+          dev_name: "{{ trigger.topic.split('/')[1] }}"
+          topic: "{{ trigger.topic }}"
+          payload: "{{ trigger.payload | default('') }}"
+      - choose:
+          - conditions: "{{ topic == 'm5dial/' ~ dev_name ~ '/request/switches/rooms/' }}"
+            sequence:
+              - service: script.m5dial_get_switches_rooms_mqtt
+                data:
+                  topic: "{{ topic }}"
+                  payload: "{{ payload }}"
+                  dev_name: "{{ dev_name }}"
+          - conditions: "{{ topic.startswith('m5dial/' ~ dev_name ~ '/request/switches/room/') }}"
+            sequence:
+              - service: script.m5dial_get_switches_room_devices_mqtt
+                data:
+                  topic: "{{ topic }}"
+                  payload: "{{ payload }}"
+                  dev_name: "{{ dev_name }}"
+          - conditions: "{{ topic.startswith('m5dial/' ~ dev_name ~ '/request/switches/device/') }}"
+            sequence:
+              - service: script.m5dial_get_switches_device_switches_mqtt
+                data:
+                  topic: "{{ topic }}"
+                  payload: "{{ payload }}"
+                  dev_name: "{{ dev_name }}"
+        default:
+          - service: system_log.write
+            data:
+              message: "Unbekannter M5Dial Topic: {{ topic }}"
+              level: warning
+
+  - id: 'm5dial_set_switch_mqtt'
+    alias: m5dial_set_switch_mqtt
+    trigger:
+      - platform: mqtt
+        topic: "m5dial/+/set/switch/#"
+    action:
+      - variables:
+          dev_name: "{{ trigger.topic.split('/')[1] }}"
+          data: "{{ trigger.payload_json }}"
+          entity_id: "{{ data.entity_id }}"
+      - choose:
+          - conditions: "{{ data.state == 'off' }}"
+            sequence:
+              - service: switch.turn_off
+                target:
+                  entity_id: "{{ entity_id }}"
+          - conditions: "{{ data.state == 'on' }}"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: "{{ entity_id }}"
+
+
+
+script:
+  m5dial_get_switches_all_mqtt:
+    alias: "M5Dial – Get Switches ALL via MQTT (don't use!!!)"
+    mode: single
+    fields:
+      topic:
+        required: true
+        selector:
+          text:
+      dev_name:
+        required: true
+        selector:
+          text:
+      payload:
+        required: false
+        selector:
+          text:
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: >-
+            m5dial/{{dev_name}}/response/switches/all
+          payload: >-
+            {%- set ns = namespace(
+              cleaned=[]
+            , itemgroup="dummy"
+            , searchfor="dummy"
+            , group_entities=[]
+            , group_name=""
+            , items=[]
+            , name=""
+            , entity=""
+            , entry=""
+            , group_lines=[]
+            , item_entries=[]
+            , ns_result_data=[]
+            ) 
+            -%} 
+                {# Eingabe: Filter-Modus, z. B. "rooms" oder "Wohnzimmer/TV" #}
+                {# payload for request must be set to all #}
+                {%- set filter_response = payload | default('all') -%}
+                {%- set ns.searchfor = "switch" or [] -%}
+                {%- set ns.itemgroup = "group.m5_switches" or [] -%}
+                {%- set such_sensor_watt = ['watt', 'leistung'] -%}
+                {%- set such_sensor_amp = ['ampere', 'stromstarke', 'stromstaerke', 'current'] -%}
+                {%- set such_sensor_volt = ['spannung', 'volt'] -%}
+                {%- set such_sensor_energy = ['energy', 'kwh', 'kilowatt'] -%}
+                {%- set result = namespace(liste=[]) -%}
+                {%- set handled_switches = namespace(entities=[]) -%}
+                {%- set ns.item_entries = [] -%}
+                {%- set ns.group_entities = state_attr( ns.itemgroup , 'entity_id') or [] -%}
+                {%- for group in ns.group_entities -%}
+                  {%- set ns.group_name = state_attr(group, 'friendly_name') or group.split('.')[-1] -%}
+                  {%- set ns.items = expand(state_attr(group, 'entity_id')) 
+                      | selectattr('domain', 'equalto', ns.searchfor) | list -%}
+                    {%- set ns.item_entries = [] -%}
+                    {%- for item in ns.items -%}
+                      {%- if item.entity_id in handled_switches.entities %}
+                        {%- continue %}
+                      {%- endif %}
+                      {%- set entity = item.entity_id -%}
+                      {%- set dev_id = device_id(entity) -%}
+                      {%- set dev_name = device_attr(entity, 'name_by_user') or device_attr(entity, 'name') or 'UnknownDevice' -%}
+                      {%- set ents = device_entities(dev_id) -%}
+                      {%- set sensor_ents = ents | select('match', '^sensor\\.') | list %}
+                      {%- set switch_ents = ents | select('match', '^switch\\.') | list %}
+                      {%- set watt = namespace(val='NA') -%}
+                      {%- set amp = namespace(val='NA') -%}
+                      {%- set volt = namespace(val='NA') -%}
+                      {%- set kwh = namespace(val='NA') -%}
+                      {%- set shared_flag = 'yes' -%}
+                      {%- for s in sensor_ents -%}
+                        {%- set lname = s.split('.')[-1] | lower -%}
+                        {%- if watt.val == 'NA' and (such_sensor_watt | select('in', lname) | list | length > 0) -%}
+                          {%- set watt.val = states(s) ~ 'W' -%}
+                        {%- endif -%}
+                        {%- if amp.val == 'NA' and (such_sensor_amp | select('in', lname) | list | length > 0) -%}
+                          {%- set amp.val = states(s) ~ 'A' -%}
+                        {%- endif -%}
+                        {%- if volt.val == 'NA' and (such_sensor_volt | select('in', lname) | list | length > 0) -%}
+                          {%- set volt.val = states(s) ~ 'V' -%}
+                        {%- endif -%}
+                        {%- if kwh.val == 'NA' and (such_sensor_energy | select('in', lname) | list | length > 0) -%}
+                          {%- set kwh.val = states(s) ~ 'kWh' -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {%- for s in sensor_ents -%}
+                        {%- if item.object_id in s -%}
+                          {%- set shared_flag = 'no' -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                    {%- for sw2 in switch_ents -%}
+                      {%- if sw2 in handled_switches.entities -%}
+                        {%- continue -%}
+                      {%- endif -%}
+                      {%- set name2 = state_attr(sw2, 'friendly_name') | default(sw2) -%}
+                      {%- set s2 = states(sw2) -%}
+                      {%- set ns.entry = {
+                        "dev_name": dev_name,
+                        "name": name2,
+                        "entity_id": sw2,
+                        "state": s2,
+                        "shared": shared_flag,
+                        "watt": watt.val,
+                        "ampere": amp.val,
+                        "volt": volt.val,
+                        "kwh": kwh.val,
+                      } -%}
+                      {%- set ns.item_entries = ns.item_entries + [ns.entry] -%}
+                      {% set handled_switches.entities = handled_switches.entities + [sw2] %}
+                    {%- endfor -%}
+                  {%- endfor -%}
+                  {%- set group_line = { "raum": ns.group_name, "switches": ns.item_entries } -%}
+                  {%- set ns.group_lines = ns.group_lines + [group_line] -%}
+                {%- endfor -%} 
+              {{ ns.group_lines | tojson }}
+
+  m5dial_get_switches_rooms_mqtt:
+    alias: "M5Dial – Get Switches ROOMS via MQTT"
+    mode: single
+    fields:
+      topic:
+        required: true
+        selector:
+          text:
+      dev_name:
+        required: true
+        selector:
+          text:
+      payload:
+        required: false
+        selector:
+          text:
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: >-
+            {{ "m5dial/" ~ dev_name ~ "/response/switches/rooms/" }}
+          payload: >-
+            {%- set ns = namespace(
+              cleaned=[]
+            , itemgroup="dummy"
+            , searchfor="dummy"
+            , group_entities=[]
+            , group_name=""
+            , items=[]
+            , name=""
+            , entity=""
+            , entry=""
+            , group_lines=[]
+            , item_entries=[]
+            , ns_result_data=[]
+            ) 
+            -%} 
+                {# Eingabe: Filter-Modus, z. B. "rooms" oder "Wohnzimmer/TV" #}
+                {# payload for request must be set to rooms #}
+                {%- set filter_response = payload | default('rooms')  -%}
+                {%- set ns.searchfor = "switch" or [] -%}
+                {%- set ns.itemgroup = "group.m5_switches" or [] -%}
+                {%- set such_sensor_watt = ['watt', 'leistung'] -%}
+                {%- set such_sensor_amp = ['ampere', 'stromstarke', 'stromstaerke', 'current'] -%}
+                {%- set such_sensor_volt = ['spannung', 'volt'] -%}
+                {%- set such_sensor_energy = ['energy', 'kwh', 'kilowatt'] -%}
+                {%- set result = namespace(liste=[]) -%}
+                {%- set handled_switches = namespace(entities=[]) -%}
+                {%- set ns.item_entries = [] -%}
+                {%- set ns.group_entities = state_attr( ns.itemgroup , 'entity_id') or [] -%}
+                {%- for group in ns.group_entities -%}
+                  {%- set ns.group_name = state_attr(group, 'friendly_name') or group.split('.')[-1] -%}
+                  {%- set ns.items = expand(state_attr(group, 'entity_id')) 
+                      | selectattr('domain', 'equalto', ns.searchfor) | list -%}
+                    {%- set ns.item_entries = [] -%}
+                    {%- for item in ns.items -%}
+                      {%- if item.entity_id in handled_switches.entities %}
+                        {%- continue %}
+                      {%- endif %}
+                      {%- set entity = item.entity_id -%}
+                      {%- set dev_id = device_id(entity) -%}
+                      {%- set dev_name = device_attr(entity, 'name_by_user') or device_attr(entity, 'name') or 'UnknownDevice' -%}
+                      {%- set ents = device_entities(dev_id) -%}
+                      {%- set sensor_ents = ents | select('match', '^sensor\\.') | list %}
+                      {%- set switch_ents = ents | select('match', '^switch\\.') | list %}
+                      {%- set watt = namespace(val='NA') -%}
+                      {%- set amp = namespace(val='NA') -%}
+                      {%- set volt = namespace(val='NA') -%}
+                      {%- set kwh = namespace(val='NA') -%}
+                      {%- set shared_flag = 'yes' -%}
+                      {%- for s in sensor_ents -%}
+                        {%- set lname = s.split('.')[-1] | lower -%}
+                        {%- if watt.val == 'NA' and (such_sensor_watt | select('in', lname) | list | length > 0) -%}
+                          {%- set watt.val = states(s) ~ 'W' -%}
+                        {%- endif -%}
+                        {%- if amp.val == 'NA' and (such_sensor_amp | select('in', lname) | list | length > 0) -%}
+                          {%- set amp.val = states(s) ~ 'A' -%}
+                        {%- endif -%}
+                        {%- if volt.val == 'NA' and (such_sensor_volt | select('in', lname) | list | length > 0) -%}
+                          {%- set volt.val = states(s) ~ 'V' -%}
+                        {%- endif -%}
+                        {%- if kwh.val == 'NA' and (such_sensor_energy | select('in', lname) | list | length > 0) -%}
+                          {%- set kwh.val = states(s) ~ 'kWh' -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {%- for s in sensor_ents -%}
+                        {%- if item.object_id in s -%}
+                          {%- set shared_flag = 'no' -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                    {%- for sw2 in switch_ents -%}
+                      {%- if sw2 in handled_switches.entities -%}
+                        {%- continue -%}
+                      {%- endif -%}
+                      {%- set name2 = state_attr(sw2, 'friendly_name') | default(sw2) -%}
+                      {%- set s2 = states(sw2) -%}
+                      {%- set ns.entry = {
+                        "dev_name": dev_name,
+                        "name": name2,
+                        "entity_id": sw2,
+                        "state": s2,
+                        "shared": shared_flag,
+                        "watt": watt.val,
+                        "ampere": amp.val,
+                        "volt": volt.val,
+                        "kwh": kwh.val,
+                      } -%}
+                      {%- set ns.item_entries = ns.item_entries + [ns.entry] -%}
+                      {% set handled_switches.entities = handled_switches.entities + [sw2] %}
+                    {%- endfor -%}
+                  {%- endfor -%}
+                  {%- set group_line = { "raum": ns.group_name, "switches": ns.item_entries } -%}
+                  {%- set ns.group_lines = ns.group_lines + [group_line] -%}
+                {%- endfor -%} 
+ 
+            {# ROOMS ROOMS ROOMS ROOMS ROOMS ROOMS ROOMS ROOMS ROOMS #}
+              {%- set ns.result_data = [] -%}
+              {%- for eintrag in ns.group_lines -%}
+                  {%- set raum = eintrag['raum'] -%}
+                  {%- set ns.result_data = ns.result_data + [raum] -%}
+              {%- endfor -%}
+              {%- set ns.result_data = { "rooms": ns.result_data } -%}
+              {{ ns.result_data | tojson }}
+
+
+  m5dial_get_switches_room_devices_mqtt:
+    alias: "M5Dial – Get Switches ROOM devices/switches minimal via MQTT"
+    mode: single
+    fields:
+      topic:
+        required: true
+        selector:
+          text:
+      dev_name:
+        required: true
+        selector:
+          text:
+      payload:
+        required: false
+        selector:
+          text:
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: >-
+            m5dial/{{dev_name}}/response/switches/room
+          payload: >-
+            {%- set ns = namespace(
+              cleaned=[]
+            , itemgroup="dummy"
+            , searchfor="dummy"
+            , group_entities=[]
+            , group_name=""
+            , items=[]
+            , name=""
+            , entity=""
+            , entry=""
+            , group_lines=[]
+            , item_entries=[]
+            , result_data=[]
+            ) 
+            -%} 
+                {# Eingabe: Filter-Modus, z. B. "rooms" oder "Wohnzimmer/TV" #}
+                {# payload for request must be set to ROOM Name #}
+                {%- set filter_response = payload  | default('Buero') -%}
+                {%- set ns.searchfor = "switch" or [] -%}
+                {%- set ns.itemgroup = "group.m5_switches" or [] -%}
+                {%- set such_sensor_watt = ['watt', 'leistung'] -%}
+                {%- set such_sensor_amp = ['ampere', 'stromstarke', 'stromstaerke', 'current'] -%}
+                {%- set such_sensor_volt = ['spannung', 'volt'] -%}
+                {%- set such_sensor_energy = ['energy', 'kwh', 'kilowatt'] -%}
+                {%- set result = namespace(liste=[]) -%}
+                {%- set handled_switches = namespace(entities=[]) -%}
+                {%- set ns.item_entries = [] -%}
+                {%- set ns.group_entities = state_attr( ns.itemgroup , 'entity_id') or [] -%}
+                {%- for group in ns.group_entities -%}
+                  {%- set ns.group_name = state_attr(group, 'friendly_name') or group.split('.')[-1] -%}
+                  {%- set ns.items = expand(state_attr(group, 'entity_id')) 
+                      | selectattr('domain', 'equalto', ns.searchfor) | list -%}
+                    {%- set ns.item_entries = [] -%}
+                    {%- for item in ns.items -%}
+                      {%- if item.entity_id in handled_switches.entities %}
+                        {%- continue %}
+                      {%- endif %}
+                      {%- set entity = item.entity_id -%}
+                      {%- set dev_id = device_id(entity) -%}
+                      {%- set dev_name = device_attr(entity, 'name_by_user') or device_attr(entity, 'name') or 'UnknownDevice' -%}
+                      {%- set ents = device_entities(dev_id) -%}
+                      {%- set sensor_ents = ents | select('match', '^sensor\\.') | list %}
+                      {%- set switch_ents = ents | select('match', '^switch\\.') | list %}
+                      {%- set watt = namespace(val='NA') -%}
+                      {%- set amp = namespace(val='NA') -%}
+                      {%- set volt = namespace(val='NA') -%}
+                      {%- set kwh = namespace(val='NA') -%}
+                      {%- set shared_flag = 'yes' -%}
+                      {%- for s in sensor_ents -%}
+                        {%- set lname = s.split('.')[-1] | lower -%}
+                        {%- if watt.val == 'NA' and (such_sensor_watt | select('in', lname) | list | length > 0) -%}
+                          {%- set watt.val = states(s) ~ 'W' -%}
+                        {%- endif -%}
+                        {%- if amp.val == 'NA' and (such_sensor_amp | select('in', lname) | list | length > 0) -%}
+                          {%- set amp.val = states(s) ~ 'A' -%}
+                        {%- endif -%}
+                        {%- if volt.val == 'NA' and (such_sensor_volt | select('in', lname) | list | length > 0) -%}
+                          {%- set volt.val = states(s) ~ 'V' -%}
+                        {%- endif -%}
+                        {%- if kwh.val == 'NA' and (such_sensor_energy | select('in', lname) | list | length > 0) -%}
+                          {%- set kwh.val = states(s) ~ 'kWh' -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {%- for s in sensor_ents -%}
+                        {%- if item.object_id in s -%}
+                          {%- set shared_flag = 'no' -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                    {%- for sw2 in switch_ents -%}
+                      {%- if sw2 in handled_switches.entities -%}
+                        {%- continue -%}
+                      {%- endif -%}
+                      {%- set name2 = state_attr(sw2, 'friendly_name') | default(sw2) -%}
+                      {%- set s2 = states(sw2) -%}
+                      {%- set ns.entry = {
+                          "dev_name": dev_name
+                        , "entity_id": sw2
+                        , "name": name2
+                        , "state": s2
+                      } -%}
+                      {%- set ns.item_entries = ns.item_entries + [ns.entry] -%}
+                      {% set handled_switches.entities = handled_switches.entities + [sw2] %}
+                    {%- endfor -%}
+                  {%- endfor -%}
+                  {%- set group_line = { "raum": ns.group_name, "switches": ns.item_entries } -%}
+                  {%- set ns.group_lines = ns.group_lines + [group_line] -%}
+                {%- endfor -%} 
+
+              
+              {%- set ns.result_data = []  -%}
+              {%- for raum_eintrag in ns.group_lines -%}
+                {%- if raum_eintrag['raum'] == filter_response -%}
+                  {%- set raum = raum_eintrag['raum'] -%}
+                  {%- set switches = raum_eintrag['switches'] -%}
+                  {%- set geraete = namespace(devices={}) -%}
+                  {%- for sw in switches -%}
+                    {%- set dev_name = sw['dev_name'] -%}
+                    {# cleaned Dict ohne dev_name #}
+                    {%- set cleaned = namespace(d={}) -%}
+                    {%- for key, val in sw.items() -%}
+                      {%- if key != 'dev_name' -%}
+                        {%- set cleaned.d = cleaned.d | combine({ key: val }) -%}
+                      {%- endif -%}
+                    {%- endfor -%}
+                    {%- set dev_eintrag = geraete.devices.get(dev_name, []) -%}
+                    {%- set geraete.devices = geraete.devices | combine({ dev_name: dev_eintrag + [cleaned.d] }) -%}
+                  {%- endfor -%}
+                  {%- set ns.result_data = ns.result_data + [ { raum: geraete.devices } ] -%}
+                {%- endif -%}
+              {%- endfor -%}
+              
+              {{ ns.result_data[0][ filter_response ] | tojson }}
+
+
+  m5dial_get_switches_device_switches_mqtt:
+    alias: "M5Dial – Get Switches DEVICE/switches detail via MQTT"
+    mode: single
+    fields:
+      topic:
+        required: true
+        selector:
+          text:
+      dev_name:
+        required: true
+        selector:
+          text:
+      payload:
+        required: false
+        selector:
+          text:
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: >-
+            m5dial/{{dev_name}}/response/switches/device
+          payload: >-
+            {%- set ns = namespace(
+              cleaned=[]
+            , itemgroup="dummy"
+            , searchfor="dummy"
+            , group_entities=[]
+            , group_name=""
+            , items=[]
+            , name=""
+            , entity=""
+            , entry=""
+            , group_lines=[]
+            , item_entries=[]
+            , ns_result_data=[]
+            ) 
+            -%} 
+                {# Eingabe: Filter-Modus, z. B. "rooms" oder "Wohnzimmer/TV" #}
+                {# payload for request must be set to Device Name #}
+                {%- set filter_response =  payload | default( "CH1555_3Plug_4" )  -%}
+                {%- set ns.searchfor = "switch" or [] -%}
+                {%- set ns.itemgroup = "group.m5_switches" or [] -%}
+                {%- set such_sensor_watt = ['watt', 'leistung'] -%}
+                {%- set such_sensor_amp = ['ampere', 'stromstarke', 'stromstaerke', 'current'] -%}
+                {%- set such_sensor_volt = ['spannung', 'volt'] -%}
+                {%- set such_sensor_energy = ['energy', 'kwh', 'kilowatt'] -%}
+                {%- set result = namespace(liste=[]) -%}
+                {%- set handled_switches = namespace(entities=[]) -%}
+                {%- set ns.item_entries = [] -%}
+                {%- set ns.group_entities = state_attr( ns.itemgroup , 'entity_id') or [] -%}
+                {%- for group in ns.group_entities -%}
+                  {%- set ns.group_name = state_attr(group, 'friendly_name') or group.split('.')[-1] -%}
+                  {%- set ns.items = expand(state_attr(group, 'entity_id')) 
+                      | selectattr('domain', 'equalto', ns.searchfor) | list -%}
+                    {%- set ns.item_entries = [] -%}
+                    {%- for item in ns.items -%}
+                      {%- if item.entity_id in handled_switches.entities %}
+                        {%- continue %}
+                      {%- endif %}
+                      {%- set entity = item.entity_id -%}
+                      {%- set dev_id = device_id(entity) -%}
+                      {%- set dev_name = device_attr(entity, 'name_by_user') or device_attr(entity, 'name') or 'UnknownDevice' -%}
+                      {%- set ents = device_entities(dev_id) -%}
+                      {%- set sensor_ents = ents | select('match', '^sensor\\.') | list %}
+                      {%- set switch_ents = ents | select('match', '^switch\\.') | list %}
+                      {%- set watt = namespace(val='NA') -%}
+                      {%- set amp = namespace(val='NA') -%}
+                      {%- set volt = namespace(val='NA') -%}
+                      {%- set kwh = namespace(val='NA') -%}
+                      {%- set shared_flag = 'yes' -%}
+                      {%- for s in sensor_ents -%}
+                        {%- set lname = s.split('.')[-1] | lower -%}
+                        {%- if watt.val == 'NA' and (such_sensor_watt | select('in', lname) | list | length > 0) -%}
+                          {%- set watt.val = states(s) ~ 'W' -%}
+                        {%- endif -%}
+                        {%- if amp.val == 'NA' and (such_sensor_amp | select('in', lname) | list | length > 0) -%}
+                          {%- set amp.val = states(s) ~ 'A' -%}
+                        {%- endif -%}
+                        {%- if volt.val == 'NA' and (such_sensor_volt | select('in', lname) | list | length > 0) -%}
+                          {%- set volt.val = states(s) ~ 'V' -%}
+                        {%- endif -%}
+                        {%- if kwh.val == 'NA' and (such_sensor_energy | select('in', lname) | list | length > 0) -%}
+                          {%- set kwh.val = states(s) ~ 'kWh' -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {%- for s in sensor_ents -%}
+                        {%- if item.object_id in s -%}
+                          {%- set shared_flag = 'no' -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                    {%- for sw2 in switch_ents -%}
+                      {%- if sw2 in handled_switches.entities -%}
+                        {%- continue -%}
+                      {%- endif -%}
+                      {%- set name2 = state_attr(sw2, 'friendly_name') | default(sw2) -%}
+                      {%- set s2 = states(sw2) -%}
+                      {%- set ns.entry = {
+                        "dev_name": dev_name,
+                        "name": name2,
+                        "entity_id": sw2,
+                        "state": s2,
+                        "shared": shared_flag,
+                        "watt": watt.val,
+                        "ampere": amp.val,
+                        "volt": volt.val,
+                        "kwh": kwh.val,
+                      } -%}
+                      {%- set ns.item_entries = ns.item_entries + [ns.entry] -%}
+                      {% set handled_switches.entities = handled_switches.entities + [sw2] %}
+                    {%- endfor -%}
+                  {%- endfor -%}
+                  {%- set group_line = { "raum": ns.group_name, "switches": ns.item_entries } -%}
+                  {%- set ns.group_lines = ns.group_lines + [group_line] -%}
+                {%- endfor -%} 
+ 
+
+              
+              {%- set ns.result_data = []  -%}
+              {%- for raum_eintrag in ns.group_lines -%}
+                  {%- set useit = 0 -%}
+                  {%- set raum = raum_eintrag['raum'] -%}
+                  {%- set switches = raum_eintrag['switches'] -%}
+                  {%- set geraete = namespace(devices={}) -%}
+                  {%- for sw in switches -%}
+                    {%- if sw['dev_name'] == filter_response -%}              
+                        {%- set useit =1 -%}
+                        {%- set dev_name = sw['dev_name'] -%}
+                        {# cleaned Dict ohne dev_name #}
+                        {%- set cleaned = namespace(d={}) -%}
+                        {%- for key, val in sw.items() -%}
+                          {%- if key != 'dev_name' -%}
+                            {%- set cleaned.d = cleaned.d | combine({ key: val }) -%}
+                          {%- endif -%}
+                        {%- endfor -%}
+                        {%- set dev_eintrag = geraete.devices.get(dev_name, []) -%}
+                        {%- set geraete.devices = geraete.devices | combine({ dev_name: dev_eintrag + [cleaned.d] }) -%}
+                  
+                    {%- endif -%}
+                  {%- endfor -%}
+                  {%- set ns.result_data = ns.result_data + [geraete.devices]  -%}
+              {%- endfor -%}
+
+              {{ ns.result_data | tojson }}

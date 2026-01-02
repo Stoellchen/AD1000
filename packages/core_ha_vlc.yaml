@@ -1,0 +1,9 @@
+################################################################################
+#   
+# Dummy Player for tts to chromecast with picture   
+#   
+# https://www.home-assistant.io/integrations/vlc
+media_player:
+  - platform: vlc
+    name: vlc_dummy
+    arguments: "--alsa-audio-device=hw:1,0"

@@ -1,0 +1,481 @@
+##########################################################################################
+##
+##  usto stuff for m5-Dial ...
+##
+##########################################################################################
+
+##########################################################################################
+##
+##  Info to display ............. by usto
+##
+##########################################################################################
+
+##
+## this must be checked in every send to mobile .....
+##
+##  input_boolean, group and scripts are set file :   usto_set_notify_info_display_speak.yaml
+## 
+##  Initial should not be set the have the same value after a restart than before
+##
+
+##            {{ (state_attr( (state_attr (  'sensor.person_tracker_1' ,'person_1' )|string ),'device_trackers')[0] |string).replace('device_tracker','sensor')  }}_geocoded_location
+##            {{ (state_attr( (state_attr (  'sensor.person_tracker_1' ,'person_2' )|string ),'device_trackers')[0] |string).replace('device_tracker','sensor')  }}_geocoded_location
+##            {{ states_attr (sensor.person_tracker_1,'device_2_geo' ) }}
+
+group:
+  m5_lights:
+    entities:
+      - group.m5_lights_esszimmer
+      - group.m5_lights_wohnzimmer
+      - group.m5_lights_schlafzimmer
+
+  m5_lights_esszimmer:
+    name: Esszimmer
+    entities:
+      - light.e1
+      - light.e2
+      - light.e3
+      - light.e4
+      - light.kerze
+
+  m5_lights_wohnzimmer:
+    name: Wohnzimmer
+    entities:
+      - light.w1
+      - light.w2
+      - light.w3
+      - light.w4
+      - light.sideboard_kerze_rechts
+      - light.sideboard_rechts
+      - light.sideboard_links_rechts
+      - light.sideboard_links
+      - light.wand
+
+  m5_lights_Schlafzimmer:
+    name: Schlafzimmer
+    entities:
+      - light.s1
+      - light.s2
+      - light.sstrip1
+      - light.sstrip2
+      - light.sstrip3
+
+
+
+automation:
+  - id: 'm5dial_update_lights_mqtt'
+    alias: m5dial_update_lights_mqtt
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.m5dial_01_status
+        to: "on"
+      - platform: time_pattern
+        minutes: "/1"
+      - platform: homeassistant
+        event: start
+    action:
+      - service: script.m5dial_push_lights_mqtt
+
+#  - id: 'm5dial_update_switches_mqtt'
+#    alias: m5dial_update_switches_mqtt
+#    trigger:
+#      - platform: state
+#        entity_id: binary_sensor.m5dial_01_status
+#        to: "on"
+#      - platform: time_pattern
+#        minutes: "/1"
+#      - platform: homeassistant
+#        event: start
+#    action:
+#      - service: script.m5dial_push_switches_mqtt
+
+  - id: 'm5dial_update_media_mqtt'
+    alias: m5dial_update_media_mqtt
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.m5dial_01_status
+        to: "on"
+      - platform: time_pattern
+        minutes: "/1"
+      - platform: homeassistant
+        event: start
+    action:
+      - service: script.m5dial_push_media_mqtt
+
+  - id: 'm5dial_update_aircon_mqtt'
+    alias: m5dial_update_aircon_mqtt
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.m5dial_01_status
+        to: "on"
+      - platform: time_pattern
+        minutes: "/1"
+      - platform: homeassistant
+        event: start
+    action:
+      - service: script.m5dial_push_aircon_mqtt
+
+
+  - id: 'm5dial_get_light_mqtt'
+    alias: m5dial_get_light_mqtt
+    trigger:
+      - platform: mqtt
+        topic: "m5dial/+/get/light/#"
+    action:
+      - variables:
+          dev_name: "{{ trigger.topic.split('/')[1] }}"
+          entity_id: "{{ 'light.' + trigger.topic.split('/')[-1] }}"
+      - condition: template
+        value_template: "{{ states(entity_id) is defined }}"
+      - service: mqtt.publish
+        data:
+          topic: "m5dial/{{ dev_name }}/status/light/{{ entity_id }}"
+          payload: >-
+            {{ {
+              "entity": entity_id,
+              "state": states(entity_id),
+              "brightness": state_attr(entity_id, 'brightness') | default(0),
+              "color": state_attr(entity_id, 'rgb_color') | default([0, 0, 0])
+            } | tojson }}
+    mode: restart
+
+
+  - id: 'm5dial_set_light_mqtt'
+    alias: m5dial_set_light_mqtt
+    trigger:
+      - platform: mqtt
+        topic: "m5dial/+/set/light/#"
+    action:
+      - variables:
+          dev_name: "{{ trigger.topic.split('/')[1] }}"
+          data: "{{ trigger.payload_json }}"
+          entity_id: "{{ data.entity_id }}"
+          current_brightness: >
+            {{ data.brightness
+              if data.brightness is defined
+              else state_attr(entity_id, 'brightness') 
+                if state_attr(entity_id, 'brightness') is defined
+                else 255 }}
+      - choose:
+          - conditions: "{{ data.state == 'off' }}"
+            sequence:
+              - service: light.turn_off
+                target:
+                  entity_id: "{{ entity_id }}"
+          - conditions: "{{ data.state == 'on' }}"
+            sequence:
+              - choose:
+                  - conditions: "{{ 'color' in data }}"
+                    sequence:
+                      - service: light.turn_on
+                        target:
+                          entity_id: "{{ entity_id }}"
+                        data:
+                          brightness: "{{ current_brightness }}"
+                          rgb_color: "{{ data.color }}"
+                  - conditions: "{{ 'brightness' in data }}"
+                    sequence:
+                      - service: light.turn_on
+                        target:
+                          entity_id: "{{ entity_id }}"
+                        data:
+                          brightness: "{{ current_brightness }}"
+                  - conditions: "{{ 'brightness' not in data and 'color' not in data }}"
+                    sequence:
+                      - service: light.turn_on
+                        target:
+                          entity_id: "{{ entity_id }}"
+
+
+  - id: 'm5dial_set_room_light_mqtt'
+    alias: m5dial_set_room_light_mqtt
+    trigger:
+      - platform: mqtt
+        topic: "m5dial/+/set/room/light"
+
+    variables:
+      dev_name: "{{ trigger.topic.split('/')[1] }}"
+      payload: "{{ trigger.payload_json }}"
+      raum: "{{ payload.room }}"
+      aktion: "{{ payload.action | default('') }}"
+      zielwert: >-
+        {% if aktion.startswith('brightness') and (payload.value is number) %}
+          {{ payload.value | int }}
+        {% else %}
+          0
+        {% endif %}
+      color_value: >-
+        {% if aktion == 'color' and (payload.value is iterable and payload.value is not string) %}
+          {{ payload.value }}
+        {% else %}
+          [255,255,255]
+        {% endif %}
+
+    action:
+      - variables:
+          lichter: >
+            {% set ns = namespace(liste=[]) %}
+            {% for l in states.light
+                if area_name(l.entity_id) == raum
+                and l.state == 'on'
+                and l.entity_id.split('.')[-1] != raum | lower %}
+              {% set ns.liste = ns.liste + [l.entity_id] %}
+            {% endfor %}
+            {{ ns.liste }}
+
+      - repeat:
+          count: "{{ lichter | length }}"
+          sequence:
+            - variables:
+                licht: "{{ lichter[repeat.index - 1] }}"
+                alt: "{{ state_attr(licht, 'brightness') | default(128) | int }}"
+                neu: >-
+                  {% if aktion == 'brightness_plus' %}
+                    {{ [alt + 26, 255] | min }}
+                  {% elif aktion == 'brightness_minus' %}
+                    {{ [alt - 26, 0] | max }}
+                  {% elif aktion == 'brightness_absolut' %}
+                    {{ zielwert }}
+                  {% else %}
+                    {{ alt }}
+                  {% endif %}
+
+            - choose:
+                - conditions: "{{ aktion.startswith('brightness') }}"
+                  sequence:
+                    - service: light.turn_on
+                      target:
+                        entity_id: "{{ licht }}"
+                      data:
+                        brightness: "{{ neu | int }}"
+                - conditions: "{{ aktion == 'color' }}"
+                  sequence:
+                    - service: light.turn_on
+                      target:
+                        entity_id: "{{ licht }}"
+                      data:
+                        rgb_color: "{{ color_value }}"
+
+
+  - id: 'm5dial_get_room_light_mqtt'
+    alias: m5dial_get_room_light_mqtt
+    trigger:
+      - platform: mqtt
+        topic: "m5dial/+/get/room/light/#"
+
+    variables:
+      dev_name: "{{ trigger.topic.split('/')[1] }}"
+      raum: "{{ trigger.topic.split('/')[-1] }}"
+
+    action:
+      - variables:
+          helligkeiten: >
+            {% set ns = namespace(liste=[]) %}
+            {% for light in states.light
+                if area_name(light.entity_id) == raum
+                and light.state == 'on'
+                and state_attr(light.entity_id, 'brightness') is number %}
+              {% set ns.liste = ns.liste + [state_attr(light.entity_id, 'brightness')] %}
+            {% endfor %}
+            {{ ns.liste }}
+
+          mittelwert: >
+            {% if helligkeiten | length > 0 %}
+              {{ (helligkeiten | map('float') | sum / helligkeiten | length) | int }}
+            {% else %}
+              0
+            {% endif %}
+
+      - service: mqtt.publish
+        data:
+          topic: "m5dial/{{ dev_name }}/status/room/light/{{ raum }}"
+          payload: >-
+            { "room": "{{ raum }}", "brightness": {{ mittelwert }} }
+
+
+
+  - alias: "m5dial_activity_monitoring_mqtt_blacklist"
+    id: m5dial_activity_monitoring_mqtt_blacklist
+    mode: queued
+    trigger:
+      - platform: state
+        entity_id:
+          ## lichter und Switches
+          - light.w1
+          - light.w2
+          - light.w3
+          - light.w4
+          - light.sideboard_kerze_rechts
+          - light.sideboard_rechts
+          - light.sideboard_links_rechts
+          - light.sideboard_links
+          - switch.faketv
+          - switch.sideboard_steckdose_2 # lichterkette
+          - switch.sideboard_steckdose_3 # tromsoe
+          - switch.tv_steckdose_4  # sony faketv
+          - light.wand
+          - light.e1
+          - light.e2
+          - light.e3
+          - light.e4
+          - light.kerze
+          - light.s1
+          - light.s2
+          - light.sstrip1
+          - light.sstrip2
+          - light.sstrip3
+          ## Bewegungs- und Belegungs- Sensoren
+          - binary_sensor.ms1_belegung
+          - binary_sensor.ms2_belegung
+          - binary_sensor.ms3_belegung
+          - binary_sensor.ms4_belegung
+          - binary_sensor.ms5_belegung
+          - binary_sensor.ms6_belegung
+          - binary_sensor.ms1_bewegung
+          - binary_sensor.ms2_bewegung
+          - binary_sensor.ms3_bewegung
+          - binary_sensor.ms4_bewegung
+          - binary_sensor.ms5_bewegung
+          - binary_sensor.ms6_bewegung
+          ## media player
+          - media_player.apple
+          - media_player.bad
+          - media_player.dusche
+          - media_player.echo_01
+          - media_player.echo_02
+          - media_player.echo_03
+          - media_player.echo_04
+          - media_player.entrance_speaker
+          - media_player.googletv
+          - media_player.googletv_2
+          - media_player.info_1
+          - media_player.info_2
+          - media_player.info_3
+          - media_player.marantz_sr7010
+          - media_player.nestmini9424
+          - media_player.schlafzimmer
+          - media_player.schlafzimmerlinks
+          - media_player.schlafzimmerrechts
+          - media_player.sony
+          - media_player.sony_2
+          - media_player.sony_3
+          - media_player.sony_kd_65xd9305
+          - media_player.stereo
+          - media_player.wohnzimmer_links
+          - media_player.wohnzimmer_rechts
+
+    variables:
+      erlaubte_typen: ["light", "media_player", "switch","binary_sensor" ]
+      domain: "{{ trigger.entity_id.split('.')[0] }}"
+      entity: "{{ trigger.entity_id }}"
+      friendly: "{{ states[entity].name | default(entity) }}"
+      to: "{{ trigger.to_state.state if trigger.to_state else 'unknown' }}"
+      from: "{{ trigger.from_state.state if trigger.from_state else 'unknown' }}"
+    condition:
+      - "{{ domain in erlaubte_typen }}"
+      - "{{ from != to }}"  # echte Zustandsänderung
+    action:
+      - service: mqtt.publish
+        data:
+          topic: m5dial/activity/monitoring
+          payload: >-
+            {
+              "type": "{{ domain }}",
+              "entity": "{{ entity }}",
+              "name": "{{ friendly }}",
+              "from": "{{ from }}",
+              "to": "{{ to }}",
+              "ts": "{{ now().isoformat() }}"
+            }
+
+
+
+script:
+  m5dial_push_lights_mqtt:
+    alias: "M5Dial – Push Lights via MQTT"
+    mode: single
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: m5dial/lights
+          retain: true
+          payload: >-
+            {%- set ns = namespace(itemgroup="dummy",searchfor="dummy",group_entities=[], group_name="", items=[], name="", entity="", entry="", group_lines=[], item_entries=[]) -%} 
+              {%- set ns.searchfor = "light" or [] -%}
+              {%- set ns.itemgroup = "group.m5_lights" or [] -%}
+              {%- set ns.group_entities = state_attr( ns.itemgroup , 'entity_id') or [] -%}
+              {%- for group in ns.group_entities -%}
+                {%- set ns.group_name = state_attr(group, 'friendly_name') or group.split('.')[-1] -%}
+                {%- set ns.items = expand(state_attr(group, 'entity_id')) 
+                    | selectattr('domain', 'equalto', ns.searchfor) | list -%}
+                {%- set ns.item_entries = [] -%}
+                {%- for item in ns.items -%}
+                  {%- set ns.name = item.name | default(item.entity_id) -%}
+                  {%- set ns.entity = item.entity_id.split('.')[-1] -%}
+                  {%- set ns.entry = ns.name ~ '|' ~ ns.entity -%}
+                  {%- set ns.item_entries = ns.item_entries + [ns.entry] -%}
+                {%- endfor -%}
+                {%- set group_line = ns.group_name ~ ':' ~ ns.item_entries | join(',') -%}
+                {%- set ns.group_lines = ns.group_lines + [group_line] -%}
+            {%- endfor -%} {{ ns.group_lines | join('§') }}
+
+
+
+
+  m5dial_push_media_mqtt:
+    alias: "M5Dial – Push Media via MQTT"
+    mode: single
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: m5dial/media
+          retain: true
+          payload: >-
+            {%- set ns = namespace(itemgroup="dummy",searchfor="dummy",group_entities=[], group_name="", items=[], name="", entity="", entry="", group_lines=[], item_entries=[]) -%} 
+              {%- set ns.searchfor = "media_player" or [] -%}
+              {%- set ns.itemgroup = "group.m5_media" or [] -%}
+              {%- set ns.group_entities = state_attr( ns.itemgroup , 'entity_id') or [] -%}
+              {%- for group in ns.group_entities -%}
+                {%- set ns.group_name = state_attr(group, 'friendly_name') or group.split('.')[-1] -%}
+                {%- set ns.items = expand(state_attr(group, 'entity_id')) 
+                    | selectattr('domain', 'equalto', ns.searchfor) | list -%}
+                {%- set ns.item_entries = [] -%}
+                {%- for item in ns.items -%}
+                  {%- set ns.name = item.name | default(item.entity_id) -%}
+                  {%- set ns.entity = item.entity_id.split('.')[-1] -%}
+                  {%- set ns.entry = ns.name ~ '|' ~ ns.entity -%}
+                  {%- set ns.item_entries = ns.item_entries + [ns.entry] -%}
+                {%- endfor -%}
+                {%- set group_line = ns.group_name ~ ':' ~ ns.item_entries | join(',') -%}
+                {%- set ns.group_lines = ns.group_lines + [group_line] -%}
+            {%- endfor -%} {{ ns.group_lines | join('§') }}
+
+
+  m5dial_push_aircon_mqtt:
+    alias: "M5Dial – Push Aircon via MQTT"
+    mode: single
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: m5dial/aircon
+          retain: true
+          payload: >-
+            {%- set ns = namespace(group_entities=[], group_name="", players=[], name="", entity="", entry="", group_lines=[], player_entries=[]) -%}
+            {%- set ns.group_entities = state_attr('group.m5_media_players', 'entity_id') or [] -%}
+            {%- for group in ns.group_entities -%}
+              {%- set ns.group_name = state_attr(group, 'friendly_name') or group.split('.')[-1] -%}
+              {%- set ns.players = expand(state_attr(group, 'entity_id')) 
+                  | selectattr('domain', 'equalto', 'media_player') | list -%}
+              {%- set ns.player_entries = [] -%}
+              {%- for player in ns.players -%}
+                {%- set ns.name = player.name | default(player.entity_id) -%}
+                {%- set ns.entity = player.entity_id.split('.')[-1] -%}
+                {%- set ns.entry = ns.name ~ '|' ~ ns.entity -%}
+                {%- set ns.player_entries = ns.player_entries + [ns.entry] -%}
+              {%- endfor -%}
+              {%- set group_line = ns.group_name ~ ':' ~ ns.player_entries | join(',') -%}
+              {%- set ns.group_lines = ns.group_lines + [group_line] -%}
+            {%- endfor -%}
+            {{ ns.group_lines | join('§') }}
+ 
+

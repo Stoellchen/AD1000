@@ -1,0 +1,398 @@
+##########################################################################################
+##
+##  usto stuff for m5-Dial ...
+##
+##########################################################################################
+
+##########################################################################################
+##
+##  Info to display ............. by usto
+##
+##########################################################################################
+
+##
+## this must be checked in every send to mobile .....
+##
+##  input_boolean, group and scripts are set file :   usto_set_notify_info_display_speak.yaml
+## 
+##  Initial should not be set the have the same value after a restart than before
+##
+
+##            {{ (state_attr( (state_attr (  'sensor.person_tracker_1' ,'person_1' )|string ),'device_trackers')[0] |string).replace('device_tracker','sensor')  }}_geocoded_location
+##            {{ (state_attr( (state_attr (  'sensor.person_tracker_1' ,'person_2' )|string ),'device_trackers')[0] |string).replace('device_tracker','sensor')  }}_geocoded_location
+##            {{ states_attr (sensor.person_tracker_1,'device_2_geo' ) }}
+
+group:
+  ## media-player
+  m5_media:
+    entities:
+      - group.m5_media_wohnzimmer
+      - group.m5_media_schlafzimmer
+      - group.m5_media_esszimmer
+      - group.m5_media_bad
+      - group.m5_media_dusche
+      - group.m5_media_storage
+
+  m5_media_wohnzimmer:
+    name: Wohnzimmer
+    entities:
+      - media_player.marantz_sr7010
+      - media_player.googletv
+      - media_player.stereo
+      - media_player.info_3
+
+  m5_media_schlafzimmer:
+    name: Schlafzimmer
+    entities:
+      - media_player.schlafzimmer
+
+  m5_media_esszimmer:
+    name: Esszimmer
+    entities:
+      - media_player.info_1
+
+  m5_media_bad:
+    name: Bad
+    entities:
+      - media_player.bad
+
+  m5_media_dusche:
+    name: Dusche
+    entities:
+      - media_player.dusche
+
+  m5_media_storage:
+    name: Storage
+    entities:
+      - media_player.info_2
+
+
+automation:
+  - id: 'm5dial_get_media_mqtt'
+    alias: m5dial_get_media_mqtt
+    mode: queued
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.m5dial_01_status
+        to: "on"
+      - platform: homeassistant
+        event: start
+        ## Request von m5dial 
+      - platform: mqtt
+        topic: m5dial/+/request/media/rooms/
+      - platform: mqtt
+        topic: m5dial/+/request/media/room/#
+    action:
+      - variables:
+          dev_name: "{{ trigger.topic.split('/')[1] }}"
+          topic: "{{ trigger.topic }}"
+          payload: "{{ trigger.payload | default('') }}"
+      - choose:
+          - conditions: "{{ topic == 'm5dial/' ~ dev_name ~ '/request/media/rooms/' }}"
+            sequence:
+              - service: script.m5dial_get_media_rooms_mqtt
+                data:
+                  topic: "{{ topic }}"
+                  payload: "{{ payload }}"
+                  dev_name: "{{ dev_name }}"
+          - conditions: "{{ topic.startswith('m5dial/' ~ dev_name ~ '/request/media/room/') }}"
+            sequence:
+              - service: script.m5dial_get_media_room_player_mqtt
+                data:
+                  topic: "{{ topic }}"
+                  payload: "{{ payload }}"
+                  dev_name: "{{ dev_name }}"
+        default:
+          - service: system_log.write
+            data:
+              message: "Unbekannter M5Dial Topic: {{ topic }}"
+              level: warning
+
+  - id: 'm5dial_set_media_volume_mqtt'
+    alias: m5dial_set_media_volume_mqtt
+    mode: queued
+    trigger:
+        ## Request von m5dial 
+      - platform: mqtt
+        topic: m5dial/+/set/media/volume/+/+/#
+    action:
+      - variables:
+          dev_name: "{{ trigger.topic.split('/')[1] }}"
+          group_player: "{{ trigger.topic.split('/')[5] }}"
+          action: "{{ trigger.topic.split('/')[6] }}"
+          friendly: "{{ trigger.topic.split('/')[-1] }}"
+          topic: "{{ trigger.topic }}"
+          payload: "{{ trigger.payload | default('') }}"
+      - choose:
+        - conditions:
+            - condition: template
+              value_template: >-
+                {{ ( group_player == 'group' or group_player == 'player' ) and topic.startswith('m5dial/' ~ dev_name ~ '/set/media/volume/') }}      
+          sequence:
+            - service: script.m5dial_set_media_volume_mqtt
+              data:
+                topic: "{{ topic }}"
+                payload: "{{ payload }}"
+                dev_name: "{{ dev_name }}"
+                friendly: "{{ friendly }}"
+                group_player: "{{ group_player }}"
+                action: "{{ action }}"
+        default:
+          - service: system_log.write
+            data:
+              message: "Unbekannter M5Dial Topic: {{ topic }}"
+              level: warning
+
+
+
+script:
+  m5dial_get_media_rooms_mqtt:
+    alias: "M5Dial – Get Media ROOMS via MQTT"
+    mode: single
+    fields:
+      topic:
+        required: true
+        selector:
+          text:
+      dev_name:
+        required: true
+        selector:
+          text:
+      payload:
+        required: false
+        selector:
+          text:
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: >-
+            {{ "m5dial/" ~ dev_name ~ "/response/media/rooms/" }}
+          payload: >-
+            {%- set ns = namespace(
+              cleaned=[]
+            , itemgroup="dummy"
+            , searchfor="dummy"
+            , group_entities=[]
+            , group_name=""
+            , items=[]
+            , name=""
+            , entity=""
+            , entry=""
+            , group_lines=[]
+            , rooms=[]
+            , item_entries=[]
+            , ns_result_data=[]
+            ) 
+            -%} 
+            
+            {%- set itemgroup = "group.m5_media" -%}
+            {%- set group_entities = state_attr(itemgroup, 'entity_id') or [] -%}
+            {%- set result = [] -%}
+
+            {%- for group in group_entities %}
+              {%- set room_name = state_attr(group, 'friendly_name') or group.split('.')[-1] -%}
+              {%- set ns.rooms = ns.rooms + [room_name] -%}
+              {%- set media_players = state_attr(group, 'entity_id') or [] -%}
+              {%- set room_entries = [] -%}
+
+              {%- for player in media_players -%}
+              {%- set ns.group_entities =[]  -%}
+                {%- set state = states(player) -%}
+                {%- set name = state_attr(player, 'friendly_name') or player %}
+                {%- set ns.group_entities = ns.group_entities + [{
+                  "name": name,
+                  "entity_id": player,
+                  "state": state
+                }] -%}
+              {%- endfor -%}
+              {%- set ns.group_lines = ns.group_lines + [{
+                "room": room_name,
+                "players": ns.group_entities
+              }] %}
+            {%- endfor -%}
+
+            {{ {'rooms': ns.rooms} | tojson }}
+
+  m5dial_get_media_room_player_mqtt:
+    alias: "M5Dial – Get Media ROOM player via MQTT"
+    mode: single
+    fields:
+      topic:
+        required: true
+        selector:
+          text:
+      dev_name:
+        required: true
+        selector:
+          text:
+      payload:
+        required: false
+        selector:
+          text:
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: >-
+            {{ "m5dial/" ~ dev_name ~ "/response/media/room/player" }}
+          payload: >-
+            {%- set ns = namespace(
+              cleaned=[]
+            , itemgroup="dummy"
+            , searchfor="dummy"
+            , group_entities=[]
+            , group_name=""
+            , items=[]
+            , name=""
+            , entity=""
+            , playing="no"
+            , entry=""
+            , group_lines=[]
+            , rooms=[]
+            , item_entries=[]
+            , ns_result_data=[]
+            ) 
+            -%} 
+            
+            {%- set itemgroup = "group.m5_media" -%}
+            {# payload for request must be set to ROOM Name #}
+            {%- set filter_response = payload  | default('Wohnzimmer') -%}
+            {%- set group_entities = state_attr(itemgroup, 'entity_id') or [] -%}
+            {%- set result = [] -%}
+
+            {%- for group in group_entities %}
+              {%- set room_name = state_attr(group, 'friendly_name') or group.split('.')[-1] -%}
+              {%- if room_name == filter_response -%}
+                {%- set media_players = state_attr(group, 'entity_id') or [] -%}
+                {%- set room_entries = [] -%}
+                {%- set ns.group_entities =[]  -%}
+
+                {%- for player in media_players -%}
+                  {%- set state = states(player) -%}
+                  {%- set name = state_attr(player, 'friendly_name') or player %}
+                  {%- if state == "playing"  -%}
+                  {%- set ns.playing = "yes"  -%}
+                  {%- endif -%}
+                  {%- set ns.group_entities = ns.group_entities + [{
+                    "name": name,
+                    "entity_id": player,
+                    "state": state
+                  }] -%}
+                {%- endfor -%}
+                {%- set ns.group_lines = ns.group_lines + [{
+                  "room": room_name,
+                  "playing": ns.playing,
+                  "players": ns.group_entities
+                }] %}
+              {%- endif -%}
+            {%- endfor -%}
+            {{ {'room': ns.group_lines} | tojson }}
+
+
+
+  m5dial_set_media_volume_mqtt:
+    alias: "M5Dial – Set Media volume via MQTT"
+    mode: single
+    fields:
+      topic:
+        required: true
+        selector:
+          text:
+      dev_name:
+        required: true
+        selector:
+          text:
+      friendly:
+        required: true
+        selector:
+          text:
+      group_player:
+        required: true
+        selector:
+          text:
+      action:
+        required: true
+        selector:
+          text:
+      payload:
+        required: false
+        selector:
+          text:
+    sequence:
+      - variables:
+          players: >
+            {%- if group_player == 'group' -%}
+              {%- set grp = 'group.m5_media_' ~ friendly | lower -%}
+              {{ expand(state_attr(grp, 'entity_id')) | map(attribute='entity_id') | list }}
+            {%- else -%}
+              {{ [friendly] | list }}
+            {%- endif -%}
+
+      - repeat:
+          for_each: "{{ players }}"
+          sequence:
+            - choose:
+                # Volume erhöhen
+                - conditions: "{{ action == 'up' and states(repeat.item) in [ 'playing', 'on', 'paused' ] }}"
+                  sequence:
+                    - service: media_player.volume_set
+                      data:
+                        entity_id: "{{ repeat.item }}"
+                        volume_level: >
+                          {% set vol = state_attr(repeat.item, 'volume_level') | float(0) %}
+                          {{ [vol + 0.05, 1.0] | min }}
+                
+                # Volume verringern
+                - conditions: "{{ action == 'down' and states(repeat.item) in [ 'playing', 'on', 'paused' ] }}"
+                  sequence:
+                    - service: media_player.volume_set
+                      data:
+                        entity_id: "{{ repeat.item }}"
+                        volume_level: >
+                          {% set vol = state_attr(repeat.item, 'volume_level') | float(0) %}
+                          {{ [vol - 0.05, 0.0] | max }}
+
+                # Mute toggeln
+                - conditions: "{{ action == 'mute' and states(repeat.item) in [ 'playing', 'on', 'paused' ] }}"
+                  sequence:
+                  - choose:
+                    - conditions:
+                      - condition: template
+                        value_template: "{{ state_attr(repeat.item, 'is_volume_muted' ) == false }}"
+                      sequence:
+                      - service: media_player.volume_mute
+                        data:
+                          is_volume_muted: true
+                        target:
+                          entity_id: '{{ repeat.item }}'
+                    default:
+                    - service: media_player.volume_mute
+                      target:
+                        entity_id: '{{ repeat.item }}'
+                      data:
+                        is_volume_muted: false
+
+
+                # Ausschalten
+                - conditions: "{{ action == 'off' }}"
+                  sequence:
+                    - service: media_player.turn_off
+                      data:
+                        entity_id: "{{ repeat.item }}"
+
+                # Pause oder Resume
+                - conditions: "{{ action == 'pause' }}"
+                  sequence:
+                    - choose:
+                        - conditions: "{{ is_state(repeat.item, 'playing') }}"
+                          sequence:
+                            - service: media_player.media_pause
+                              data:
+                                entity_id: "{{ repeat.item }}"
+                        - conditions: "{{ is_state(repeat.item, 'paused') }}"
+                          sequence:
+                            - service: media_player.media_play
+                              data:
+                                entity_id: "{{ repeat.item }}"
+
+                                
+

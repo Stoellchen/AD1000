@@ -1,0 +1,99 @@
+#   🔴 Kurzfassung (wichtig)
+#   
+#   👉 Die MQTT-Verbindung darf seit einiger Zeit NICHT mehr per YAML konfiguriert werden.
+#   👉 Broker, Port, User, Passwort gehören ausschließlich in die MQTT-Integration (UI).
+#   👉 Deshalb sind broker, port, username, password, discovery, protocol, keepalive in YAML absichtlich verboten.
+#   
+#   Dein Fehler ist also korrekt erkannt worden von HA.
+#   
+#   ⸻
+#   
+#   🧠 Warum das so ist (Hintergrund)
+#   
+#   Home Assistant hat MQTT auf Config Entries umgestellt:
+#   	•	❌ Früher: mqtt: in configuration.yaml
+#   	•	✅ Heute: MQTT Integration (UI)
+#   	•	YAML ist nur noch für MQTT-Entities, nicht für die Verbindung
+#   
+#   Deshalb sagt HA:
+
+###############################################################################
+# MQTT – Zentrale Konfiguration
+#
+# Dieses Package verbindet Home Assistant mit einem externen MQTT-Broker
+# (z. B. EMQX oder Mosquitto).
+#
+# Architektur:
+#   Home Assistant  →  MQTT Broker (EMQX)
+#                    →  Zigbee2MQTT
+#                    →  ESPHome
+#                    →  Skripte / Heartbeats
+#
+# Empfehlung:
+# - Für Produktivbetrieb immer Benutzer + Passwort verwenden
+# - Secrets in secrets.yaml auslagern
+###############################################################################
+
+
+##   mqtt:
+##   
+##   ###########################################################################
+##   # MQTT Broker – Netzwerk
+##   ###########################################################################
+## 
+##   # IP-Adresse oder Hostname des MQTT-Brokers
+##   # Beispiel:
+##   #   broker: 10.0.0.50
+##   #   broker: emqx.local
+##   broker: emqx001.main.arpa
+## 
+##   # Standard MQTT-Port:
+##   # 1883 = unverschlüsselt
+##   # 8883 = TLS (nur wenn korrekt konfiguriert)
+##   port: 1883
+## 
+##   ###########################################################################
+##   # Authentifizierung
+##   ###########################################################################
+## 
+##   # Benutzername, der im Broker (EMQX/Mosquitto) angelegt wurde
+##   username: !secret homeassistant_mqtt_username
+## 
+##   # Passwort aus secrets.yaml
+##   # Beispiel in secrets.yaml:
+##   # mqtt_password: "super_geheimes_passwort"
+##   password: !secret homeassistant_mqtt_password
+## 
+## 
+##   ###########################################################################
+##   # Optionale Einstellungen (für später)
+##   ###########################################################################
+## 
+##   # Client-ID (optional)
+##   # Sinnvoll, wenn mehrere HA-Instanzen existieren
+##   # client_id: homeassistant_main
+## 
+##   # Keepalive in Sekunden (Standard: 60)
+##   keepalive: 60
+## 
+##   # Protokoll-Version (Standard meist korrekt)
+##   protocol: 3.1.1
+## 
+##   ###########################################################################
+##   # TLS / SSL (optional – NICHT aktivieren ohne Zertifikate!)
+##   ###########################################################################
+## 
+##   # Wenn du später TLS nutzen willst:
+##   # port: 8883
+##   # certificate: /config/certs/ca.crt
+##   # client_cert: /config/certs/client.crt
+##   # client_key: /config/certs/client.key
+## 
+##   ###########################################################################
+##   # Discovery (Standard: true)
+##   #
+##   # Ermöglicht automatisches Finden von:
+##   # - Zigbee2MQTT Geräten
+##   # - ESPHome Geräten
+##   ###########################################################################
+##   discovery: true

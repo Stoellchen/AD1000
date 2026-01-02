@@ -1,0 +1,211 @@
+################################################################################
+#   
+# Presense Simulation for Alarm System 
+#   
+#   https://www.home-assistant.io/integrations/vlc
+#   
+#   Tutorials
+#   Smart Home Junkie's English tutorial: https://youtu.be/OTQu3BMr3EU
+#   Tristan's Smartes Heim's German tutorial: https://youtu.be/5vCp3iKZb4Q
+#   HectorziN Domótica's Spanish tutorial: https://youtu.be/2N7aihhnkNg
+#   
+#   
+
+## How to use:
+#   1. Assign the label `presense` to any entity you want to include
+#      in the presence simulation (lights, media players, switches, etc.)
+#   2. The group `group.presense_simulationen_group` will be automatically
+#      populated with those entities.
+#   3. Use this group in your presence simulation automations or scripts.
+#   4. The group updates automatically on HA start and every 5 minutes.
+#   5. You can check the group members in Developer Tools > States.
+#   6. Adjust the update interval in the automation if needed.
+#   7. Enjoy enhanced security with dynamic presence simulation!
+#   Note: Ensure that the label name `presense` matches exactly.
+################################################################################
+# Der switch um die presense simulation zu aktivieren/deaktivieren
+# der Sitch wird automatisch von der integration erstellt und kann soll umbenannt werden
+# in der Automation verwendet werden um die presense simulation zu aktivieren/deaktivieren
+#   input_boolean:
+#     presense_simulation_activ:                     #  Wird in der Alarm Automation verwendet um die Presense Simulation zu aktivieren/deaktivieren
+#       name: Presense Simulation Aktivieren
+#       icon: mdi:home-automation
+#   
+
+
+template:
+  - sensor:
+      - name: "Presence Simulation Active Devices"
+        unit_of_measurement: "count"
+#        state_class: measurement
+#        attributes:
+#          description: "Number of active devices in the presence simulation group (alarm_ha_presense_simulation)"
+        state: >
+          {% if is_state('switch.presense_simulation_activ', 'on') %}
+            {{ expand('group.presense_simulationen_group')
+               | selectattr('state','eq','on')
+               | list | count }}
+          {% else %}
+            0
+          {% endif %}
+
+
+
+
+group:
+  presense_simulationen_group:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presense Simulation Group (Dynamic - label presense) (alarm_ha_presense_simulation)"
+    entities:
+      - light.dummy
+  presense_simulationen_group_near:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presense Simulation Group NEAR (Dynamic - label presense_near) (alarm_ha_presense_simulation)"
+    entities:
+      - light.dummy
+  presense_simulationen_group_far:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presense Simulation Group FAR (Dynamic - label presense_far) (alarm_ha_presense_simulation)"
+    entities:
+      - light.dummy
+  presense_simulationen_group_night:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presense Simulation Group NIGHT (Dynamic - label presense_night) (alarm_ha_presense_simulation)"
+    entities:
+      - light.kerze
+      - switch.lichterkette_wohnzimmer
+      - switch.fake_tv
+
+
+#   Bonus: „Pseudo-Attribut“ per Template-Sensor
+#   template:
+#     - sensor:
+#         - name: "Presense Simulationen Group Info"
+#           state: >
+#             {{ label_entities('presense') | count }}
+#           attributes:
+#             last_update: >
+#               {{ states('input_datetime.presense_simulationen_group_last_update') }}
+#             entities: >
+#               {{ label_entities('presense') }}
+
+
+###############################################################################
+# Presence Simulation – Dynamic Group Update
+#
+# Purpose:
+#   Dynamically builds and maintains the group
+#   `group.presense_simulationen_group` based on Home Assistant Labels.
+#
+# How it works:
+#   - Uses Home Assistant's built-in `label_entities()` helper
+#   - Collects all entities tagged with the label: `presense`
+#   - Replaces the group content atomically using `group.set`
+#
+# Why this approach:
+#   - No hardcoded entity lists
+#   - Automatically adapts to new / removed entities
+#   - No dependency on device_id or attributes
+#   - Safe, fast, and officially supported by Home Assistant
+#
+# Notes:
+#   - The label name is intentionally spelled `presense`
+#     (must match the label exactly as defined in HA)
+#   - `group.set` always overwrites the full group
+#   - `object_id` must be given WITHOUT the `group.` prefix
+#
+# Update triggers:
+#   - On Home Assistant startup
+#   - Every 5 minutes (can be adjusted)
+###############################################################################
+
+#     Build entity list dynamically from label `presense`
+#     {% set ns = namespace(list=[]) %}
+#     {% for entity in label_entities('presense') %}
+#       {% set ns.list = ns.list + [entity] %}
+#     {% endfor %}
+#     {{ ns.list }}
+
+
+
+automation:
+  - id: presence_simulation_update_group
+    alias: "Presence Simulation – Update Entity Group (alarm_ha_presense_simulation)"
+    mode: single
+
+    trigger:
+      # Update group on Home Assistant start
+      - platform: homeassistant
+        event: start
+
+      # Periodic refresh to catch label changes
+      - platform: time_pattern
+        minutes: "/5"
+
+    action:
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presense_simulationen_group enthält near und far
+          object_id: presense_simulationen_group
+
+          # Build entity list dynamically from label `presense_var` oder `presense_near`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+
+            {% for entity in label_entities('presense_near') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+
+            {% for entity in label_entities('presense_far') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {% for entity in label_entities('presense_night') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presense_simulationen_group_near
+          object_id: presense_simulationen_group_near
+
+          # Build entity list dynamically from label `presense_near`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for entity in label_entities('presense_near') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presense_simulationen_group_far
+          object_id: presense_simulationen_group_far
+
+          # Build entity list dynamically from label `presense_far`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for entity in label_entities('presense_far') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presense_simulationen_group_far
+          object_id: presense_simulationen_group_night
+
+          # Build entity list dynamically from label `presense_far`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for entity in label_entities('presense_night') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+            {{ ns.list }}
+

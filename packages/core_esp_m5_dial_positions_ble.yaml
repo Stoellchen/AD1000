@@ -1,0 +1,298 @@
+##########################################################################################
+##
+##  usto stuff for m5 positions ...
+##
+##########################################################################################
+
+##########################################################################################
+##
+##  Info to display ............. by usto
+##
+##########################################################################################
+
+##
+## this must be checked in every send to mobile .....
+##
+##  input_boolean, group and scripts are set file :   usto_set_notify_info_display_speak.yaml
+## 
+##  Initial should not be set the have the same value after a restart than before
+##
+
+##            {{ (state_attr( (state_attr (  'sensor.person_tracker_1' ,'person_1' )|string ),'device_trackers')[0] |string).replace('device_tracker','sensor')  }}_geocoded_location
+##            {{ (state_attr( (state_attr (  'sensor.person_tracker_1' ,'person_2' )|string ),'device_trackers')[0] |string).replace('device_tracker','sensor')  }}_geocoded_location
+##            {{ states_attr (sensor.person_tracker_1,'device_2_geo' ) }}
+
+
+
+automation:
+
+  #  
+  # all infos - maybe too much for m5-dial  
+  #  
+  #  {{ {
+  #        "positions": ns.positions
+  #      , "distances": ns.lines
+  #    } | tojson }}
+
+
+  - id: 'm5dial_positions_ble_step2_mqtt'
+    alias: m5dial_positions_ble_step2_mqtt
+    description: "umrechnung für m5-dial"
+    mode: queued
+    trigger:
+      - platform: mqtt
+        topic: m5dial/+/request/tracking/ble/step_2
+    variables:
+      payload: "{{ trigger.payload | from_json }}"
+      max_px: "{{ payload.positions | map(attribute='px') | max }}"
+      max_py: "{{ payload.positions | map(attribute='py') | max }}"
+      dev_name: "{{ trigger.topic.split('/')[1] }}"
+    action:
+      - variables:
+          ble_payload: >-
+            {%- set ns = namespace(positions=[], lines=[] ) -%}
+            {%- for p in payload.positions -%}
+              {%- set px = p.px -%}
+              {%- set py = p.py -%}
+              {%- set sx = (px / max_px * 200) | round(0) -%}
+              {%- set sy = (py / max_py * 200) | round(0) -%}
+              {%- set entry = {
+                "id": p.id,
+                "name": p.name,
+                "px": px,
+                "py": py,
+                "s_x": sx,
+                "s_y": sy,
+                "type": p.type
+              } -%}
+              {%- set ns.positions = ns.positions + [entry] -%}
+            {%- endfor -%}
+            {%- for a in payload.positions -%}
+              {%- for b in payload.positions -%}
+                {%- if a.id != b.id -%}
+                  {%- set dx = a.px - b.px -%}
+                  {%- set dy = a.py - b.py -%}
+                  {%- set d = ((dx * dx + dy * dy) ** 0.5) | round(1) -%}
+                  {%- set d_m = (d / 100.0) | round(1) -%}
+                  {%- set from_sx = (a.px / max_px * 200) | round(0) -%}
+                  {%- set from_sy = (a.py / max_py * 200) | round(0) -%}
+                  {%- set to_sx = (b.px / max_px * 200) | round(0) -%}
+                  {%- set to_sy = (b.py / max_py * 200) | round(0) -%}
+                  {%- set entry = {
+                    "from": a.id,
+                    "to": b.id,
+                    "d_cm": d,
+                    "d_m": d_m,                    
+                    "f_x": a.px,
+                    "f_y": a.py,
+                    "t_x": b.px,
+                    "t_y": b.py,
+                    "sf_x": from_sx,
+                    "sf_y": from_sy,
+                    "st_x": to_sx,
+                    "st_y": to_sy
+                  } -%}
+                  {%- set ns.lines = ns.lines + [entry] -%}
+                {%- endif -%}
+              {%- endfor -%}
+            {%- endfor -%}
+
+            {{ ns.positions | tojson }}
+
+
+      - service: mqtt.publish
+        data:
+          topic: >-
+            {{ "m5dial/" ~ dev_name ~ "/response/tracking/ble" }}
+          payload: >
+            { "payload" : {{ ble_payload }} }
+
+
+
+  - id: 'm5dial_positions_ble_step1_mqtt'
+    alias: m5dial_positions_ble_step1_mqtt
+    description: "Positionsbestimmung"
+    mode: queued
+    trigger:
+      - platform: mqtt
+        topic: m5dial/+/request/tracking/ble/step_1
+    variables:
+      payload: "{{ (trigger.payload | from_json)[0] }}"
+      dev_name: "{{ trigger.topic.split('/')[1] }}"
+
+    action:
+      - variables:
+          positions: >-
+            {%- set result = namespace(known=[] ) -%}
+            {%- set parsed = trigger.payload | from_json -%}
+            {# Add known positions #}
+            {%- for pos in parsed.known_positions -%}
+              {%- set result.known = result.known + [{
+                'id': pos.id,
+                'name': pos.id,
+                'px': pos.px,
+                'py': pos.py,
+                'type': 'known'
+              }] -%}
+            {%- endfor -%}
+
+
+            {# Unbekannte Scanner auswerten #}
+            {%- for scanner in parsed.scanners -%}
+              {%- set sid = scanner.device -%}
+              {%- set known_ids = result.known | map(attribute='id') | list -%}
+              {%- if sid not in known_ids -%}
+                {%- set adv_names = scanner.adverts | map(attribute='name') | list -%}
+                {%- set px_list = result.known | selectattr('id', 'in', adv_names) | map(attribute='px') | list -%}
+                {%- set py_list = result.known | selectattr('id', 'in', adv_names) | map(attribute='py') | list -%}
+                {%- if px_list | length > 0 -%}
+                  {%- set px = (px_list | sum / px_list | length) | round(0) -%}
+                  {%- set py = (py_list | sum / py_list | length) | round(0) -%}
+                  {%- set result.known = result.known + [{
+                    'id': sid,
+                    'name': sid,
+                    'px': px,
+                    'py': py,
+                    'type': 'estimated'
+                  }] -%}
+                {%- endif -%}
+              {%- endif -%}
+            {%- endfor -%}
+
+            {# Devices auswerten #}
+            {%- for scanner in parsed.devices -%}
+              {%- set sid = scanner.device -%}
+              {%- set known_ids = result.known | map(attribute='id') | list -%}
+              {%- if sid not in known_ids -%}
+                {%- set adv_names = scanner.adverts | map(attribute='name') | list -%}
+                {%- set px_list = result.known | selectattr('id', 'in', adv_names) | map(attribute='px') | list -%}
+                {%- set py_list = result.known | selectattr('id', 'in', adv_names) | map(attribute='py') | list -%}
+                {%- if px_list | length > 0 -%}
+                  {%- set px = (px_list | sum / px_list | length) | round(0) -%}
+                  {%- set py = (py_list | sum / py_list | length) | round(0) -%}
+                  {%- set result.known = result.known + [{
+                      'id': sid
+                    , 'name': sid
+                    , 'px': px
+                    , 'py': py
+                    , 'type': 'device'
+                  }] -%}
+                {%- endif -%}
+              {%- endif -%}
+            {%- endfor -%}
+
+            {{ result.known }}
+
+      - service: mqtt.publish
+        data:
+          topic: >-
+            {{ "m5dial/" ~ dev_name ~ "/request/tracking/ble/step_2" }}
+          payload: >
+            {{ { "positions": positions } | tojson }}
+
+
+
+  - id: 'm5dial_positions_ble_step0_mqtt'
+    alias: m5dial_positions_ble_step0_mqtt
+    mode: queued
+    description: "Step 0 for positions"
+    trigger: 
+      ## - platform: time_pattern
+      ##   minutes: "/20"
+      ##   m5-deial sendet ohne step_0 - dis ist nur, damit es einfach ist zu verstehen 
+      - platform: mqtt
+        topic: m5dial/+/request/tracking/ble/step_0
+      - platform: mqtt
+        topic: m5dial/+/request/tracking/ble
+    condition: []
+    action:
+      - data: {}
+        action: bermuda.dump_devices
+        response_variable: bermuda_response
+      - delay: 1
+      - variables:
+          dev_name: "{{ trigger.topic.split('/')[1] }}"
+          ble_payload: |-
+            {%- set result = namespace(scanners=[] , devices=[], known_positions=[] ) -%}
+            {%- for mac, dev in bermuda_response.items() -%}
+              {%- if dev.name is string and "BLE-" in dev.name | upper -%}
+                {%- set adverts = namespace(list=[]) -%}
+                {%- for advert_mac, advert in (dev.adverts or {}).items() -%}
+
+                  {%- set entry = {
+                    "name": advert.name if 'name' in advert else '',
+                    "rssi": advert.rssi,
+                    "tx_power": advert.tx_power,
+                    "cm": ((advert.rssi_distance_raw | float * 100) | round(0))
+                  } -%}
+
+                  {%- set adverts.list = adverts.list + [entry] -%}
+                {%- endfor -%}
+                {%- set dev_entry = {
+                  "device": dev.name,
+                  "adverts": adverts.list
+                } -%}
+                {%- set result.scanners = result.scanners + [dev_entry] -%}
+              {%- endif -%}
+            {%- endfor -%}
+
+            {%- for mac, dev in bermuda_response.items() -%}
+              {%- if dev.name is string and ("IPHONE" in (dev.name | upper)) or ("IPAD" in (dev.name | upper)) -%}
+                {%- set adverts = namespace(list=[]) -%}
+                {%- for advert_mac, advert in (dev.adverts or {}).items() -%}
+                  {%- if dev.area_last_seen is string -%}
+                    {%- set entry = {
+                        "name": advert.name if 'name' in advert else ''
+                      , "rssi": advert.rssi
+                      , "tx_power": advert.tx_power
+                      , "cm": ((advert.rssi_distance_raw | float * 100) | round(0))
+                      , "last": dev.area_last_seen
+                    } -%}
+                  {%- else -%}
+                    {%- set entry = {
+                        "name": advert.name if 'name' in advert else ''
+                      , "rssi": advert.rssi
+                      , "tx_power": advert.tx_power
+                      , "cm": ((advert.rssi_distance_raw | float * 100) | round(0))
+                    } -%}
+                  {%- endif -%}
+                   
+
+                  {%- set adverts.list = adverts.list + [entry] -%}
+                {%- endfor -%}
+                {%- set dev_entry = {
+                  "device": dev.name,
+                  "adverts": adverts.list
+                } -%}
+                {%- set result.devices = result.devices + [dev_entry] -%}
+              {%- endif -%}
+            {%- endfor -%}
+
+
+            {%- for entity in states.number if entity.entity_id.startswith('number.ble_') and '_position_x_cm' in entity.entity_id -%}
+              {%- set id_raw = entity.entity_id.split('.')[1].replace('_position_x_cm', '') -%}
+              {%- set x_ent = 'number.' ~ id_raw ~ '_position_x_cm' -%}
+              {%- set y_ent = 'number.' ~ id_raw ~ '_position_y_cm' -%}
+              {%- set x = states(x_ent) | float(0) -%}
+              {%- set y = states(y_ent) | float(0) -%}
+              {%- if x != 0 and y != 0 -%}
+                {%- set id = id_raw.split('_')[1] | upper -%}
+                {%- set entry = dict(id="BLE-" ~ id, px=(x | int), py=(y | int)) -%}
+                {%- set result.known_positions = result.known_positions + [entry] -%}
+              {%- endif -%}
+
+            {%- endfor -%}
+
+            {{ {
+              "devices": result.devices,
+              "scanners": result.scanners,
+              "known_positions": result.known_positions
+            } | tojson }}
+            
+      - service: mqtt.publish
+        data:
+          topic: >-
+            m5dial/{{dev_name}}/request/tracking/ble/step_1
+          payload: "{{ ble_payload }}"
+
+

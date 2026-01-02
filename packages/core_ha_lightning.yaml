@@ -1,0 +1,115 @@
+###############################################################################
+# core_ha_lighting.yaml
+#
+# Zentrale Lighting-Optionen für das gesamte System
+#
+# Dieses Package enthält KEINE Logik für Lampen oder Räume.
+# Es stellt ausschließlich globale Schalter / Optionen bereit,
+# die von AppDaemon / Automationen ausgewertet werden.
+#
+# Architektur:
+#   - Circadian Lighting läuft IMMER
+#   - Spezialeffekte (z. B. Blue Hour) sind OPTIONEN
+#
+# Wichtig:
+#   - Keine Zeitlogik hier
+#   - Kein Sonnenstand hier
+#   - Nur Schalter / Flags
+###############################################################################
+
+###############################################################################
+# Globaler Schalter für optionale Blue-Hour-Modulation (systemweit)
+###############################################################################
+input_boolean:
+  lighting_blue_hour:
+    name: Lighting Blue Hour
+    icon: mdi:weather-sunset
+
+  motion_eval_enabled_buero:
+    name: Motion Buero (off)
+    icon: mdi:motion-sensor
+
+  motion_eval_enabled_keller:
+    name: Motion Keller (off)
+    icon: mdi:motion-sensor
+
+  motion_eval_enabled_schlafzimmer_rechts:
+    name: Motion Schlafzimmer Rechts (off)
+    icon: mdi:motion-sensor
+
+  motion_eval_enabled_schlafzimmer_links:
+    name: Motion Schlafzimmer Links (off)
+    icon: mdi:motion-sensor
+
+  motion_eval_enabled_schlafzimmer_1:
+    name: Motion Schlafzimmer Rechts (off)
+    icon: mdi:motion-sensor
+
+  motion_eval_enabled_schlafzimmer_2:
+    name: Motion Schlafzimmer 2 (off)
+    icon: mdi:motion-sensor
+
+  motion_eval_enabled_schlafzimmer_2:
+    name: Motion Schlafzimmer 3 (off)
+    icon: mdi:motion-sensor
+
+  motion_eval_enabled_schlafzimmer_4:
+    name: Motion Schlafzimmer 4 (off)
+    icon: mdi:motion-sensor
+
+  motion_eval_enabled_esszimmer:
+    name: Motion Esszimmer (off)
+    icon: mdi:motion-sensor
+
+  motion_eval_enabled_werkstatt:
+    name: Motion Werkstatt (off)
+    icon: mdi:motion-sensor
+
+  motion_eval_enabled_wohnzimmer:
+    name: Motion Wohnzimmer (off)
+    icon: mdi:motion-sensor
+
+  manual_timer_enabled_buero:
+    name: Timer Keller (off)
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_keller:
+    name: Timer Keller (off)
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_schlafzimmer_rechts:
+    name: Timer Schlafzimmer Rechts (off)
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_schlafzimmer_links:
+    name: Timer Schlafzimmer Links (off)
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_schlafzimmer_1:
+    name: Timer Schlafzimmer Rechts (off)
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_schlafzimmer_2:
+    name: Timer Schlafzimmer 2 (off)
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_schlafzimmer_2:
+    name: Timer Schlafzimmer 3 (off)
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_schlafzimmer_4:
+    name: Timer Schlafzimmer 4 (off)
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_esszimmer:
+    name: Timer Esszimmer (off)
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_werkstatt:
+    name: Timer Werkstatt (off)
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_wohnzimmer:
+    name: Timer Wohnzimmer (off)
+    icon: mdi:timer-lock
+

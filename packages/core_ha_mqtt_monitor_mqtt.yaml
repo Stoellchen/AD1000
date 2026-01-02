@@ -1,0 +1,253 @@
+#   🔴 Kurzfassung (wichtig)
+#   
+#   👉 Die MQTT-Verbindung darf seit einiger Zeit NICHT mehr per YAML konfiguriert werden.
+#   👉 Broker, Port, User, Passwort gehören ausschließlich in die MQTT-Integration (UI).
+#   👉 Deshalb sind broker, port, username, password, discovery, protocol, keepalive in YAML absichtlich verboten.
+#   
+#   Dein Fehler ist also korrekt erkannt worden von HA.
+#   
+#   ⸻
+#   
+#   🧠 Warum das so ist (Hintergrund)
+#   
+#   Home Assistant hat MQTT auf Config Entries umgestellt:
+#   	•	❌ Früher: mqtt: in configuration.yaml
+#   	•	✅ Heute: MQTT Integration (UI)
+#   	•	YAML ist nur noch für MQTT-Entities, nicht für die Verbindung
+#   
+#   Deshalb sagt HA:
+
+###############################################################################
+# MQTT – Zentrale Konfiguration
+#
+# Dieses Package verbindet Home Assistant mit einem externen MQTT-Broker
+# (z. B. EMQX oder Mosquitto).
+#
+# Architektur:
+#   Home Assistant  →  MQTT Broker (EMQX)
+#                    →  Zigbee2MQTT
+#                    →  ESPHome
+#                    →  Skripte / Heartbeats
+#
+# Empfehlung:
+# - Für Produktivbetrieb immer Benutzer + Passwort verwenden
+# - Secrets in secrets.yaml auslagern
+###############################################################################
+
+mqtt:
+  sensor:
+    # Anzahl verbundener Clients
+    - name: "EMQX Clients Connected"
+      state_topic: "$SYS/brokers/+/stats/connections/count"
+      icon: mdi:lan-connect
+    # Anzahl aktiver Sessions
+    - name: "EMQX Sessions"
+      unique_id: emqx_sessions
+      state_topic: "$SYS/brokers/+/stats/sessions/count"
+      icon: mdi:account-network
+    # Eingehende Nachrichten (total)
+    - name: "EMQX Msg In"
+      unique_id: emqx_msg_in
+      state_topic: "$SYS/brokers/+/metrics/messages/received"
+      icon: mdi:arrow-down-bold
+    # Ausgehende Nachrichten (total)
+    - name: "EMQX Msg Out"
+      unique_id: emqx_msg_out
+      state_topic: "$SYS/brokers/+/metrics/messages/sent"
+      icon: mdi:arrow-up-bold
+    # test Echo wird über eine automation getriggert die eine MQTT Message an EMQX sendet und dieser verteilt sie dann wieder
+    - name: "EMQX MQTT Test Echo"
+      unique_id: emqx_mqtt_test_echo
+      state_topic: "ha/test/echo"
+
+
+  binary_sensor:
+    - name: "EMQX Alive"
+      unique_id: emqx_alive
+      state_topic: "$SYS/brokers/+/stats/uptime"
+      payload_on: ""
+      payload_off: ""
+      device_class: connectivity
+      value_template: >
+        {{ value | int > 0 }}
+      
+###############################################################################
+# EMQX – Netzwerk / Reachability Check
+###############################################################################
+binary_sensor:
+  - platform: ping
+    name: "EMQX Reachable"
+    host: emqx001.main.arpa
+    count: 2
+    scan_interval: 30
+
+
+
+
+
+###############################################################################
+# MQTT Heartbeat Monitoring (analog Influx)
+#
+# Zweck:
+#   Überwacht die Funktion der MQTT-Verbindung selbst:
+#     Home Assistant → MQTT Broker → Home Assistant
+#
+# Liefert:
+#   - sensor.mqtt_heartbeat        (technischer Timestamp)
+#   - binary_sensor.mqtt_alive     (Status für Dashboard)
+#
+# Architektur:
+#   HA Automation  → mqtt.publish
+#                 → Broker
+#                 → mqtt.sensor
+#                 → input_datetime
+#                 → binary_sensor
+###############################################################################
+
+###############################################################################
+# 1) MQTT Sensor – empfängt den Heartbeat
+###############################################################################
+mqtt:
+  sensor:
+    - name: "EMQX MQTT Heartbeat"
+      unique_id: emqx_mqtt_heartbeat
+      state_topic: "ha/heartbeat/emqx/mqtt"
+      icon: mdi:heart-pulse
+
+
+###############################################################################
+# 2) Input-Datetime – merkt sich den letzten Empfang
+###############################################################################
+input_datetime:
+  emqx_mqtt_heartbeat_last_seen:
+    name: EMQX MQTT Heartbeat Last Seen
+    has_date: true
+    has_time: true
+
+
+
+
+###############################################################################
+# 3) Automation – merkt sich den letzten MQTT-Empfang
+###############################################################################
+automation:
+  - id: emqx_mqtt_heartbeat_received
+    alias: "EMQX MQTT Heartbeat Received (core_ha_mqtt_monitor_mqtt)"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.emqx_mqtt_heartbeat
+    action:
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.emqx_mqtt_heartbeat_last_seen
+        data:
+          timestamp: "{{ now().timestamp() }}"
+
+
+###############################################################################
+# 4) Automation – sendet den Heartbeat regelmäßig
+###############################################################################
+  - id: emqx_mqtt_heartbeat_publish
+    alias: "EMQX MQTT Heartbeat Publish (core_ha_mqtt_monitor_mqtt)"
+    mode: single
+    trigger:
+      - platform: time_pattern
+        seconds: "/30"
+    action:
+      - service: mqtt.publish
+        data:
+          topic: "ha/heartbeat/emqx/mqtt"
+          payload: "{{ now().timestamp() | int }}"
+          retain: true
+
+
+###############################################################################
+# MQTT Roundtrip – basierend auf Publish vs. Receive Automation
+#
+# Berechnung:
+#   (Receive.last_triggered - Publish.last_triggered) in Millisekunden
+###############################################################################
+template:
+  - trigger:
+      # Neu berechnen, sobald ein Heartbeat empfangen wurde
+      - platform: state
+        entity_id: automation.emqx_mqtt_heartbeat_received
+
+    sensor:
+      - name: "EMQX MQTT Roundtrip (ms)  (core_ha_mqtt_monitor_mqtt)"
+        unique_id: emqx_mqtt_roundtrip_ms
+        unit_of_measurement: "ms"
+        icon: mdi:timer-outline
+        state: >
+          {% set sent = state_attr('automation.emqx_mqtt_heartbeat_publish', 'last_triggered') %}
+          {% set recv = state_attr('automation.emqx_mqtt_heartbeat_received', 'last_triggered') %}
+
+          {% if sent and recv %}
+            {{ ((as_timestamp(recv) - as_timestamp(sent)) * 1000) | round(1) }}
+          {% else %}
+            unknown
+          {% endif %}
+
+###############################################################################
+# MQTT Alive – binärer Status
+#
+# ON  → gültiger Roundtrip vorhanden
+# OFF → kein MQTT-Empfang
+###############################################################################
+
+  - trigger:
+      - platform: state
+        entity_id: sensor.emqx_mqtt_roundtrip_ms
+      - platform: time_pattern
+        seconds: "/10"
+    binary_sensor:
+      - name: "EMQX MQTT Alive (core_ha_mqtt_monitor_mqtt)"
+        unique_id: emqx_mqtt_alive
+        device_class: connectivity
+        state: >
+          {{ states('sensor.emqx_mqtt_roundtrip_ms') not in ['unknown', 'unavailable'] }}
+
+
+###############################################################################
+# MQTT Status Ampel (logischer Zustand)
+#
+# Schwellen:
+#   < 500 ms     → green
+#   500–2000 ms  → yellow
+#   > 2000 ms    → red
+#   kein Wert    → offline
+###############################################################################
+  - trigger:
+      - platform: state
+        entity_id: sensor.emqx_mqtt_roundtrip_ms
+
+    sensor:
+      - name: "EMQX MQTT Status  (core_ha_mqtt_monitor_mqtt)"
+        unique_id: emqx_mqtt_status
+        icon: mdi:traffic-light
+        state: >
+          {% set v = states('sensor.emqx_mqtt_roundtrip_ms') | float(-1) %}
+          {% if v < 0 %}
+            offline
+          {% elif v < 35 %}
+            green
+          {% elif v < 65 %}
+            yellow
+          {% else %}
+            red
+          {% endif %}
+        attributes:
+          color: >
+            {% if states('sensor.emqx_mqtt_status') == 'green' %}green
+            {% elif states('sensor.emqx_mqtt_status') == 'yellow' %}orange
+            {% elif states('sensor.emqx_mqtt_status') == 'red' %}red
+            {% else %}grey
+            {% endif %}
+          description: >
+            {% set v = states('sensor.emqx_mqtt_roundtrip_ms') %}
+            {% if v not in ['unknown','unavailable'] %}
+              {{ v }} ms Roundtrip
+            {% else %}
+              MQTT offline
+            {% endif %}

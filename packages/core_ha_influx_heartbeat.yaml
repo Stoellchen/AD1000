@@ -1,0 +1,207 @@
+###
+###
+### core_ha_influx_heartbeat.yaml
+###
+### DATUM     wer     was 
+### 18.12.25  usto    neu erstellt
+###
+###
+
+###############################################################################
+# RAW-BUCKET
+#
+# Zweck:
+# - Ungefilterte Rohdaten aus Home Assistant
+# - Single Source of Truth
+# - Basis für Telegraf-Routing (Meta / Core / Energy)
+# - Debugging & Backfill
+#
+# Eigenschaften:
+# - Hohes Datenvolumen
+# - Kurze Retention (z. B. 14–30 Tage)
+# - KEINE Filter, KEINE Trennung
+#
+# ## Nachführen wenn telegraf ausfällt !!!
+# from(bucket: "HomeAssistant_raw")
+#   |> range(start: -3d)
+#   |> filter(fn: (r) => r._measurement == "state")
+#   |> to(
+#       bucket: "HomeAssistant_core",
+#       org: "zwooky",
+#       token: "WRITE_CORE_TOKEN"
+#   )
+#
+#
+###############################################################################
+influxdb:
+  api_version: 2
+  host: vminfluxdb001.main.arpa
+  port: 8086
+  ssl: false            # <<< WICHTIG
+  verify_ssl: false     # <<< WICHTIG
+  organization: zwooky
+  bucket: HomeAssistant_raw
+  token: !secret influxdb_token_HomeAssistant_DBs
+  # Moderate Retries: HA darf nicht blockieren
+  max_retries: 3
+  # Standard-Measurement für HA-States
+  default_measurement: state
+  include:
+    entity_globs:
+      # ─────────── System / Monitoring ───────────
+      - sensor.ha_heartbeat
+      - sensor.*_heartbeat
+      - sensor.system_*
+      - sensor.health_*
+      # ─────────── Energie ───────────
+      - sensor.*_power
+      - sensor.*_energy
+      - sensor.*_consumption
+      - sensor.*_leistung
+      - sensor.*_spannung
+      - sensor.*_stromstarke    # default vom sensor
+      - sensor.*_stromstaerke   # in case of
+      - sensor.*_energie_gesamt
+      - sensor.*_energie*       # in case of
+      # ─────────── Temperaturen ───────────
+      # - sensor.*_temperature  # DE und EN abgefaungen mit der unteren zeile
+      - sensor.*_temperatur*
+      - sensor.*_temp
+      # ─────────── Luftqualitaet etc netatmo ... ───────────
+      - sensor.netatmo*
+      # ─────────── Auto Rafale ... ───────────
+      - device_tracker.rafale_standort
+      - sensor.rafale*
+      # ─────────── Wetter / Umwelt ───────────
+      - sensor.cloud_coverage*
+      - sensor.uv*
+      - sensor.illumination*
+      - sensor.sun*
+      - sun.sun
+      # ─────────── one circadian location info to visiualize curves ───────────
+      - sensor.circadian_location
+      # ─────────── Anwesenheit ───────────
+      - person.*
+
+          
+###############################################################################
+# Influx Heartbeat schreiben für Influxcheck
+# wird über einen Alert in der DB geprüft und an HA zurückgesendet, wenn es nicht kommt
+###############################################################################
+template:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    sensor:
+      - name: "HA Heartbeat → Influx"
+        unique_id: ha_heartbeat
+        state: "{{ now().timestamp() | int }}"
+        icon: mdi:heart-pulse
+        attributes:
+          last_seen_human: >
+            {{ states('sensor.ha_heartbeat')
+               | as_timestamp
+               | timestamp_custom('%D.%M.%Y %H:%M', true) }}
+#      - name: "Influx Last Seen (min)"
+#        unit_of_measurement: "min"
+#        state: >
+#          {{ ((now().timestamp() -
+#              as_timestamp(states('input_datetime.influx_heartbeat_last_seen'))) / 60) | round(1) }}
+      #########################################################################
+      # Influx Last Seen (min) inkl. Ampel
+      #########################################################################
+      - name: "Influx Last Seen (min)"
+        unique_id: influx_last_seen_min
+        unit_of_measurement: "min"
+        icon: mdi:database-check
+        state: >
+          {% set ts = as_timestamp(states('input_datetime.influx_heartbeat_last_seen')) %}
+          {% if ts is not none %}
+            {{ ((now().timestamp() - ts) / 60) | round(1) }}
+          {% else %}
+            unknown
+          {% endif %}
+        attributes:
+          status: >
+            {% set v = states('sensor.influx_last_seen_min') | float(-1) %}
+            {% if v < 0 %}
+              offline
+            {% elif v < 1 %}
+              green
+            {% elif v < 3 %}
+              orange
+            {% else %}
+              red
+            {% endif %}
+
+          color: >
+            {% set v = states('sensor.influx_last_seen_min') | float(-1) %}
+            {% if v < 0 %}grey
+            {% elif v < 1 %}green
+            {% elif v < 3 %}orange
+            {% else %}red
+            {% endif %}
+
+          description: >
+            {% set v = states('sensor.influx_last_seen_min') %}
+            {% if v not in ['unknown','unavailable'] %}
+              Last seen {{ v }} min ago
+            {% else %}
+              Influx offline
+            {% endif %}
+
+
+  - binary_sensor:
+      - name: "Influx Alive"
+        state: >
+          {% set ts = as_timestamp(states('input_datetime.influx_heartbeat_last_seen')) %}
+          {{ ts is not none and (now().timestamp() - ts) < 180 }}
+
+input_datetime:
+  influx_heartbeat_last_seen:
+    name: Influx HearBeat Last Seen
+    has_date: true
+    has_time: true
+
+automation:
+  - id: "Influx_RAW_Alert_Mail"
+    alias: "Influx RAW Alert Mail (webhook) (core_ha_influx_heartbeat)"
+    mode: single
+    trigger:
+      - platform: webhook
+        webhook_id: influx_alert
+    action:
+      - service: notify.notify
+        data:
+          title: "🚨 Influx Alert"
+          message: >
+            {{ trigger.body }}
+
+  - id: "Influx_Alive"
+    alias: "Influx Alive (webhook) (core_ha_influx_heartbeat)"
+    mode: single
+    trigger:
+      - platform: webhook
+        webhook_id: influx_alive
+    action:
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.influx_heartbeat_last_seen
+        data:
+          timestamp: "{{ now().timestamp() }}"
+
+
+  - id: "Influx_down_alert"
+    alias: "Influx down alert (core_ha_influx_heartbeat)"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.influx_alive
+        to: "off"
+        for: "00:05:00"
+    action:
+      - service: notify.notify
+        data:
+          title: "🚨 InfluxDB DOWN"
+          message: "InfluxDB hat seit >3 Minuten kein Lebenszeichen gesendet"
+
+

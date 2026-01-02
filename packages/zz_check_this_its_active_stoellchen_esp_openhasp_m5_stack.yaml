@@ -1,0 +1,148 @@
+##########################################################################################
+##
+##  usto stuff for 3-plug timer with variables ...
+##
+##########################################################################################
+
+
+#############  number 3 - 6 ##############################################################################
+automation:
+- id: openhasp-googletv-detect-mediaplayer-coverart
+  alias: openhasp-googletv-detect-mediaplayer-coverart
+  trigger:
+    - platform: state
+      entity_id: media_player.googletv
+  condition:
+    - condition: template
+      value_template: >
+        {{ trigger.from_state.attributes.entity_picture != trigger.to_state.attributes.entity_picture 
+        or 1==1
+        }}
+  action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ state_attr('media_player.googletv','entity_picture') != None }}"
+      sequence:
+      - service: openhasp.push_image
+        target:
+          entity_id: openhasp.plate_googletv
+        data:
+          image: >-
+            {{state_attr ("media_player.googletv" , "entity_picture")  }}
+          obj: p6b16
+          width: 200
+          height: 200
+      - service: openhasp.command
+        target:
+          entity_id: openhasp.plate_googletv
+        data:
+          keyword: p6b15.hidden
+          parameters: '0'
+    - conditions:
+      - condition: template
+        value_template: "{{ state_attr('media_player.googletv','entity_picture') == None }}"
+      sequence:
+      - service: openhasp.command
+        target:
+          entity_id: openhasp.plate_googletv
+        data:
+          keyword: p6b15.hidden
+          parameters: '1'
+
+
+- id: openhasp_antiburn_start_at_night
+  alias: openHASP anti-burn-in start at night
+  initial_state: 'on'
+  trigger:
+    - platform: time
+      at: '00:20:00'
+    - platform: time
+      at: '01:20:00'
+    - platform: time
+      at: '02:20:00'
+    - platform: time
+      at: '03:20:00'
+    - platform: time
+      at: '04:20:00'
+    - platform: time
+      at: '05:20:00'
+  action:
+    - service: mqtt.publish
+      data:
+        topic: hasp/plates/command/antiburn
+        payload: '1'
+
+
+- id: openhasp-night
+  alias: "openHASP Night mode"
+  trigger:
+    - platform: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      below: -1
+  conditions:
+    - condition: template
+      value_template: "{{ 1== 1 }}"
+#      value_template: "{{ (as_timestamp(now()) - as_timestamp(states('sensor.ha_uptime_moment'))) / 60 > 2 }}"
+  action:
+    - service: mqtt.publish
+      data:
+        topic: hasp/plates/config/gui
+        payload: '{"idle2":120}'
+
+- id: openhasp-day
+  alias: "openHASP Day mode"
+  trigger:
+    - platform: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      above: 1
+  conditions:
+    - condition: template
+      value_template: "{{ 1== 1 }}"
+#      value_template: "{{ (as_timestamp(now()) - as_timestamp(states('sensor.ha_uptime_moment'))) / 60 > 2 }}"
+  action:
+    - service: mqtt.publish
+      data:
+        topic: hasp/plates/config/gui
+        payload: '{"idle2":10}'
+
+
+- id: openhasp-plate_myroom-day
+  alias: "openHASP Night mode based on My Room entities"
+  trigger:
+    - platform: state
+      entity_id: light.plate_myroom_light_12
+    - platform: state
+      entity_id: light.plate_myroom_light_14
+    - platform: state
+      entity_id: cover.myroom_1
+    - platform: state
+      entity_id: cover.myroom_2
+    - platform: state
+      entity_id: openhasp.plate_googletv
+      from: 'unavailable'
+  mode: restart
+  condition:
+    condition: and
+    conditions:
+    - condition: template
+      value_template: "{{ (as_timestamp(now()) - as_timestamp(states('sensor.ha_uptime_moment'))) / 60 > 2 }}"
+    - condition: template
+      value_template: >
+        {{ 
+        state_attr("cover.myroom_1", "current_position") | float(default=0) > 25 or
+        state_attr("cover.myroom_2", "current_position") | float(default=0) > 25 or
+        states("light.plate_myroom_light_12") == "on" or 
+        states("light.plate_myroom_light_14") == "on"
+        }}
+  action:
+    - service: openhasp.config
+      target:
+        entity_id: openhasp.plate_googletv
+      data:
+        submodule: gui
+        parameters: '{"idle2":0}'
+
+

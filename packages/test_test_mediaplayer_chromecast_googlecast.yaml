@@ -1,0 +1,254 @@
+##########################################################################################
+##
+##  Info to display ............. by usto
+##
+##########################################################################################
+
+script:
+# Play a video file from the local network:
+
+  test_mediaplayer_chromecast_play_video_v1:
+    alias: "test_mediaplayer_chromecast_play_video_v1"
+    sequence:
+    - alias: "play media"
+      service: media_player.play_media
+      target: 
+        entity_id: "media_player.info_3"
+      data:
+        media_content_type: "video"
+        media_content_id: "http://ad1000.main.arpa:8123/local/mp3/Die_Kuh_Elsa.mp4"
+
+  test_mediaplayer_chromecast_play_video_v2:
+    alias: "test_mediaplayer_chromecast_play_video_v2"
+    sequence:
+    - alias: "play media"
+      service: media_player.play_media
+      target: 
+        entity_id: "media_player.info_3"
+      data:
+        media_content_type: "video"
+        media_content_id: "http://ad1000.main.arpa:8123/local/mp3/Die_Kuh_Elsa.mp4"
+        extra:
+          metadata:
+            metadataType: 1
+            title: "Die Kuh Elsa"
+            subtitle: "Didi Hallervorden - eines meiner Lieblinge"
+            images:
+              - url: "http://ad1000.main.arpa:8123/local/mp3/Die_Kuh_Elsa.jpg"
+
+
+  test_mediaplayer_chromecast_play_video_from_plex_v3:
+    alias: "test_mediaplayer_chromecast_play_video_from_plex_v3"
+    sequence:
+    - alias: "play media"
+      service: media_player.play_media
+      target: 
+        entity_id: "media_player.info_3"
+      data:
+        media_content_type: movie
+        media_content_id: 'plex://{"library_name": "Filme pmve011", "title": "Jagd auf Roter Oktober"}'
+
+
+
+  test_mediaplayer_chromecast_play_radiostation_v4:
+    alias: "test_mediaplayer_chromecast_play_radiostation_v4"
+    sequence:
+    - alias: "play media"
+      service: media_player.play_media
+      target: 
+        entity_id: "media_player.info_3"
+      data:
+        media_content_type: "audio/mp3"
+        media_content_id: "http://stream.tilos.hu:8000/tilos"
+        extra:
+          metadata:
+            metadataType: 3
+            title: "Radio TILOS"
+            artist: "LIVE"
+            images:
+              - url: "http://ad1000.main.arpa:8123/local/mp3/Die_Kuh_Elsa.jpg"
+
+
+
+
+
+
+
+  test_dinner_ready:
+    alias: "TTS with picture when dinner is ready"
+    icon: mdi:food
+    sequence:
+      - alias: "Call the script with the additional data as script variables"
+        service: script.turn_on
+        target:
+          entity_id: script.google_home_tts_screen
+        data:
+          variables:
+            dummy_player: media_player.vlc_telnet 
+            target: media_player.info_3 
+            large_text: Mitagessen!
+            small_text: Mittagessen ist bereit. Bitte in Esszimmer kommen.
+            picture_url: "http://ad1000.main.arpa:8123/local/mp3/Die_Kuh_Elsa.jpg"
+      - alias: "Send the TTS service call to the dummy player"
+        # service: tts.google_cloud_say
+        service: tts.cloud_say
+        target: 
+          entity_id: media_player.vlc_telnet
+        data:
+          message: Mittagessen ist bereit. Bitte in Esszimmer kommen.
+
+  google_home_tts_screen:
+    alias: "Google Home - Send TTS with picture and information"
+    description: Script to send a TTS with picture and text to a player with screen
+    icon: mdi:cast-audio
+    mode: parallel
+    max: 20
+    sequence:
+      - alias: "Version number"
+        variables:
+          version: 2.0.1
+      - wait_for_trigger:
+          - platform: event
+            event_type: call_service
+            event_data:
+              domain: media_player
+              service: play_media
+              service_data:
+                media_content_type: music
+                entity_id: "{{ [ dummy_player ] }}"
+
+      - service: media_player.volume_set
+        data:
+          entity_id: "{{ target }}"
+          volume_level: 0.3
+
+      - alias: "Send TTS message with picture"
+        service: media_player.play_media
+        target: 
+          entity_id: "{{ target }}"
+        data:
+          media_content_type: "music"
+          media_content_id: "{{ wait.trigger.event.data.service_data.media_content_id }}"
+          extra:
+            metadata:
+              metadataType: 3
+              title: "{{ large_text }}"
+              artist: "{{ small_text }}"
+              images:
+                - url: "{{ picture_url }}"
+
+      - alias: "Send TTS message with picture"
+        service: media_player.play_media
+        target: 
+          entity_id: "{{ target }}"
+        data:
+          media_content_type: "music"
+          media_content_id: "{{ wait.trigger.event.data.service_data.media_content_id }}"
+          extra:
+            metadata:
+              metadataType: 3
+              title: "{{ large_text }}"
+              artist: "{{ small_text }}"
+              images:
+                - url: "{{ picture_url }}"
+
+
+
+
+  google_home_tts_screen_bad1:
+    alias: "Google Home - Send TTS with picture and information"
+    description: Script to send a TTS with picture and text to a player with screen
+    icon: mdi:cast-audio
+    mode: parallel
+    max: 20
+    sequence:
+      - alias: "Version number"
+        variables:
+          version: 2.0.1
+      - wait_for_trigger:
+          - platform: event
+            event_type: call_service
+            event_data:
+              domain: media_player
+              service: play_media
+              service_data:
+                media_content_type: music
+                entity_id: "{{ [ dummy_player ] }}"
+      - alias: "Send TTS message with picture"
+        service: media_player.play_media
+        target: 
+          entity_id: "{{ target }}"
+        data:
+          media_content_id: "{{ wait.trigger.event.data.service_data.media_content_id }}"
+          media_content_type: "music"
+          extra:
+            metadata:
+              metadataType: 3
+              title: "{{ large_text }}"
+              artist: "{{ small_text }}"
+              images:
+                - url: "{{ picture_url }}"
+
+
+
+
+
+
+
+
+#
+#      - service: script.turn_on
+#        entity_id: script.notify_tts_speak
+#        data:
+#          variables:
+#            volume: 0.5
+#            speakers: group.tts_notify_speaker_medium
+#            language: de-CH
+#            message:  >
+
+  notify_tts_speak_badone:
+    alias: notify TTS speak - queued bad one!!!!  
+    mode: queued
+    sequence:
+      - variables:
+          speaker: "{{ speakers }}"
+          volume: "{{ volume }}"
+          room: "{{ area_name(speaker) }}"
+          room_mode: >
+            {% if room %}
+              {{ states('input_select.room_mode_' ~ room | lower | replace(' ', '_')) }}
+            {% else %}
+              normal
+            {% endif %}
+          volume_level: >
+            {% if room_mode == 'quiet' %}
+              {{ volume * 0.5 }}
+            {% else %}
+              {{ volume }}
+            {% endif %}
+
+      - if:
+          - condition: template
+            value_template: "{{ room_mode != 'silent' }}"
+        then:
+          - service: media_player.volume_set
+            data:
+              entity_id: "{{ speaker }}"
+              volume_level: "{{ volume_level }}"
+          - service: media_player.turn_on
+            data_template:
+              entity_id: '{{ speakers }}'
+          - delay: '1'
+          - service: media_player.volume_set
+            data_template:
+              entity_id: '{{ speakers }}'
+              volume_level: '{{ volume_level }}'
+          - service: tts.speak
+            metadata: {}
+            data:
+              cache: true
+              message: "{{ message }}"
+              media_player_entity_id: "{{ speakers }}"
+              language: "{{ language }}"
+            target:
+              entity_id: tts.home_assistant_cloud

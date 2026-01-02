@@ -1,0 +1,94 @@
+##########################################################################################
+##
+##  usto alarm_ha_presense_group  ...
+##
+##########################################################################################
+
+
+## Binary Sensor for is anybody at home - guest solution
+## https://community.home-assistant.io/t/device-tracker-binary-sensor/54043/10
+##  
+##  binary_sensor:
+##    - platform: template
+##      sensors:
+##        someone_home:
+##          value_template: >
+##            {{ is_state('group.all_devices', 'home') or
+##               is_state('input_boolean.guest', 'on') }}
+##          device_class: presence
+##  
+
+
+
+
+group:
+  family:
+    name: Family
+    icon: mdi:home-heart
+    entities:
+    - group.thomas
+    - group.manu
+
+  thomas:
+    name: Thomas
+    entities:
+      - device_tracker.5t0ll                      #iPhone 17 Pro Max
+      - person.thomas
+    
+  manu:
+    name: Manu
+    entities:
+      - device_tracker.manuelas_iphone             #iPhone 11 Plus Max  
+      - person.manu
+
+      
+
+
+##         or is_state('device_tracker.clodines_phone', 'home')  this hangs at the moment
+##      changed on 30.4.24 from device_tracker to person tracker
+##
+##  Attention: This generates entities like:   binary_sensor.template_occupied_home_1
+##
+template:
+  - binary_sensor:
+  ## if anybody Manu or Thomas is at home, than the home is occupied
+    # Buchserstrasse 5
+    - unique_id: occupied_home_1
+      state: >
+        {{ 
+           is_state('person.thomas', 'home') 
+        or is_state('person.manu', 'home') 
+        or is_state('person.thomas', 'Thomas') 
+        or is_state('person.manu', 'Thomas') 
+        }}
+      attributes:
+        friendly_name: "Buchserstrasse 5"
+
+    #  oberhausensteig 10 wettswil am albis
+    - unique_id: occupied_home_2
+      state: >
+        {{ 
+           is_state('person.thomas', 'Manus Home') 
+        or is_state('person.manu', 'Manus Home') 
+        }}
+      attributes:
+        friendly_name: "Oberhausensteig 10"
+
+    # Hinterbergstrasse 56
+    - unique_id: occupied_home_3
+      state: >
+        {{ 
+           is_state('person.thomas', 'Hinterberg') 
+        or is_state('person.manu', 'Hinterberg') 
+        }}
+      attributes:
+        friendly_name: "Hinterbergstrasse 56"
+
+
+
+#        attribute_templates:
+#          zone: home
+#          persons: manu,thomas
+#          occupied: away
+
+

@@ -1,0 +1,76 @@
+###
+###
+### core_ha_influx_heartbeat.yaml
+###
+### DATUM     wer     was 
+### 18.12.25  usto    neu erstellt
+###
+###
+
+###############################################################################
+# RAW-BUCKET
+#
+# Zweck:
+# - Ungefilterte Rohdaten aus Home Assistant
+# - Single Source of Truth
+# - Basis für Telegraf-Routing (Meta / Core / Energy)
+# - Debugging & Backfill
+#
+# Eigenschaften:
+# - Hohes Datenvolumen
+# - Kurze Retention (z. B. 14–30 Tage)
+# - KEINE Filter, KEINE Trennung
+#
+# ## Nachführen wenn telegraf ausfällt !!!
+# from(bucket: "HomeAssistant_raw")
+#   |> range(start: -3d)
+#   |> filter(fn: (r) => r._measurement == "state")
+#   |> to(
+#       bucket: "HomeAssistant_core",
+#       org: "zwooky",
+#       token: "WRITE_CORE_TOKEN"
+#   )
+#
+#
+###############################################################################
+proxmoxve:
+  - host: 10.231.10.11
+    username: root
+    password: srinagar
+    verify_ssl: false
+    realm: pve
+    nodes:
+      - node: pmve001
+        vms:
+          - VM_ID_1
+          - VM_ID_2
+  - host: 10.231.10.12
+    username: root
+    password: srinagar
+    verify_ssl: false
+    realm: pve
+    nodes:
+      - node: pmve002
+        vms:
+          - VM_ID_1
+          - VM_ID_2
+  - host: 10.231.10.13
+    username: root
+    password: srinagar
+    verify_ssl: false
+    realm: pve
+    nodes:
+      - node: pmve003
+        vms:
+          - VM_ID_1
+          - VM_ID_2
+  - host: 10.231.10.21
+    username: root
+    password: srinagar
+    verify_ssl: false
+    realm: pve
+    nodes:
+      - node: pmve011
+        vms:
+          - VM_ID_1
+          - VM_ID_2
