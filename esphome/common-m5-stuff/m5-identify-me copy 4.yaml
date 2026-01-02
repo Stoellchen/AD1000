@@ -1,0 +1,230 @@
+# ------------------------------------------------------
+# 💡 IDENTIFY MODULE – Flash RGB LED in custom color
+#
+# Usage:
+# - select "Identify color" → pick one of 20 colors
+# - toggle "Identify active" → start blinking every 5 seconds
+# - to disable: choose "off" or disable the switch
+# - Include in your device YAML using:
+#       # Package to find devices if not labeled
+#       packages:
+#         identify: !include ./m5-identify-me.yaml
+#         identify: !include common-m5-stuff/m5-identify-me.yaml
+#         identify: !include common/identify_common.yaml
+# ------------------------------------------------------
+
+# ✅ M5 IDENTIFY MODULE MIT GLOBAL-UNTERSTÜTZUNG UND AUSGELAGERTEM BLINKSCRIPT
+
+# ------------------------
+# 🧠 Voraussetzung:
+# ▸ Globale Steuerung über input_boolean.identify_all_devices in HA
+# ▸ Jedes Gerät prüft bei on_boot diesen globalen Zustand
+# ▸ Script "led_blink_script" ist ausgelagert, damit er separat angesteuert werden kann
+# ------------------------
+
+esphome:
+  on_boot:
+    priority: 500
+    then:
+      - script.execute: check_identify_state
+
+api:
+  services:
+    - service: check_identify_state
+      then:
+        - script.execute: check_identify_state
+
+        
+# 💡 GLOBALE IDENTIFY-AKTIVIERUNG BEI START ODER ÜBER HA
+script:
+  - id: check_identify_state
+    then:
+      - homeassistant.service:
+          service: homeassistant.update_entity
+          data:
+            entity_id: input_boolean.identify_all_devices
+      - delay: 200ms
+      - lambda: |-
+          if (id(identify_enable).state || id(identify_color).state == "off") return;
+          if (id(identify_global_switch).state) {
+            id(led_blink_script).execute(1, 300, 300, id(identify_r), id(identify_g), id(identify_b) );
+          }
+
+
+#
+#  - id: led_blink_script
+#    parameters:
+#      repeat: int
+#      on_ms: int
+#      off_ms: int
+#      red: int
+#      green: int
+#      blue: int
+#    mode: queued
+#    then:
+#      - lambda: |-
+#          for (int i = 0; i < repeat; i++) {
+#            id(led)->set_rgb(red / 255.0, green / 255.0, blue / 255.0);
+#            id(led)->turn_on();
+#            delay(on_ms);
+#            id(led)->turn_off();
+#            delay(off_ms);
+#          }
+
+switch:
+  - platform: template
+    name: "Identify active"
+    id: identify_enable
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:eye
+
+select:
+  - platform: template
+    name: "Identify color"
+    id: identify_color
+    optimistic: true
+    restore_value: true
+    initial_option: "Violet"
+    options: ["off", "Red", "Orange", "Amber", "Yellow", "Lime", "Green", "Mint", "Cyan", "Sky", "Blue", "Indigo", "Violet", "Purple", "Magenta", "Pink", "Rose", "Brown", "Grey", "White"]
+    icon: mdi:palette
+
+  - platform: template
+    name: "Identify duration"
+    id: identify_duration
+    optimistic: true
+    restore_value: true
+    initial_option: "Infinite"
+    options: ["Infinite", "1 Minute", "5 Minutes", "10 Minutes", "30 Minutes", "60 Minutes", "6 Hours", "12 Hours", "1 Day", "7 Days", "14 Days", "1 Month"]
+    icon: mdi:timer-outline
+
+globals:
+  - id: identify_start_time
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  - id: night_mode
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+  - id: identify_r
+    type: int
+    restore_value: true
+    initial_value: '255'
+  - id: identify_g
+    type: int
+    restore_value: true
+    initial_value: '0'
+  - id: identify_b
+    type: int
+    restore_value: true
+    initial_value: '0'
+
+interval:
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(identify_enable).state && id(identify_color).state != "off";'
+          then:
+            - lambda: |-
+                unsigned long now = millis();
+                if (id(identify_start_time) == 0) {
+                  id(identify_start_time) = now;
+                }
+
+                std::string duration = id(identify_duration).state;
+                unsigned long timeout = 0;
+
+                if (duration == "Infinite") timeout = 0;
+                else if (duration == "1 Minute") timeout = 60000;
+                else if (duration == "5 Minutes") timeout = 5 * 60000;
+                else if (duration == "10 Minutes") timeout = 10 * 60000;
+                else if (duration == "30 Minutes") timeout = 30 * 60000;
+                else if (duration == "60 Minutes") timeout = 60 * 60000;
+                else if (duration == "6 Hours") timeout = 6UL * 60 * 60000;
+                else if (duration == "12 Hours") timeout = 12UL * 60 * 60000;
+                else if (duration == "1 Day") timeout = 24UL * 60 * 60000;
+                else if (duration == "7 Days") timeout = 7UL * 24 * 60 * 60000;
+                else if (duration == "14 Days") timeout = 14UL * 24 * 60 * 60000;
+                else if (duration == "1 Month") timeout = 30UL * 24 * 60 * 60000;
+
+                if (timeout > 0 && (now - id(identify_start_time)) > timeout) {
+                  id(identify_enable).turn_off();
+                  id(identify_start_time) = 0;
+                  return;
+                }
+
+                std::map<std::string, std::tuple<int,int,int>> colors = {
+                    {"Red", {255,0,0}}, {"Orange", {255,165,0}}, {"Amber", {255,191,0}},
+                    {"Yellow", {255,255,0}}, {"Lime", {191,255,0}}, {"Green", {0,255,0}},
+                    {"Mint", {0,255,191}}, {"Cyan", {0,255,255}}, {"Sky", {135,206,235}},
+                    {"Blue", {0,0,255}}, {"Indigo", {75,0,130}}, {"Violet", {148,0,211}},
+                    {"Purple", {128,0,128}}, {"Magenta", {255,0,255}}, {"Pink", {255,105,180}},
+                    {"Rose", {255,0,127}}, {"Brown", {150,75,0}}, {"Grey", {128,128,128}},
+                    {"White", {255,255,255}}
+                };
+
+                auto selected = colors[id(identify_color).state];
+                int r = std::get<0>(selected);
+                int g = std::get<1>(selected);
+                int b = std::get<2>(selected);
+                id(identify_r) = r;
+                id(identify_g) = g;
+                id(identify_b) = b;
+
+                id(led_blink_script).execute(1, 300, 300, r, g, b );
+          else:
+            - lambda: |-
+                if (!id(identify_enable).state || id(identify_color).state == "off") {
+                  id(identify_start_time) = 0;
+                  id(led)->turn_off();
+                }
+
+  - interval: 59s
+    then:
+      - lambda: |-
+          auto now = id(esptime).now();
+          if (!now.is_valid()) return;
+
+          int h = now.hour;
+          int m = now.minute;
+
+          id(night_mode) = (h >= 22 || h < 7);
+
+binary_sensor:
+  - platform: homeassistant
+    id: identify_global_switch
+    entity_id: input_boolean.identify_all_devices
+
+
+
+
+# 
+# this must be included in the other one, because it's depending on other things.
+# 
+# script:
+#   - id: led_blink_script
+#     parameters:
+#       repeat: int
+#       on_ms: int
+#       off_ms: int
+#       red: int
+#       green: int
+#       blue: int
+#     mode: queued
+#     then:
+#       - lambda: |-
+#           for (int i = 0; i < repeat; i++) {
+#             id(led)->set_rgb(red / 255.0, green / 255.0, blue / 255.0);
+#             id(led)->turn_on();
+#             delay(on_ms);
+#             id(led)->turn_off();
+#             delay(off_ms);
+#           }
+# 
+# 
+# 
+

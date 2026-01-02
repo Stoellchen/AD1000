@@ -1,0 +1,156 @@
+# ------------------------------------------------------
+# 💡 IDENTIFY MODULE – Flash RGB LED in custom color
+#
+# Usage:
+# - select "Identify color" → pick one of 20 colors
+# - toggle "Identify active" → start blinking every 5 seconds
+# - to disable: choose "off" or disable the switch
+# - Include in your device YAML using:
+#       # Package to find devices if not labeled
+#       packages:
+#         identify: !include ./m5-identify-me.yaml
+#         identify: !include common-m5-stuff/m5-identify-me.yaml
+#         identify: !include common/identify_common.yaml
+# ------------------------------------------------------
+
+
+switch:
+  - platform: template
+    name: "Identify active"
+    id: identify_enable
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:eye
+
+select:
+  - platform: template
+    name: "Identify color"
+    id: identify_color
+    optimistic: true
+    restore_value: true
+    initial_option: "off"
+    options:
+      - "off"
+      - "blue"
+      - "cyan"
+      - "yellow"
+      - "gold"
+      - "green"
+      - "lightblue"
+      - "lightgreen"
+      - "purple"
+      - "magenta"
+      - "neongreen"
+      - "orange"
+      - "pink"
+      - "deep purple"
+      - "red"
+      - "turquoise"
+      - "violet"
+      - "white"
+      - "wine"
+      - "lemon"
+    icon: "mdi:palette"
+
+interval:
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(identify_enable).state && id(identify_color).state != "off";'
+          then:
+            - script.execute:
+                id: led_blink_script
+                repeat: 1
+                on_ms: 300
+                off_ms: 300
+                red: !lambda |-
+                  if (id(identify_color).state == "blue") return 0;
+                  if (id(identify_color).state == "cyan") return 0;
+                  if (id(identify_color).state == "yellow") return 255;
+                  if (id(identify_color).state == "gold") return 255;
+                  if (id(identify_color).state == "green") return 0;
+                  if (id(identify_color).state == "lightblue") return 135;
+                  if (id(identify_color).state == "lightgreen") return 144;
+                  if (id(identify_color).state == "purple") return 128;
+                  if (id(identify_color).state == "magenta") return 255;
+                  if (id(identify_color).state == "neongreen") return 57;
+                  if (id(identify_color).state == "orange") return 255;
+                  if (id(identify_color).state == "pink") return 255;
+                  if (id(identify_color).state == "deep purple") return 128;
+                  if (id(identify_color).state == "red") return 255;
+                  if (id(identify_color).state == "turquoise") return 64;
+                  if (id(identify_color).state == "violet") return 148;
+                  if (id(identify_color).state == "white") return 255;
+                  if (id(identify_color).state == "wine") return 128;
+                  if (id(identify_color).state == "lemon") return 255;
+                  return 0;
+                green: !lambda |-
+                  if (id(identify_color).state == "blue") return 0;
+                  if (id(identify_color).state == "cyan") return 255;
+                  if (id(identify_color).state == "yellow") return 255;
+                  if (id(identify_color).state == "gold") return 215;
+                  if (id(identify_color).state == "green") return 255;
+                  if (id(identify_color).state == "lightblue") return 206;
+                  if (id(identify_color).state == "lightgreen") return 238;
+                  if (id(identify_color).state == "purple") return 0;
+                  if (id(identify_color).state == "magenta") return 0;
+                  if (id(identify_color).state == "neongreen") return 255;
+                  if (id(identify_color).state == "orange") return 165;
+                  if (id(identify_color).state == "pink") return 105;
+                  if (id(identify_color).state == "deep purple") return 0;
+                  if (id(identify_color).state == "red") return 0;
+                  if (id(identify_color).state == "turquoise") return 224;
+                  if (id(identify_color).state == "violet") return 0;
+                  if (id(identify_color).state == "white") return 255;
+                  if (id(identify_color).state == "wine") return 0;
+                  if (id(identify_color).state == "lemon") return 255;
+                  return 0;
+                blue: !lambda |-
+                  if (id(identify_color).state == "blue") return 255;
+                  if (id(identify_color).state == "cyan") return 255;
+                  if (id(identify_color).state == "yellow") return 0;
+                  if (id(identify_color).state == "gold") return 0;
+                  if (id(identify_color).state == "green") return 0;
+                  if (id(identify_color).state == "lightblue") return 235;
+                  if (id(identify_color).state == "lightgreen") return 144;
+                  if (id(identify_color).state == "purple") return 128;
+                  if (id(identify_color).state == "magenta") return 255;
+                  if (id(identify_color).state == "neongreen") return 20;
+                  if (id(identify_color).state == "orange") return 0;
+                  if (id(identify_color).state == "pink") return 180;
+                  if (id(identify_color).state == "deep purple") return 128;
+                  if (id(identify_color).state == "red") return 0;
+                  if (id(identify_color).state == "turquoise") return 208;
+                  if (id(identify_color).state == "violet") return 211;
+                  if (id(identify_color).state == "white") return 255;
+                  if (id(identify_color).state == "wine") return 64;
+                  if (id(identify_color).state == "lemon") return 0;
+                  return 0;
+
+
+# 
+# this must be included in the other one, because it's depending on other things.
+# 
+# script:
+#   - id: led_blink_script
+#     parameters:
+#       on_ms: int
+#       off_ms: int
+#       red: int
+#       green: int
+#       blue: int
+#       repeat: int
+#     mode: queued
+#     then:
+#       - lambda: |-
+#           for (int i = 0; i < repeat; i++) {
+#             id(led)->set_rgb(red / 255.0, green / 255.0, blue / 255.0);
+#             id(led)->turn_on();
+#             delay(on_ms);
+#             id(led)->turn_off();
+#             delay(off_ms);
+#           }
+# 
+# 
+# 

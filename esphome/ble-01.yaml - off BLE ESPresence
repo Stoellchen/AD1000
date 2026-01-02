@@ -1,0 +1,15 @@
+substitutions:
+  name: ble-01
+  friendly_name: BLE-01
+  short_name: BLE-01
+
+  ble_beacon_uuid: "a73c5d5e-4af8-463e-9e45-c4b50133fa12"     # bei allen geräten gleich
+  ble_beacon_major: "1"                                       # mal so behalten auf 1
+  ble_beacon_minor: "1"                                       #### mus pro device anders sein!!!!
+
+
+## rest is for all m5-atom-lite BLE the same as in the base-file
+packages:
+  common: !include common-m5-stuff/m5atom-ble-01-esp-dif.yaml
+
+

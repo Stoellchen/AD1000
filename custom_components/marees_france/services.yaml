@@ -1,0 +1,87 @@
+get_water_levels:
+  name: Get Water Levels
+  description: Fetches detailed water level heights for a specific harbor device and date. Data is primarily read from the cache; fetches from SHOM API only as a fallback if data is missing.
+  fields:
+    device_id: # Changed from harbor_name
+      name: Harbor Device
+      description: The Marées France harbor device to get water levels for.
+      required: true
+      # example: "LE_PALAIS" # Example not needed for device selector
+      selector:
+        device: # Changed from text
+          integration: marees_france # Filter by integration
+    date:
+      name: Date
+      description: The date for which to fetch water levels (YYYY-MM-DD format).
+      required: true
+      example: "2025-04-24"
+      selector:
+        date:
+get_tides_data:
+  name: Get Tides Data
+  description: Retrieves cached tide data (high/low tides, coefficients) for a specific harbor device.
+  fields:
+    device_id: # Changed from harbor_name
+      name: Harbor Device
+      description: The Marées France harbor device to get tide data for.
+      required: true
+      # example: "LE_PALAIS" # Example not needed for device selector
+      selector:
+        device: # Changed from text
+          integration: marees_france # Filter by integration
+get_coefficients_data:
+  name: Get Coefficients Data
+  description: Retrieves cached tide coefficient data for a specific harbor device. Allows filtering by start date and number of days. If no filters are provided, returns all cached data (up to 365 days from today).
+  fields:
+    device_id:
+      name: Harbor Device
+      description: The Marées France harbor device to get coefficient data for.
+      required: true
+      selector:
+        device:
+          integration: marees_france
+    date:
+      name: Start Date (Optional)
+      description: The starting date for which to fetch coefficients (YYYY-MM-DD format). If omitted, defaults to today when 'days' is specified, or returns all data if 'days' is also omitted.
+      required: false
+      example: "2025-04-25"
+      selector:
+        date:
+    days:
+      name: Number of Days (Optional)
+      description: The number of days (including the start date) to retrieve coefficients for. If omitted, returns data only for the specified 'date' (if provided), or all cached data if 'date' is also omitted.
+      required: false
+      example: 7
+      selector:
+        number:
+          min: 1
+          max: 365 # Max cache duration
+          mode: box
+reinitialize_harbor_data:
+  name: Reinitialize Harbor Data
+  description: Clears the cached tide and water level data for a specific harbor device and triggers an immediate refresh from the SHOM API. Use this if you suspect the cached data is stale or incorrect.
+  fields:
+    device_id:
+      name: Harbor Device
+      description: The Marées France harbor device to reinitialize data for.
+      required: true
+      selector:
+        device:
+          integration: marees_france # Filter by integration
+get_water_temp:
+  name: Get Water Temperature
+  description: Retrieves cached water temperature data for a specific harbor device. Allows filtering by date.
+  fields:
+    device_id:
+      name: Harbor Device
+      description: The Marées France harbor device to get water temperature for.
+      required: true
+      selector:
+        device:
+          integration: marees_france
+    date:
+      name: Date (Optional)
+      description: The date for which to fetch water temperature (YYYY-MM-DD format). If omitted, returns all cached data.
+      required: false
+      selector:
+        date:

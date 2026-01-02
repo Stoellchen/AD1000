@@ -1,0 +1,66 @@
+### BLE position stuff
+
+# ------------------------------------------------------
+# BLE Positionierung – manuelle X/Y Eingabe in Zentimeter
+# ------------------------------------------------------
+# Diese Konfiguration ermöglicht es, die Position eines BLE-Geräts
+# manuell über zwei Eingabefelder (in cm) zu definieren.
+# Die Werte werden über Neustart/OTA hinweg gespeichert.
+# Zusätzlich werden sie als Textsensor veröffentlicht (z. B. für MQTT).
+# Die Koordinaten werden in einem zweidimensionalen Raster erfasst.
+# 0/0 ist der Ursprung links unten, 10000/10000 entspricht 100x100 m.
+
+#  einbinden mit:
+#  packages:
+#    position: !include ./m5atom-ble-position-01.yaml
+
+
+text_sensor:
+  - platform: template
+    name: "${friendly_name} Position X Text"
+    id: ble_pos_x_text
+    icon: mdi:axis-x-arrow
+    update_interval: never
+    # Zeigt die aktuelle X-Position als Text – z. B. zur Anzeige oder MQTT-Publikation
+
+  - platform: template
+    name: "${friendly_name} Position Y Text"
+    id: ble_pos_y_text
+    icon: mdi:axis-y-arrow
+    update_interval: never
+    # Zeigt die aktuelle Y-Position als Text – z. B. zur Anzeige oder MQTT-Publikation
+
+number:
+  - platform: template
+    name: "${friendly_name} Position X (cm)"
+    id: ble_pos_x
+    unit_of_measurement: "cm"
+    min_value: 0
+    max_value: 50000
+    step: 1
+    restore_value: true
+    mode: box
+    optimistic: true
+    set_action:
+      then:
+        - lambda: |-
+            // Wenn X-Wert geändert wird, auch Textsensor aktualisieren
+            id(ble_pos_x_text).publish_state(to_string(x));
+
+  - platform: template
+    name: "${friendly_name} Position Y (cm)"
+    id: ble_pos_y
+    unit_of_measurement: "cm"
+    min_value: 0
+    max_value: 50000
+    step: 1
+    restore_value: true
+    mode: box
+    optimistic: true
+    set_action:
+      then:
+        - lambda: |-
+            // Wenn Y-Wert geändert wird, auch Textsensor aktualisieren
+            id(ble_pos_y_text).publish_state(to_string(x));
+
+

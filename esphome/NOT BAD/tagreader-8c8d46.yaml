@@ -1,0 +1,15 @@
+substitutions:
+  name: tagreader-8c8d46
+packages:
+  adonno.tag_reader: github://adonno/tagreader/tagreader.yaml
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+api:
+#  encryption:
+#    key: 2ynAV7L+JDZDtqeJwh8t5XhQ9bckGXL/AASuYqVE5CI=
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password

@@ -1,0 +1,5 @@
+#IP-Adress,Name,Password
+# [IP-Adresse pfSense 1],[Name pfSense 1],[Passwort pfSense1]
+# [IP-Adresse pfSense 2],[Name pfSense 2],[Passwort pfSense2]
+10.231.23.254,draguignan,Zacharias-863
+

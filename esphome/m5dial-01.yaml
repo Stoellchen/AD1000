@@ -1,0 +1,19 @@
+## https://devices.esphome.io/devices/M5Stack-Dial
+## https://docs.m5stack.com/en/core/M5Dial
+## https://github.com/GinAndBacon/ESPHome-LVGL-EncoderDial/tree/main
+## https://aguacatec.es/integrar-m5stack-dial-en-ha/
+## sounds:   https://1j01.github.io/rtttl.js/#Bolero  +  https://rtttl.skully.tech/
+
+
+
+substitutions:
+# Device customization
+# Personalización del dispositivo
+  name: m5dial-01
+  friendly_name: M5Dial-01
+  short_name: Dial-01
+
+## rest is for all m5-dials the same as in the base-file
+packages:
+  common: !include common-m5-stuff/m5dial-01-base.yaml
+

@@ -1,0 +1,45 @@
+# --- Home Assistant intern ---
+.storage/
+.cloud/
+.ha_run.lock
+.HA_VERSION
+
+# --- Secrets ---
+secrets.yaml
+known_devices.yaml
+
+# --- Logs & DB ---
+*.log
+*.log.*
+*.db
+*.db-shm
+*.db-wal
+
+# --- Backups / Archives ---
+backup/
+*.zip
+
+# --- Python / Cache ---
+__pycache__/
+*.pyc
+
+# --- SSH keys (lokal behalten!) ---
+.ssh/
+
+# --- Sonstiges ---
+homeassistant_db*
+
+
+# ZIP-Dateien in packages und esphome ignorieren
+packages/**/*.zip
+esphome/**/*.zip
+config/**/*.zip
+# TXT-Datein in packages und esphoe ignorieren
+packages/**/*.txt
+esphome/**/*.txt
+config/**/*.txt
+
+#Exclude tts
+tts/*
+
+

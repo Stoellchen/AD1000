@@ -1,0 +1,33 @@
+{
+  "pages": {
+    "0": [
+      {        "id": 1,        "obj": "btn",        "x": 120,        "y": 35,        "w": 40,        "h": 40,        "text": "Home",        "click": true      },
+      {        "id": 2,        "obj": "btn",        "x": 165,        "y": 51,        "w": 40,        "h": 40,        "text": "Licht",        "click": true,        "group": "category"      },
+      {        "id": 3,        "obj": "btn",        "x": 195,        "y": 85,        "w": 40,        "h": 40,        "text": "Media",        "click": true      },
+      {        "id": 4,        "obj": "btn",        "x": 210,        "y": 130,        "w": 40,        "h": 40,        "text": "Klima",        "click": true      },
+      {        "id": 5,        "obj": "btn",        "x": 195,        "y": 175,        "w": 40,        "h": 40,        "text": "Frei1",        "click": true      },
+      {        "id": 6,        "obj": "btn",        "x": 165,        "y": 210,        "w": 40,        "h": 40,        "text": "Frei2",        "click": true      },
+      {        "id": 7,        "obj": "btn",        "x": 120,        "y": 225,        "w": 40,        "h": 40,        "text": "Frei3",        "click": true      },
+      {        "id": 8,        "obj": "btn",        "x": 75,        "y": 210,        "w": 40,        "h": 40,        "text": "Frei4",        "click": true      },
+      {        "id": 9,        "obj": "btn",        "x": 45,        "y": 175,        "w": 40,        "h": 40,        "text": "Frei5",        "click": true      },
+      {        "id": 10,        "obj": "btn",        "x": 30,        "y": 130,        "w": 40,        "h": 40,        "text": "Frei6",        "click": true      }
+    ]
+  },
+  "menus": {
+    "light": {
+      "page_start": 10,
+      "type": "light",
+      "source": "input_text.m5_list_lights"
+    },
+    "media": {
+      "page_start": 20,
+      "type": "media_player",
+      "source": "input_text.m5_list_media"
+    },
+    "climate": {
+      "page_start": 30,
+      "type": "climate",
+      "source": "input_text.m5_list_aircon"
+    }
+  }
+}

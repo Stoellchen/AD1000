@@ -1,0 +1,270 @@
+substitutions:
+# Device customization
+# Personalización del dispositivo
+  name: m5dial-01
+  friendly_name: M5Dial-01
+  short_name: Dial-01
+
+
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: m5stack-atom
+  framework:
+    type: arduino
+
+logger:
+
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_encryption_key
+  services:
+    - service: play_sound
+      variables:
+        song: string
+        volume: int 
+      then:
+        - lambda: "id(script_rtttl_play).execute(song, volume);"
+
+
+ota:
+  - platform: esphome
+    password: !secret ota_encrpytion_key 
+
+wifi:
+  fast_connect: !secret wifi2_fast_connect
+  networks:
+  - ssid: !secret wifi2_ssid
+    password: !secret wifi2_password
+    priority: !secret wifi2_priority
+  - ssid: !secret wifi2_ssid_2
+    password: !secret wifi2_password_2
+    priority: !secret wifi2_priority_2
+  - ssid: !secret wifi2_ssid_3
+    password: !secret wifi2_password_3
+    priority: !secret wifi2_priority_3
+  - ssid: !secret wifi2_ssid_4
+    password: !secret wifi2_password_4
+    priority: !secret wifi2_priority_4
+  - ssid: !secret wifi2_ssid_5
+    password: !secret wifi2_password_5
+    priority: !secret wifi2_priority_5
+  domain: !secret wifi2_domain
+  
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${short_name} Fallback Hotspot"
+    password: !secret ap_password
+
+
+captive_portal:
+
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: true
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO19
+
+display:
+  - platform: st7789v
+    model: "ROUND_240X240"
+    id: round_display
+    cs_pin: GPIO5
+    dc_pin: GPIO15
+    reset_pin: GPIO23
+    rotation: 0
+    lambda: |-
+      it.print(120, 120, id(font_small), TextAlign::CENTER, "M5 Dial");
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_small
+    size: 16
+
+touchscreen:
+  platform: ft3267
+  interrupt_pin: GPIO39
+  id: ft_touch
+
+text_sensor:
+
+  - platform: homeassistant
+    id: m5_list_lights
+    entity_id: input_text.m5_list_lights
+    
+  - platform: homeassistant
+    id: m5_list_media
+    entity_id: input_text.m5_list_media
+    
+  - platform: homeassistant
+    id: m5_list_aircon
+    entity_id: input_text.m5_list_aircon
+    
+  - platform: homeassistant
+    id: m5_list_lights
+    entity_id: input_text.m5_list_lights
+  - platform: homeassistant
+    id: m5_list_media
+    entity_id: input_text.m5_list_media
+  - platform: homeassistant
+    id: m5_list_aircon
+    entity_id: input_text.m5_list_aircon
+
+globals:
+  - id: selected_light_room
+    type: std::string
+    restore_value: no
+    initial_value: "\"\"
+
+script:
+
+  - id: show_light_rooms
+    then:
+      - lambda: |-
+          id(round_display).clear();
+          std::string data = id(m5_list_lights).state;
+          std::vector<std::string> blocks = esphome::split_string(data, "§");
+          int y = 20;
+          int id_offset = 1000;
+          for (int i = 0; i < blocks.size(); i++) {
+            std::string block = blocks[i];
+            size_t sep = block.find(":");
+            if (sep == std::string::npos) continue;
+            std::string room = block.substr(0, sep);
+            int item_id = id_offset + i;
+            id(round_display).printf(10, y + (i * 20), id(font_small), room.c_str());
+            ESP_LOGI("light", "Raum [%d]: %s", item_id, room.c_str());
+          }
+    
+  - id: show_media_rooms
+    then:
+      - lambda: |-
+          id(round_display).clear();
+          std::string data = id(m5_list_media).state;
+          std::vector<std::string> blocks = esphome::split_string(data, "§");
+          int y = 20;
+          int id_offset = 1000;
+          for (int i = 0; i < blocks.size(); i++) {
+            std::string block = blocks[i];
+            size_t sep = block.find(":");
+            if (sep == std::string::npos) continue;
+            std::string room = block.substr(0, sep);
+            int item_id = id_offset + i;
+            id(round_display).printf(10, y + (i * 20), id(font_small), room.c_str());
+            ESP_LOGI("media", "Raum [%d]: %s", item_id, room.c_str());
+          }
+    
+  - id: show_climate_rooms
+    then:
+      - lambda: |-
+          id(round_display).clear();
+          std::string data = id(m5_list_aircon).state;
+          std::vector<std::string> blocks = esphome::split_string(data, "§");
+          int y = 20;
+          int id_offset = 1000;
+          for (int i = 0; i < blocks.size(); i++) {
+            std::string block = blocks[i];
+            size_t sep = block.find(":");
+            if (sep == std::string::npos) continue;
+            std::string room = block.substr(0, sep);
+            int item_id = id_offset + i;
+            id(round_display).printf(10, y + (i * 20), id(font_small), room.c_str());
+            ESP_LOGI("climate", "Raum [%d]: %s", item_id, room.c_str());
+          }
+    
+  - id: show_light_rooms
+    then:
+      - lambda: |-
+          id(round_display).clear();
+          std::string data = id(m5_list_lights).state;
+          std::vector<std::string> blocks = esphome::split_string(data, "§");
+
+          int y = 20;
+          int id_offset = 1000;
+
+          for (int i = 0; i < blocks.size(); i++) {
+            std::string block = blocks[i];
+            size_t sep = block.find(":");
+            if (sep == std::string::npos) continue;
+
+            std::string room = block.substr(0, sep);
+            int item_id = id_offset + i;
+
+            id(round_display).printf(10, y + (i * 20), id(font_small), room.c_str());
+            ESP_LOGI("lights", "Raum [%d]: %s", item_id, room.c_str());
+          }
+
+binary_sensor:
+
+  - platform: touchscreen
+    name: "Touch Light"
+    internal: true
+    x_min: 80
+    x_max: 160
+    y_min: 80
+    y_max: 160
+    page_id: 0
+    id: touch_light_btn
+    on_press:
+      then:
+        - display.page.show: 10
+        - script.execute: show_light_rooms
+    
+  - platform: touchscreen
+    name: "Touch Media"
+    internal: true
+    x_min: 80
+    x_max: 160
+    y_min: 80
+    y_max: 160
+    page_id: 0
+    id: touch_media_btn
+    on_press:
+      then:
+        - display.page.show: 20
+        - script.execute: show_media_rooms
+    
+  - platform: touchscreen
+    name: "Touch Climate"
+    internal: true
+    x_min: 80
+    x_max: 160
+    y_min: 80
+    y_max: 160
+    page_id: 0
+    id: touch_climate_btn
+    on_press:
+      then:
+        - display.page.show: 30
+        - script.execute: show_climate_rooms
+    
+  - platform: touchscreen
+    name: "Touch Center Select"
+    x_min: 80
+    x_max: 160
+    y_min: 80
+    y_max: 160
+    page_id: 10
+    internal: true
+    on_press:
+      then:
+        - lambda: |-
+            std::string data = id(m5_list_lights).state;
+            std::vector<std::string> blocks = esphome::split_string(data, "§");
+            if (blocks.size() > 0) {
+              size_t sep = blocks[0].find(":");
+              if (sep != std::string::npos) {
+                id(selected_light_room) = blocks[0].substr(0, sep);
+                ESP_LOGI("lights", "Ausgewählter Raum: %s", id(selected_light_room).c_str());
+              }
+            }
+        - display.page.show: 11

@@ -1,0 +1,118 @@
+##################################################################################################################################
+##################################################################################################################################
+##################################################################################################################################
+##################################################################################################################################
+##### ad1000
+##################################################################################################################################
+##################################################################################################################################
+##################################################################################################################################
+##################################################################################################################################
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+## Shell commands die aufgerufen werden koennen
+shell_command: !include shell_command.yaml
+
+## https://www.home-assistant.io/docs/configuration/basic/
+homeassistant:
+  packages: !include_dir_named packages
+  allowlist_external_dirs:
+#    - /usr/var/dumping-ground
+    - /tmp
+    - /config
+
+# https://www.home-assistant.io/integrations/python_script
+# please see in configs/packages/usto_set_pyscript_enable.yaml  -  needs to be here .....
+# python_script:
+python_script:
+
+# Location Sharing with google maps https://www.home-assistant.io/integrations/google_maps/
+# device_tracker:
+#  - platform: google_maps
+#    username: "stoellchens@gmail.com"
+# das habe ich in file definiert !!!!   usto_device_tracker_maps.yaml in packages
+
+
+###############################################################################################
+ifttt:
+  key:
+    ZWOOKY: n2-58e6LAMN94QaKtgteu_SSz_ppVzXzUz7-gC4yOk8
+#    YOUR_KEY_NAME2: YOUR_API_KEY2
+
+
+logbook:
+  exclude:
+    entity_globs:
+      - switch.echo_*      # alle Echo-Schalter
+      - select.echo_*      # alle Echo-Select
+      - media_player.echo_*      # alle Echo-media_player
+      - binary_sensor.echo_*      # alle Echo-Sensoren
+      - switch.ble_*       # alle BLE-Sensoren
+      - select.ble_*       # alle BLE-Sensoren
+      - sensor.ble_*       # alle BLE-Sensoren
+      - number.ble_*       # alle BLE-Sensoren
+      - switch.atom_*      # alle Atom-Einheiten
+      - sensor.m5dial_*    # alles vom M5 Dial
+
+recorder:
+  db_url: postgresql://homeassistant:srinagar@postgresql001.main.arpa:5432/homeassistant_db
+  purge_keep_days: 60
+  commit_interval: 30
+  auto_purge: true
+  auto_repack: true
+
+  exclude:
+    entity_globs:
+      - sensor.vacuum_*
+      - automation.vacuum_*
+      - sensor.flightradar24*
+      - switch.echo_*      # alle Echo-Schalter
+      - select.echo_*      # alle Echo-Select
+      - media_player.echo_*      # alle Echo-media_player
+      - binary_sensor.echo_*      # alle Echo-Sensoren
+      - switch.ble_*       # alle BLE-Sensoren
+      - select.ble_*       # alle BLE-Sensoren
+      - sensor.ble_*       # alle BLE-Sensoren
+      - number.ble_*       # alle BLE-Sensoren
+      - switch.atom_*      # alle Atom-Einheiten
+      - sensor.m5dial_*    # alles vom M5 Dial
+    entities:
+      - sensor.rest980
+      - camera.roomba
+
+# keep Sensor data History !!!
+history:
+  exclude:
+    domains:
+      - automation
+      - updater
+    entities:
+      - sensor.last_boot
+      - sensor.date
+    entity_globs:
+      - switch.echo_*      # alle Echo-Schalter
+      - select.echo_*      # alle Echo-Select
+      - media_player.echo_*      # alle Echo-media_player
+      - binary_sensor.echo_*      # alle Echo-Sensoren
+      - switch.ble_*       # alle BLE-Sensoren
+      - select.ble_*       # alle BLE-Sensoren
+      - sensor.ble_*       # alle BLE-Sensoren
+      - number.ble_*       # alle BLE-Sensoren
+      - switch.atom_*      # alle Atom-Einheiten
+      - sensor.m5dial_*    # alles vom M5 Dial
+
+      
+
+
+
+
+

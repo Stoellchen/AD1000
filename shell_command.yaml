@@ -1,0 +1,13 @@
+### wird ueber confiration.yaml geladen 
+
+## Shell commands die aufgerufen werden koennen
+##shell_command: !include shell_command.yaml
+
+## run_backup_pfsense wird im stoellchen_shell_backup_pfsense.yaml verwendet
+
+#   ❌ Das ist falsch verschachtelt.
+#   Weil du in der configuration.yaml bereits shell_command: gesetzt hast,
+#   darf die include-Datei keinen weiteren shell_command:-Block enthalten.
+#   Sie soll nur die Befehle selbst enthalten.
+#   shell_command:
+run_backup_pfsense: /bin/bash /config/scripts/pfsense/backup.sh

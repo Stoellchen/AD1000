@@ -1,0 +1,214 @@
+### BLE advertise stuff
+
+## blockt wenn der scanner läuft lassen wir das...
+
+##  einbinden mit
+
+# Package to find devices if not labeled
+# packages:
+#   bleadvertise: !include ./m5atom-ble-advertise-01.yaml
+
+
+
+## ble_beacon_minor ist in den einzelnen device-configs definiert - geht nicht anders.
+# ============================================================================
+# 📡 BLE Beacon Advertising (iBeacon)
+# - UUID: shared across all BLE Atoms (defines the beacon group)
+# - MAJOR: optional (e.g., all "1" for simplicity)
+# - MINOR: unique per device (via substitution)
+# ============================================================================
+#   0xa7   0x3c  0x5d  0x5e 0x4a 0xf8, 0x46, 0x3e, 0x9e, 0x45, 0xc4, 0xb5, 0x01, 0x33, 0xfa, 0x12
+#    a  7  3  c  5  d  5  e 4a f8 46 3e 9e 45 c4 b5 01 33 fa 12"     # bei allen geräten gleich
+#   4c 00 02 15 a7 3c 5d 5e 4a f8 46 3e 9e 45 c4 b5 01 33 fa 12 00 01 00 01 C5
+#   ^^ ^^ ^^ ^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ^^^^ ^^^^ ^^
+#   |  |  |  |         UUID                                   Major Minor TX
+#   |  |  |  |
+#   |  |  |  iBeacon Identifier = 0x15
+#   |  |  Type = 0x02
+#   |  Company ID (Apple) = 0x004C
+
+esp32_ble_beacon:
+  type: iBeacon
+  uuid: ${ble_beacon_uuid}     # must be defined in each device yaml
+  major: ${ble_beacon_major}   # optional – same across all devices
+  minor: ${ble_beacon_minor}   # unique per device (e.g. 1 to 14)
+
+
+# ============================================================================
+# 🔍 BLE Beacon Scanner mit iBeacon-Parsing
+# - Filtert iBeacon-Werbung über die gemeinsame UUID
+# - Liest MINOR-ID und RSSI aus
+# - Unterstützt bis zu 14 definierte Beacons
+# - Publiziert RSSI als Sensorwert pro Beacon
+# ============================================================================
+
+    
+# --- BLE Tracker with filtering for specific iBeacon UUID ---
+#    Offset | Länge | Beschreibung
+#    --------------------------------------------
+#     0     |   2   | Hersteller ID (Apple = 0x004C)
+#     2     |   1   | iBeacon Typ (0x02)
+#     3     |   1   | Länge (0x15)
+#     4     |  16   | UUID
+#    20     |   2   | Major
+#    22     |   2   | Minor
+#    24     |   1   | TX Power
+#    → Total: 25 Bytes ab Offset 0
+
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 300ms
+    window: 300ms
+    duration: 4s   # kurz halten
+  on_ble_advertise:
+    then:
+      - lambda: |-
+          const uint8_t expected_uuid[16] = {
+            0xa7, 0x3c, 0x5d, 0x5e, 0x4a, 0xf8, 0x46, 0x3e,
+            0x9e, 0x45, 0xc4, 0xb5, 0x01, 0x33, 0xfa, 0x12
+          };
+
+          ESP_LOGD("ble_debug", "BLE advertisement received. Manufacturer data count: %d", x.get_manufacturer_datas().size());
+
+          for (auto &data : x.get_manufacturer_datas()) {
+            ESP_LOGD("ble_debug", "Checking manufacturer data. Size: %d", data.data.size());
+
+            if (data.data.size() >= 25) {
+              const uint8_t *payload = data.data.data();
+
+              if (memcmp(payload + 4, expected_uuid, 16) == 0) 
+              {
+                uint16_t minor = ((uint16_t)payload[22] << 8) | payload[23];
+                int8_t rssi = x.get_rssi();
+
+                ESP_LOGI("ble_debug", "iBeacon match: minor=%u rssi=%d", minor, rssi);
+
+                switch (minor) {
+                  case 1:  id(beacon_rssi_1).publish_state(rssi); break;
+                  case 2:  id(beacon_rssi_2).publish_state(rssi); break;
+                  case 3:  id(beacon_rssi_3).publish_state(rssi); break;
+                  case 4:  id(beacon_rssi_4).publish_state(rssi); break;
+                  case 5:  id(beacon_rssi_5).publish_state(rssi); break;
+                  case 6:  id(beacon_rssi_6).publish_state(rssi); break;
+                  case 7:  id(beacon_rssi_7).publish_state(rssi); break;
+                  case 8:  id(beacon_rssi_8).publish_state(rssi); break;
+                  case 9:  id(beacon_rssi_9).publish_state(rssi); break;
+                  case 10: id(beacon_rssi_10).publish_state(rssi); break;
+                  case 11: id(beacon_rssi_11).publish_state(rssi); break;
+                  case 12: id(beacon_rssi_12).publish_state(rssi); break;
+                  case 13: id(beacon_rssi_13).publish_state(rssi); break;
+                  case 14: id(beacon_rssi_14).publish_state(rssi); break;
+                  default:
+                    ESP_LOGW("ble_debug", "Unknown minor: %u", minor);
+                }
+              }
+            }
+          }
+
+
+
+
+
+# --- RSSI Sensors for each known Atom Beacon ---
+# These sensors store the latest RSSI values received from other static Atom devices
+# identified via their BLE beacon "minor" ID. Update interval is disabled (only updated on signal).
+sensor:
+  - platform: template
+    name: "Beacon RSSI 1"
+    id: beacon_rssi_1
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 2"
+    id: beacon_rssi_2
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 3"
+    id: beacon_rssi_3
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 4"
+    id: beacon_rssi_4
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 5"
+    id: beacon_rssi_5
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 6"
+    id: beacon_rssi_6
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 7"
+    id: beacon_rssi_7
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 8"
+    id: beacon_rssi_8
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 9"
+    id: beacon_rssi_9
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 10"
+    id: beacon_rssi_10
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 11"
+    id: beacon_rssi_11
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 12"
+    id: beacon_rssi_12
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 13"
+    id: beacon_rssi_13
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: "Beacon RSSI 14"
+    id: beacon_rssi_14
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+
+

@@ -1,0 +1,32 @@
+esphome:
+  name: m5-stack-core-2
+  friendly_name: m5 Stack Core 2
+
+esp32:
+  board: esp32-s2-saola-1
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "LpDeK4ifgVZfwDEdQC2EFBKyICo0LR/birGk4/sybPs="
+
+ota:
+  - platform: esphome
+    password: "35486fa8527839a37d2577ada13528cd"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "M5-Stack-Core-2 Fallback Hotspot"
+    password: "kgwTRkijgw6b"
+
+captive_portal:
+    

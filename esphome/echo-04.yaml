@@ -1,0 +1,22 @@
+## https://www.home-assistant.io/voice_control/thirteen-usd-voice-remote/
+## https://github.com/esphome/wake-word-voice-assistants/blob/main/m5stack-atom-echo/m5stack-atom-echo.yaml
+
+## rest is for all m5-dials the same as in the base-file
+## packages:
+##   common: !include common-m5-stuff/m5echo-01-base.yaml
+# Direkt einbinden
+## !include common-m5-stuff/m5echo-01-base.yaml
+## 
+##   geht alles nicht. bei den ECHO's muss es direkt hier sein. Ich belasse aber den code im common als basis.
+
+
+substitutions:
+  name: echo-04
+  friendly_name: Echo-04
+  short_name: Echo-04
+
+
+## rest is for all m5-dials the same as in the base-file
+packages:
+  common: !include common-m5-stuff/m5echo-01-base.yaml
+

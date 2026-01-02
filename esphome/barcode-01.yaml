@@ -1,0 +1,10 @@
+substitutions:
+  name: barcode-01
+  friendly_name: BARCODE-01
+  short_name: BARCODE-01
+
+
+## rest is for all m5-atom-lite BLE the same as in the base-file
+packages:
+  common: !include common-m5-stuff/m5atom-barcode-01.yaml
+
