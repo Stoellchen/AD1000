@@ -1,0 +1,98 @@
+import appdaemon.plugins.hass.hassapi as hass
+import math
+
+class CircadianLighting(hass.Hass):
+
+    def initialize(self):
+        """
+        Initialisierung
+        """
+
+        # Pflichtargumente
+        self.sun_sensor = self.args["sun_sensor"]
+
+        # Optional
+        self.blue_hour_switch = self.args.get("blue_hour_switch")
+
+        # Update Intervall
+        self.update_interval = int(self.args.get("update_interval", 60))
+
+        self.log("CircadianLighting started")
+
+        # Regelmaessiges Update
+        self.run_every(self.update, self.datetime(), self.update_interval)
+
+
+    def update(self, kwargs):
+        """
+        Berechnet weiche Circadian Lichtwerte
+        basierend auf Sonnenhoehe (Elevation)
+        """
+
+        # ----------------------------
+        # Sonnenhoehe aus sun_and_more
+        # ----------------------------
+        elevation = self.get_state(self.sun_sensor, attribute="elevation")
+
+        if elevation is None:
+            self.log("No elevation available yet", level="WARNING")
+            return
+
+        elevation = float(elevation)
+
+        # ----------------------------
+        # Normierung: -6 .. +60 Grad
+        # ----------------------------
+        min_el = -6.0
+        max_el = 60.0
+
+        norm = (elevation - min_el) / (max_el - min_el)
+        norm = max(0.0, min(1.0, norm))
+
+        # ----------------------------
+        # Circadian Kurve (weich!)
+        # ----------------------------
+        circadian = math.sin(norm * math.pi / 2)
+
+        # ----------------------------
+        # Helligkeit
+        # ----------------------------
+        brightness_pct = int(5 + circadian * 95)
+        brightness = int(brightness_pct / 100 * 254)
+
+        # ----------------------------
+        # Farbtemperatur
+        # ----------------------------
+        kelvin = int(2000 + circadian * 4500)
+        mired = int(1000000 / kelvin)
+
+        # ----------------------------
+        # Blue Hour Option
+        # ----------------------------
+        blue_hour = False
+
+        if self.blue_hour_switch:
+            blue_hour = self.get_state(self.blue_hour_switch) == "on"
+
+        if blue_hour and elevation < 0:
+            # Leicht kuelteres Licht waehrend Blue Hour
+            kelvin = 6000
+            mired = int(1000000 / kelvin)
+
+        # ----------------------------
+        # Ergebnis Sensor
+        # ----------------------------
+        self.set_state(
+            "sensor.circadian_light",
+            state=brightness_pct,
+            attributes={
+                "friendly_name": "Circadian Light",
+                "brightness_pct": brightness_pct,
+                "brightness": brightness,
+                "kelvin": kelvin,
+                "mired": mired,
+                "blue_hour": blue_hour,
+                "sun_elevation": elevation,
+                "unit_of_measurement": "%"
+            }
+        )

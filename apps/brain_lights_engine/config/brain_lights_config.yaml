@@ -1,0 +1,334 @@
+engine:
+  debug_level: 10
+  mode: exclusive
+  reset_timeout_on_motion: true
+  transition_off_multiplier: 3
+
+circadian_sensor:
+  ## two dotes - read attribute
+  kelvin: sensor.circadian_location.kelvin
+  mired: sensor.circadian_location.mired
+  rgb: sensor.circadian_location.rgb
+  brightness: sensor.circadian_location.brightness
+  brightness_pct: sensor.circadian_location.brightness_pct
+
+##
+##
+##    
+##    actions:
+##      lights_on:
+##      lights_off:
+##      switches_on:
+##      switches_off:
+##      scenes_on:
+##      lights_on:
+
+##
+## ACTION DEFINITIONS (REFERENCE)
+##
+## General rules:
+## - lights_on items always describe ONE light
+## - mode defines HOW the light is controlled
+## - brightness / brightness_pct are OPTIONAL unless stated otherwise
+##
+## --------------------------------------------------
+## 1) Simple light on (no brightness control)
+## --------------------------------------------------
+## Turns light on, keeps last brightness/color
+##
+## lights_on:
+##   - entity: light.e1
+##
+## --------------------------------------------------
+## 2) Light on with fixed brightness (percent)
+## --------------------------------------------------
+##
+## lights_on:
+##   - entity: light.e1
+##     mode: pct
+##     brightness_pct: 35
+##      transition: 3
+##
+## --------------------------------------------------
+## 3) Light on with fixed brightness (absolute)
+## --------------------------------------------------
+##
+## lights_on:
+##   - entity: light.e1
+##     mode: brightness
+##     brightness: 180
+##      transition: 3
+##
+## --------------------------------------------------
+## 4) Light on with RGB color (optional brightness)
+## --------------------------------------------------
+##
+## lights_on:
+##   - entity: light.e1
+##     mode: rgb
+##     color: [255, 0, 0]
+##     brightness_pct: 40        # optional
+##      transition: 3
+##
+## Alternative with absolute brightness:
+##
+## lights_on:
+##   - entity: light.e1
+##     mode: rgb
+##     color: [255, 0, 0]
+##     brightness: 160           # optional
+##      transition: 3
+##
+## --------------------------------------------------
+## 5) Light on with circadian color (kelvin or mired)
+## --------------------------------------------------
+##
+## Color follows circadian sensor values.
+## Brightness can be:
+## - omitted (keeps current brightness)
+## - fixed
+## - circadian
+##
+## lights_on:
+##   - entity: light.e1
+##     mode: circadian
+##     color: kelvin             # or: mired or rgb
+##      transition: 3
+##
+## --------------------------------------------------
+## 6) Circadian color WITH circadian brightness
+## --------------------------------------------------
+##
+## lights_on:
+##   - entity: light.e1
+##     mode: circadian
+##     color: kelvin
+##     brightness_pct: circadian
+##      transition: 3
+##
+## Alternative with absolute circadian brightness:
+##
+## lights_on:
+##   - entity: light.e1
+##     mode: circadian
+##     color: mired
+##     brightness: circadian
+##      transition: 3
+##
+## --------------------------------------------------
+## 7) Scene activation
+## --------------------------------------------------
+##
+## scenes_on:
+##   - scene.alle_lichter_hell
+##
+
+
+rooms:
+  esszimmer:
+    debug_level: 10            # overrides engine
+    priority: 0
+    zones:
+      tisch:
+        contexts:
+          - id: essenszeiten
+            activate: "on"
+            priority: 90
+            minimum_brightness: 5   # Prozent (0–100)
+            triggers:
+              - sensor: binary_sensor.ms2_occupancy
+              - sensor: binary_sensor.ms4_occupancy
+            enable:
+              sensor: input_boolean.motion_eval_enabled_esszimmer
+              state: "off"
+              invert: false
+            manual_timer:
+              enable:
+                sensor: input_boolean.manual_timer_esszimmer
+                state: "on"
+                invert: false
+            active_times:
+              - "08:00-09:30"
+              - "11:30-13:15"
+              - "16:30-20:00"
+            lux:
+              sensor: sensor.ms2_illuminance
+              below: 60
+            timeout_min: 30
+            transition_off_sec: 15
+            block_if_any_on:
+              - light.nothingblocking
+              - light.nothingblocking
+            # --------------------------------------------------
+            # Actions when context activates
+            # --------------------------------------------------
+            actions:
+              lights_on:
+                - entity: light.e1
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 3
+
+                - entity: light.e2
+                  mode: circadian
+                  color: mired
+                  brightness_pct: circadian
+                  transition: 3
+
+          - id: essenszeiten_nein
+            activate: "on"
+            priority: 50
+            minimum_brightness: 5   # Prozent (0–100)
+            triggers:
+              - sensor: binary_sensor.ms2_occupancy
+              - sensor: binary_sensor.ms4_occupancy
+            enable:
+              sensor: input_boolean.motion_eval_enabled_esszimmer
+              state: "off"
+              invert: false
+            manual_timer:
+              enable:
+                sensor: input_boolean.manual_timer_esszimmer
+                state: "on"
+                invert: false
+            active_times:
+              - "06:00-07:59"
+              - "09:31-11:29"
+              - "16:30-19:59"
+            lux:
+              sensor: sensor.ms2_illuminance
+              below: 60
+            timeout_min: 30
+            transition_off_sec: 15
+            block_if_any_on:
+              - light.nothingblocking
+              - light.nothingblocking
+            # --------------------------------------------------
+            # Actions when context activates
+            # --------------------------------------------------
+            actions:
+              lights_on:
+                - entity: light.e1
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 3
+
+
+
+          - id: nacht
+            activate: "on"
+            priority: 20
+            minimum_brightness: 1   # Prozent (0–100)
+            triggers:
+              - sensor: binary_sensor.ms2_occupancy
+              - sensor: binary_sensor.ms4_occupancy
+            enable:
+              sensor: input_boolean.motion_eval_enabled_esszimmer
+              state: "off"
+              invert: false
+            manual_timer:
+              enable:
+                sensor: input_boolean.manual_timer_esszimmer
+                state: "on"
+                invert: false
+            active_times:
+              - "20:01-23:59"
+              - "00:00-05:59"
+            lux:
+              sensor: sensor.ms2_illuminance
+              below: 60
+            timeout_min: 5
+            transition_off_sec: 15
+            block_if_any_on:
+              - light.nothingblocking
+              - light.nothingblocking
+            # --------------------------------------------------
+            # Actions when context activates
+            # --------------------------------------------------
+            actions:
+              lights_on:
+                - entity: light.e1
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 3
+
+
+
+  wohnzimmer:
+    debug_level: 10            # overrides engine
+    priority: 0
+    zones:
+      sitzecke:
+        contexts:
+          - id: sitzecke
+            activate: "on"
+            priority: 90
+            minimum_brightness: 10   # Prozent (0–100)
+            triggers:
+              - sensor: binary_sensor.ms1_occupancy
+              - sensor: binary_sensor.ms3_occupancy
+            enable:
+              sensor: input_boolean.motion_eval_enabled_wohnzimmer
+              state: "off"
+              invert: false
+            manual_timer:
+              enable:
+                sensor: input_boolean.manual_timer_wohnzimmer
+                state: "on"
+                invert: false
+            active_times:
+              - "06:00-09:00"
+              - "16:00-23:59"
+              - "00:01-02:00"
+            lux:
+              sensor: sensor.ms1_illuminance
+              below: 60
+            timeout_min: 60
+            transition_off_sec: 15
+            block_if_any_on:
+              - light.e3_notuse
+              - light.e4_notuse
+            actions:
+              lights_on:
+                - entity: light.wand
+                  mode: circadian
+                  color: rgb
+                  brightness_pct: circadian
+                  transition: 3
+
+
+          - id: decke
+            activate: "on"
+            priority: 20
+            triggers:
+              - sensor: binary_sensor.ms1_occupancy
+              - sensor: binary_sensor.ms3_occupancy
+            enable:
+              sensor: input_boolean.motion_eval_enabled_wohnzimmer
+              state: "off"
+              invert: false
+            manual_timer:
+              enable:
+                sensor: input_boolean.manual_timer_wohnzimmer
+                state: "on"
+                invert: false
+            active_times:
+              - "02:00-06:00"
+            lux:
+              sensor: sensor.ms1_illuminance
+              below: 60
+            timeout_min: 30
+            transition_off_sec: 15
+            block_if_any_on:
+              - light.wand
+            actions:
+              lights_on:
+                - entity: light.w2
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 3
+

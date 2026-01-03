@@ -1,0 +1,58 @@
+import appdaemon.plugins.hass.hassapi as hass
+from astral import LocationInfo
+from astral.sun import sun
+from datetime import datetime, timedelta
+import math
+
+class SunAndMore(hass.Hass):
+
+    def initialize(self):
+        self.location_name = self.args["name"]
+        self.lat = float(self.args["lat"])
+        self.lon = float(self.args["lon"])
+
+        self.sensor = f"sensor.sun_{self.location_name.lower()}"
+
+        self.run_every(self.update, self.datetime(), 60)
+
+    def update(self, kwargs):
+        tz = self.get_timezone()
+        now = datetime.now(tz)
+
+        location = LocationInfo(
+            name=self.location_name,
+            region="",
+            timezone=str(tz),
+            latitude=self.lat,
+            longitude=self.lon
+        )
+
+        s = sun(location.observer, date=now.date(), tzinfo=tz)
+
+        elevation = self.sun_elevation(now)
+        azimuth = self.sun_azimuth(now)
+
+        self.set_state(
+            self.sensor,
+            state=round(elevation, 2),
+            attributes={
+                "friendly_name": f"Sun {self.location_name}",
+                "azimuth": round(azimuth, 1),
+                "sunrise": s["sunrise"].isoformat(),
+                "sunset": s["sunset"].isoformat(),
+                "solar_noon": s["noon"].isoformat(),
+                "midnight": (s["noon"] + timedelta(hours=12)).isoformat(),
+                "blue_hour_start": s["dawn"].isoformat(),
+                "blue_hour_end": s["sunrise"].isoformat(),
+                "day_length_min": round((s["sunset"] - s["sunrise"]).total_seconds() / 60, 1),
+                "unit_of_measurement": "°",
+                "icon": "mdi:white-balance-sunny"
+            }
+        )
+
+    def sun_elevation(self, now):
+        hour_angle = (now.hour + now.minute / 60 - 12) * 15
+        return max(-90, min(90, 90 - abs(hour_angle)))
+
+    def sun_azimuth(self, now):
+        return (now.hour * 15) % 360

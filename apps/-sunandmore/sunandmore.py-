@@ -1,0 +1,96 @@
+import appdaemon.plugins.hass.hassapi as hass
+from datetime import datetime
+import pytz
+from astral import LocationInfo
+from astral.sun import sun
+
+
+class SunAndMore(hass.Hass):
+
+    def initialize(self):
+        """
+        Liefert rein astronomische Daten:
+        - Sonnenauf/-untergang
+        - Astronomische / nautische / bürgerliche Dämmerung
+        - Blue Hour (bool)
+        - Elevation / Azimut
+        """
+
+        # Pflicht-Parameter
+        self.city = self.args["city"]
+        self.lat = float(self.args["lat"])
+        self.lon = float(self.args["lon"])
+
+        # Optional
+        self.tz_name = self.args.get("timezone", self.get_timezone())
+        self.sensor_name = self.args.get(
+            "sensor_name",
+            f"sun_{self.city.lower().replace(' ', '_')}"
+        )
+
+        self.tz = pytz.timezone(self.tz_name)
+
+        self.log(f"SunAndMore started for {self.city} ({self.lat}, {self.lon})")
+
+        # Initial + alle 60 Sekunden
+        self.run_every(self.update, self.datetime(), 60)
+
+    def update(self, kwargs):
+
+        now = datetime.now(self.tz)
+
+        location = LocationInfo(
+            name=self.city,
+            region="",
+            timezone=self.tz_name,
+            latitude=self.lat,
+            longitude=self.lon
+        )
+
+        s = sun(location.observer, date=now.date(), tzinfo=self.tz)
+
+        elevation = self.sun_elevation()
+
+        blue_hour = (
+            s["sunset"] <= now <= s["dusk"]
+            or
+            s["dawn"] <= now <= s["sunrise"]
+        )
+
+        self.set_state(
+            f"sensor.{self.sensor_name}",
+            state=round(elevation, 2),
+            attributes={
+                "friendly_name": f"{self.city} Sun info",
+
+                # Aktuell
+                "elevation": round(elevation, 2),
+                "azimuth": round(self.sun_azimuth(), 2),
+                "blue_hour": blue_hour,
+
+                # Zeiten
+                "sunrise": s["sunrise"].strftime("%H:%M"),
+                "sunset": s["sunset"].strftime("%H:%M"),
+                "dawn": s["dawn"].strftime("%H:%M"),
+                "dusk": s["dusk"].strftime("%H:%M"),
+                "noon": s["noon"].strftime("%H:%M"),
+
+                # ISO für Diagramme
+                "sunrise_ts": s["sunrise"].isoformat(),
+                "sunset_ts": s["sunset"].isoformat(),
+
+                "unit_of_measurement": "°",
+                "icon": "mdi:weather-sunset"
+            }
+        )
+
+    # ---------------------------------------------------------
+    # Helfer
+    # ---------------------------------------------------------
+
+    def sun_elevation(self):
+        return float(self.get_state("sun.sun", attribute="elevation"))
+
+    def sun_azimuth(self):
+        return float(self.get_state("sun.sun", attribute="azimuth"))
+    

@@ -1,0 +1,19 @@
+circadian_global:
+  module: circadian_lighting
+  class: CircadianLighting
+
+  # Quelle aus sun_and_more
+  sun_sensor: sensor.sun_bordeaux
+
+  # Globaler Blue Hour Schalter
+  blue_hour_switch: input_boolean.lightning_blue_hour
+
+  # Update Intervall in Sekunden
+  update_interval: 60
+
+
+# circadian_bordeaux:
+#   sun_sensor: sensor.sun_bordeaux
+# 
+# circadian_daellikon:
+#   sun_sensor: sensor.sun_daellikon

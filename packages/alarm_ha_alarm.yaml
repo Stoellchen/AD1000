@@ -180,7 +180,6 @@ automation:
             {{ ns.list }}
 
 
-
   - id: 'alarm_arming'
     alias: "ALARM arming (alarm_ha_alarm)"
     description: ""

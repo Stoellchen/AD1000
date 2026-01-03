@@ -1,0 +1,215 @@
+################################################################################
+#
+# Brain Lights Engine – Configuration
+#
+# This file defines ALL lighting behavior.
+# The engine itself contains NO hardcoded logic about rooms, zones or lights.
+#
+################################################################################
+
+
+# ==============================================================================
+# GLOBAL ENGINE SETTINGS
+# ==============================================================================
+
+engine:
+
+  # Enable / disable the entire engine
+  enabled: true
+
+  # ---------------------------------------------------------------------------
+  # Debug verbosity level (1–9)
+  #
+  # 1 = Critical only (startup, fatal errors)
+  # 2 = Configuration loading & validation
+  # 3 = Trigger detection (motion, button, sensor)
+  # 4 = Time / Lux / Presence evaluation
+  # 5 = Context selection & priority resolution
+  # 6 = Activation (scene / light / switch)
+  # 7 = Timer handling (start, extend, cancel)
+  # 8 = Brightness / circadian calculations
+  # 9 = Very verbose (loops, internal state dumps)
+  # ---------------------------------------------------------------------------
+  debug_level: 4
+
+  # ---------------------------------------------------------------------------
+  # Default behavior when multiple contexts match
+  #
+  # exclusive = only ONE context can be active at a time per room
+  # parallel  = multiple contexts may be active (advanced use)
+  # ---------------------------------------------------------------------------
+  mode: exclusive
+
+  # ---------------------------------------------------------------------------
+  # If true, new motion during an active context
+  # will EXTEND the timeout instead of restarting logic
+  # ---------------------------------------------------------------------------
+  reset_timeout_on_motion: true
+
+
+
+# ==============================================================================
+# ROOMS
+# Each room may contain multiple contexts.
+# Contexts decide WHAT happens, WHEN, and FOR HOW LONG.
+# ==============================================================================
+
+rooms:
+
+  # ============================================================================
+  # ESSZIMMER (DINING ROOM)
+  # ============================================================================
+
+  esszimmer:
+
+    description: >
+      Dining room with multiple light and switch groups.
+      Lighting behavior depends on time, lux level and motion.
+
+    # -------------------------------------------------------------------------
+    # Default lux condition for the room
+    # Lighting is only allowed if current lux is BELOW this threshold.
+    # Can be overridden per context.
+    # -------------------------------------------------------------------------
+    lux:
+      sensor: sensor.lux_esszimmer
+      threshold: 120
+
+    # -------------------------------------------------------------------------
+    # Default transition when lights are turned OFF
+    # (used if not defined in the activation block)
+    # -------------------------------------------------------------------------
+    default_transition_off_sec: 20
+
+
+    # ==========================================================================
+    # CONTEXTS
+    #
+    # A context represents ONE lighting situation.
+    # Only ONE context can be active at a time (exclusive mode).
+    # Higher priority contexts override lower ones.
+    # ==========================================================================
+
+    contexts:
+
+      # ------------------------------------------------------------------------
+      # EVENING – DINING MODE
+      # ------------------------------------------------------------------------
+      - id: dinner_evening
+
+        description: >
+          Evening dining mode.
+          Two different light groups with different timeouts.
+
+        # Higher number = higher priority
+        priority: 20
+
+        # Time windows when this context is allowed
+        # Supports ranges over midnight (e.g. 22:00-07:00)
+        active_times:
+          - "18:00-20:00"
+
+        # Presence requirement
+        # 1 = at least one person at home
+        # 2 = both persons
+        # 0 or omitted = ignore presence
+        persons_required: 1
+
+        # Context-specific lux override
+        lux:
+          sensor: sensor.lux_esszimmer
+          threshold: 150
+
+        # Any of these triggers may activate the context
+        triggers:
+          - sensor: binary_sensor.motion_esszimmer
+
+
+        # ----------------------------------------------------------------------
+        # ACTIVATION BLOCKS
+        #
+        # Each block defines WHAT is switched on and HOW.
+        # Multiple blocks allow different timeouts and behaviors.
+        # ----------------------------------------------------------------------
+        activate:
+
+          # --------------------------------------------------------------------
+          # LIGHT GROUP – LONG TIMEOUT
+          # --------------------------------------------------------------------
+          - type: light
+
+            entities:
+              - light.e1
+              - light.e2
+
+            behavior:
+              timeout_min: 60
+              transition_off_sec: 30
+
+            circadian:
+              enabled: true
+              mode: brightness
+              min: 60
+              max: 180
+
+
+          # --------------------------------------------------------------------
+          # LIGHT GROUP – SHORT TIMEOUT
+          # --------------------------------------------------------------------
+          - type: light
+
+            entities:
+              - light.e3
+              - light.e4
+
+            behavior:
+              timeout_min: 30
+              transition_off_sec: 15
+
+            circadian:
+              enabled: true
+              mode: brightness
+              min: 40
+              max: 120
+
+
+          # --------------------------------------------------------------------
+          # SWITCH GROUP (NO DIMMING, NO TRANSITION)
+          # --------------------------------------------------------------------
+          - type: switch
+
+            entities:
+              - switch.esszimmer_stehleuchte
+
+            behavior:
+              timeout_min: 60
+              # Switches are simply turned OFF after timeout
+              # No transition or brightness handling applies
+
+
+      # ------------------------------------------------------------------------
+      # DAY MODE – BLOCK LIGHTING IF ROOM IS BRIGHT
+      # ------------------------------------------------------------------------
+      - id: dining_day_block
+
+        description: >
+          During daytime, if the room is bright enough,
+          all lighting is suppressed.
+
+        # Very high priority to override all other contexts
+        priority: 100
+
+        active_times:
+          - "09:00-18:00"
+
+        lux:
+          sensor: sensor.lux_esszimmer
+          threshold: 300
+          # If lux is ABOVE this value, lighting is blocked
+
+        triggers:
+          - sensor: binary_sensor.motion_esszimmer
+
+        activate:
+          type: none
+          # Explicitly do nothing
