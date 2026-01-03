@@ -1,0 +1,24 @@
+# -----------------------------------------------------------------------------
+# Script: Git Update AD1000
+#
+# Zweck:
+# - Manuelles Auslösen des Git-Updates per Button oder Automation
+# - Ruft das shell_command.git_update_ad1000 auf
+#
+# Vorteil:
+# - Sauberer HA-Service
+# - Kann geloggt, automatisiert oder erweitert werden
+# -----------------------------------------------------------------------------
+
+script:
+  git_update_ad1000:
+    alias: "Git Update AD1000 (git_ha_update_git)"
+    description: "Commit & Push aller Änderungen im AD1000 Repo"
+    icon: mdi:github
+    sequence:
+      - service: shell_command.git_update_ad1000
+        data:
+          message: >
+            Manual update via HA
+            {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+

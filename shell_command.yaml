@@ -11,3 +11,34 @@
 #   Sie soll nur die Befehle selbst enthalten.
 #   shell_command:
 run_backup_pfsense: /bin/bash /config/scripts/pfsense/backup.sh
+
+
+# -----------------------------------------------------------------------------
+# Git Update für AD1000
+#
+# Zweck:
+# - Führt einen sicheren Git-Commit + Push aus
+# - NUR wenn es tatsächlich Änderungen gibt
+# - Wird von Home Assistant (Script / Button / Automation) getriggert
+#
+# Ablauf:
+# 1. Wechsel nach /config (Repo-Root)
+# 2. Prüfen, ob es Änderungen gibt (git diff --quiet)
+#    - Exit 0  -> keine Änderungen -> nichts tun
+#    - Exit 1  -> Änderungen vorhanden -> weiter
+# 3. Alle Änderungen hinzufügen (git add .)
+# 4. Commit mit fixer Message
+# 5. Push zu GitHub
+#
+# Wichtig:
+# - Keine leeren Commits
+# - Keine AppDaemon-Abhängigkeit
+# - Nutzt exakt den getesteten CLI-Workflow
+# -----------------------------------------------------------------------------
+git_update_ad1000: >
+  cd /config &&
+  git diff --quiet || (
+    git add . &&
+    git commit -m "{{ message }}" &&
+    git push
+  )
