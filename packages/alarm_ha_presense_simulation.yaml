@@ -40,6 +40,8 @@ input_select:
       - off
       - away
       - night
+      - vacation
+      - by_pass
 
 
 template:
@@ -80,6 +82,18 @@ group:
       - light.dummy
   presense_simulationen_group_night:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
     name: "Presense Simulation Group NIGHT (Dynamic - label presense_night) (alarm_ha_presense_simulation)"
+    entities:
+      - light.kerze
+      - switch.lichterkette_wohnzimmer
+      - switch.fake_tv
+  presense_simulationen_group_vacation:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presense Simulation Group VACATION (Dynamic - label presense_vacation) (alarm_ha_presense_simulation)"
+    entities:
+      - light.kerze
+      - switch.lichterkette_wohnzimmer
+      - switch.fake_tv
+  presense_simulationen_group_by_pass:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presense Simulation Group BY_PASS (Dynamic - label presense_by_pass) (alarm_ha_presense_simulation)"
     entities:
       - light.kerze
       - switch.lichterkette_wohnzimmer
@@ -146,6 +160,8 @@ automation:
       # Update group on Home Assistant start
       - platform: homeassistant
         event: start
+      - platform: event
+        event_type: automation_reloaded
 
       # Periodic refresh to catch label changes
       - platform: time_pattern
@@ -222,6 +238,62 @@ automation:
             {% endfor %}
             {{ ns.list }}
 
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presense_simulationen_group enthält near und far
+          object_id: presense_simulationen_group_vacation
+
+          # Build entity list dynamically from label `presense_far` oder `presense_near`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+
+            {% for entity in label_entities('presense_near') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+
+            {% for entity in label_entities('presense_far') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {% for entity in label_entities('presense_night') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presense_simulationen_group enthält near und far
+          object_id: presense_simulationen_group_by_pass
+
+          # Build entity list dynamically from label `presense_far` oder `presense_near`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+
+            {% for entity in label_entities('presense_near') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+
+            {% for entity in label_entities('presense_far') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {% for entity in label_entities('presense_night') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {{ ns.list }}
+
 
 
   - id: presence_simulation_profile_switch
@@ -259,8 +331,35 @@ automation:
                   object_id: presense_simulationen_target
                   entities: "{{ states.group.presense_simulationen_group_night.attributes.entity_id }}"
               - service: presence_simulation.start
+          # ----------------------------------------------------
+          # VACATION → FAR only
+          # ----------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: input_select.presense_simulation_profile
+                state: vacation
+            sequence:
+              - service: group.set
+                data:
+                  object_id: presense_simulationen_target
+                  entities: "{{ states.group.presense_simulationen_group_vacation.attributes.entity_id }}"
+              - service: presence_simulation.start
+          # ----------------------------------------------------
+          # BY_PASS → FAR only
+          # ----------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: input_select.presense_simulation_profile
+                state: by_pass
+            sequence:
+              - service: group.set
+                data:
+                  object_id: presense_simulationen_target
+                  entities: "{{ states.group.presense_simulationen_group_by_pass.attributes.entity_id }}"
+              - service: presence_simulation.start
         default:
           - service: presence_simulation.stop
+
 
   - id: alarm_presence_profile_sync
     alias: "ALARM → Presence Simulation Profile Sync"

@@ -59,9 +59,12 @@ input_boolean:
 
 input_text:
   alarm_trigger_sensor:
-    name: last triggered Sensor
+    name: Alarm – Sensorname
     initial: none
-
+  alarm_trigger_room:
+    name: Alarm – Raum
+    initial: none
+    
 
 sensor:
   - platform: template
@@ -108,6 +111,10 @@ group:
     name: "Alarm Sensors FAR (Dynamic - label alarm_sensor_far) (alarm_ha_presense_simulation)"
     entities:
       - sensor.ms1_bewegung
+  alarm_sensor_group_night:       #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Alarm Sensors NIGHT (Dynamic - label alarm_sensor_night) (alarm_ha_presense_simulation)"
+    entities:
+      - sensor.ms1_bewegung
 
 
 
@@ -125,6 +132,8 @@ automation:
       # Update group on Home Assistant start
       - platform: homeassistant
         event: start
+      - platform: event
+        event_type: automation_reloaded
 
       # Periodic refresh to catch label changes
       - platform: time_pattern
@@ -145,6 +154,11 @@ automation:
               {% set ns.list = ns.list + [e] %}
             {% endfor %}
             {% for e in label_entities('ALARM_SENSOR_FAR') %}
+              {% if e not in ns.list %}
+                {% set ns.list = ns.list + [e] %}
+              {% endif %}
+            {% endfor %}
+            {% for e in label_entities('ALARM_SENSOR_NIGHT') %}
               {% if e not in ns.list %}
                 {% set ns.list = ns.list + [e] %}
               {% endif %}
@@ -175,6 +189,20 @@ automation:
           entities: >
             {% set ns = namespace(list=[]) %}
             {% for e in label_entities('ALARM_SENSOR_FAR') %}
+              {% set ns.list = ns.list + [e] %}
+            {% endfor %}
+            {{ ns.list }}
+      #
+      # ------------------------------------------------------------------
+      # NIGHT group only
+      # ------------------------------------------------------------------
+      #
+      - service: group.set
+        data:
+          object_id: alarm_sensor_group_night
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for e in label_entities('ALARM_SENSOR_NIGHT') %}
               {% set ns.list = ns.list + [e] %}
             {% endfor %}
             {{ ns.list }}
@@ -299,88 +327,74 @@ automation:
           prio: H
           title: "Alarmanlage ausgelöst"
           message: >
-            ALARM! The alarm has been triggered - sensor: {{ states.input_text.alarm_trigger_sensor.state }}
-      - service: script.turn_on
-        entity_id: script.alarm_security_alarm_triggered
+            ALARM! Der Alarm wurde duch den Sensor {{ input_text.alarm_trigger_sensor }} im Raum   {{ input_text.alarm_trigger_room }} ausgelöst um {{ states('sensor.time') }}
 
 
-  - id: 'alarm_trigger_with_motion_sensors'
-    alias: "ALARM trigger with motion sensor (alarm_ha_alarm)"
+
+  - id: alarm_trigger_with_grouped_sensors
+    alias: "ALARM trigger with grouped sensors (alarm_ha_alarm)"
+    mode: single
     trigger:
-    - platform: state
-      entity_id: binary_sensor.ms1_bewegung
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.ms2_bewegung
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.ms3_bewegung
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.ms4_bewegung
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.ms5_bewegung
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.ms6_bewegung
-      to: 'open'
-    - platform: state
-      entity_id: binary_sensor.ms7_bewegung
-      to: 'on'
+      - platform: state
+        entity_id:
+          - group.alarm_sensor_group_near
+          - group.alarm_sensor_group_far
+          - group.alarm_sensor_group_night
+        to: "on"
     condition:
-      condition: or
-      conditions:
-      - condition: state
-        entity_id: alarm_control_panel.my_alarm
-        state: armed_home
-      - condition: state
-        entity_id: alarm_control_panel.my_alarm
-        state: armed_away
+      - condition: template
+        value_template: >
+          {% set mode = states('alarm_control_panel.my_alarm') %}
+          {% if mode == 'armed_away' %}
+            {{ trigger.entity_id in [
+              'group.alarm_sensor_group_near',
+              'group.alarm_sensor_group_far'
+            ] }}
+          {% elif mode == 'armed_home' %}
+            {{ trigger.entity_id == 'group.alarm_sensor_group_far' }}
+          {% elif mode == 'armed_night' %}
+            {{ trigger.entity_id == 'group.alarm_sensor_group_night' }}
+          {% elif mode == 'armed_vacation' %}
+            {{ trigger.entity_id in [
+              'group.alarm_sensor_group_near',
+              'group.alarm_sensor_group_far'
+            ] }}
+          {% else %}
+            false
+          {% endif %}
     action:
-    - service: input_text.set_value
-      target:
-        entity_id: input_text.alarm_trigger_sensor
-      data:
-        value: "{{ trigger.entity_id }}"
-    - service: alarm_control_panel.alarm_trigger
-      entity_id: alarm_control_panel.my_alarm
+      # --------------------------------------------------
+      # Merken: Entity
+      # --------------------------------------------------
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.alarm_trigger_sensor
+        data:
+           value: >
+              {% if trigger.to_state.attributes.entity_id is defined
+                    and trigger.to_state.attributes.entity_id | length > 0 %}
+                {{ trigger.to_state.attributes.entity_id[0] }}
+              {% else %}
+                {{ trigger.to_state.attributes.friendly_name }}
+              {% endif %}
+      # --------------------------------------------------
+      # Merken: Raum
+      # --------------------------------------------------
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.alarm_trigger_room
+        data:
+          value: >
+            {% set ent = states('input_text.alarm_trigger_sensor') %}
+            {{ area_name(ent) if ent not in ['unknown','unavailable','none',''] else 'unbekannt' }}
+      # -------------------------------------------------
+      # Alarm auslösen
+      # --------------------------------------------------
+      - service: alarm_control_panel.alarm_trigger
+        target:
+          entity_id: alarm_control_panel.my_alarm
 
 
-#
-#
-# this generates errors
-#
-#
-#  - id: 'alarm_send_notification_when_alarm_is_disarmed'
-#    alias: alarm_send_notification_when_alarm_is_disarmed
-#    trigger:
-#      - platform: state
-#        entity_id: alarm_control_panel.my_alarm
-#        to: 'disarmed'
-#    action:
-#      - service: script.turn_on
-#        entity_id: script.alarm_security_alarm_disarmed
-#      - service: notify.notify
-#        data:
-#          message: "ALARM! The alarm is Disarmed at {{ states('sensor.date_time') }}"
-#      - service: light.turn_on
-#        data:
-#          brightness_pct: 10
-#          color_name: 'green'
-#        entity_id: light.alarm
-#      - service: script.turn_on
-#        entity_id: alarm_turn_presence_simulation_off
-#      - service: notify.sony
-#        data:
-#          title: Security System
-#          message: "ALARM! The alarm is Disarmed at {{ states('sensor.date_time') }}"
-#          data:
-#            fontsize: large
-#            position: top-right
-#            duration: 5
-#            transparency: 95%
-#            color: green
 
   - id: 'alarm_send_notification_when_alarm_is_in_pending_status'
     alias: 'ALARM send notification when alarm is in pending status (alarm_ha_alarm)'
@@ -414,11 +428,6 @@ automation:
     condition: []
     action:
       - service: script.turn_on
-        metadata: {}
-        data: {}
-        target:
-          entity_id: script.alarm_turn_presence_simulation_off
-      - service: script.turn_on
         entity_id: script.alarm_security_alarm_disarmed
       - service: script.notify_dispatch
         data:
@@ -439,27 +448,80 @@ automation:
     mode: single
     trigger:
       - platform: state
-        entity_id:
-          - alarm_control_panel.my_alarm
-        to: armed_away
-    condition: []
+        entity_id: alarm_control_panel.my_alarm
+        to:
+          - armed_away
+          - armed_night
+          - armed_vacation
+          - armed_custom_bypass
     action:
-      - service: script.turn_on
-        metadata: {}
-        data: {}
-        target:
-          entity_id: script.alarm_turn_presence_simulation_on
-      - service: script.notify_dispatch
-        data:
-          prio: L
-          title: "Alarmanlage armed away"
-          message: >
-            ALARM! Die Alarmanlage ist scharf Status: abwesend seit {{ states('sensor.time') }}
-      - service: script.turn_on
-        metadata: {}
-        data: {}
-        target:
-          entity_id: script.alarm_turn_presence_simulation_on
+      - choose:
+
+          # ----------------------------
+          # AWAY
+          # ----------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_away
+            sequence:
+              - service: script.alarm_presence_away
+              - service: script.notify_dispatch
+                data:
+                  prio: L
+                  title: "Alarmanlage armed away"
+                  message: >
+                    ALARM! Die Alarmanlage ist scharf (abwesend) seit {{ states('sensor.time') }}
+
+          # ----------------------------
+          # NIGHT
+          # ----------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_night
+            sequence:
+              - service: script.alarm_presence_night
+              - service: script.notify_dispatch
+                data:
+                  prio: L
+                  title: "Alarmanlage armed night"
+                  message: >
+                    ALARM! Die Alarmanlage ist scharf (Nachtmodus) seit {{ states('sensor.time') }}
+
+          # ----------------------------
+          # VACATION
+          # ----------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_vacation
+            sequence:
+              - service: script.alarm_presence_vacation
+              - service: script.notify_dispatch
+                data:
+                  prio: L
+                  title: "Alarmanlage armed vacation"
+                  message: >
+                    ALARM! Die Alarmanlage ist scharf (Urlaubsmodus) seit {{ states('sensor.time') }}
+
+          # ----------------------------
+          # CUSTOM BYPASS
+          # ----------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_custom_bypass
+            sequence:
+              - service: script.alarm_presence_custom_bypass
+              - service: script.notify_dispatch
+                data:
+                  prio: L
+                  title: "Alarmanlage armed custom bypass"
+                  message: >
+                    ALARM! Die Alarmanlage ist scharf (Benutzerdefinierter Modus) seit {{ states('sensor.time') }}
+
+
 
 #
 #
