@@ -1,22 +1,63 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
 
-# HA-safe environment
-export HOME=/root
-export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-cd /config
+## https://community.home-assistant.io/t/sharing-your-configuration-on-github/195144/38
 
-MSG="${1:-HA trigger: git update}"
 
-git add .
+NOW=$(date +"%d/%m/%Y %H:%M")
+echo "${NOW} Git Update" > /config/logs/git.log 2>&1
 
-git commit -m "$MSG" || {
-  echo "Nothing to commit"
-  exit 0
-}
+# set's the WDIR to the current directory (location of the script)
+WDIR=$(cd `dirname $0` && pwd)
+ROOT=$(dirname ${WDIR})
 
-GIT_SSH_COMMAND="/usr/bin/ssh -i /root/.ssh/id_ed25519 \
-  -o UserKnownHostsFile=/config/.ssh/known_hosts \
-  -o StrictHostKeyChecking=yes" \
-git push
+# Update fake_secrets.yaml
+#echo "Updating fake_secrets.yaml"
+if [ -x "${WDIR}/make_fake_secrets.sh" ]; then
+  "${WDIR}/make_fake_secrets.sh"
+else
+  echo "Error: make_fake_secrets.sh not found or not executable"
+  # exit 1
+fi
+
+# Ensure github.com is in the known_hosts files
+# this is required as every upgrade of HA resets this
+KNOWN_HOSTS_FILE="/root/.ssh/known_hosts"
+HOST="github.com"
+
+# Check if the host is already in known_hosts
+if ! grep -q "$HOST" "$KNOWN_HOSTS_FILE"; then
+  echo "Adding $HOST to known_hosts..."
+  ssh-keyscan "$HOST" >> "$KNOWN_HOSTS_FILE"
+else
+  echo "$HOST already present in known_hosts."
+fi
+
+
+# Git config
+git config --global user.name Stoellchen
+git config --global user.email homeasssistantgithub-reg@zwooky.com
+
+# Add new files
+git add . >> /config/logs/git.log 2>&1
+echo "-----> git add done"
+
+git status
+echo "-----> git status done"
+
+# Use first argument as commit message, or prompt if missing/blank
+if [ -n "$1" ]; then
+  CHANGE_MSG="$1"
+else
+  echo -n "Enter the Description for the Change: [Minor Edit] "
+  read CHANGE_MSG
+  CHANGE_MSG=${CHANGE_MSG:-Minor Edit}
+fi
+
+# Commit and push
+git commit -m "${CHANGE_MSG}" >> /config/logs/git.log 2>&1
+echo "-----> git commit done"
+
+git push origin main >> /config/logs/git.log 2>&1
+echo "-----> git push done"
+echo "-----> all done"
