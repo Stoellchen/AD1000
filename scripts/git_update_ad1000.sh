@@ -23,7 +23,8 @@ fi
 
 # ---------- SSH / known_hosts ----------
 KNOWN_HOSTS="/config/.ssh/known_hosts"
-SSH_KEY="/root/.ssh/id_ed25519"
+# SSH_KEY="/root/.ssh/id_ed25519"
+SSH_KEY="/config/.ssh/id_ed25519"
 
 mkdir -p /config/.ssh
 touch "$KNOWN_HOSTS"
