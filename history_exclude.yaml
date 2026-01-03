@@ -3,21 +3,41 @@
 ##  history EXCLUDE Configuration
 ##
 ################################################################################################################
+# exclude map (Optional)
+# Configure which integrations should be excluded from recordings. (Configure Filter)
+# 
+# domains list (Optional)
+# The list of domains to be excluded from recordings.
+# 
+# entity_globs list (Optional)
+# Exclude all entities matching a listed pattern from recordings (e.g., sensor.weather_*).
+# 
+# entities list (Optional)
+# The list of entity ids to be excluded from recordings.
+# 
+# event_types list (Optional)
+# The list of event types to be excluded from recordings.
+
 
 entity_globs:
-  - sensor.vacuum_*
-  - automation.vacuum_*
-  - sensor.flightradar24*
-  - switch.echo_*                 # alle Echo-Schalter
-  - select.echo_*                 # alle Echo-Select
-  - media_player.echo_*           # alle Echo-media_player
-  - binary_sensor.echo_*          # alle Echo-Sensoren
-  - switch.ble_*                  # alle BLE-Sensoren
-  - select.ble_*                  # alle BLE-Sensoren
-  - sensor.ble_*                  # alle BLE-Sensoren
-  - number.ble_*                  # alle BLE-Sensoren
-  - switch.atom_*                 # alle Atom-Einheiten
-  - sensor.m5dial_*    # alles vom M5 Dial
+## selektiert start ------------------------------------------------------------------
+  - sensor.*distance_to_ble_*
+  - sensor.backup_state
+## selektiert end --------------------------------------------------------------------
+## übernommen von beispiel setup
+#  - sensor.vacuum_*
+#  - automation.vacuum_*
+#  - switch.echo_*                 # alle Echo-Schalter
+#  - select.echo_*                 # alle Echo-Select
+#  - media_player.echo_*           # alle Echo-media_player
+#  - binary_sensor.echo_*          # alle Echo-Sensoren
+#  - switch.ble_*                  # alle BLE-Sensoren
+#  - select.ble_*                  # alle BLE-Sensoren
+#  - sensor.ble_*                  # alle BLE-Sensoren
+#  - number.ble_*                  # alle BLE-Sensoren
+#  - switch.atom_*                 # alle Atom-Einheiten
+#  - sensor.m5dial_*    # alles vom M5 Dial
+#  - sensor.flightradar24*
 entities:
   - sensor.rest980
   - camera.roomba

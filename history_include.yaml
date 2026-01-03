@@ -3,6 +3,17 @@
 ##  history INCLUDE Configuration
 ##
 ################################################################################################################
+# include map (Optional)
+# Configure which integrations should be included in recordings. If set, all other entities will not be recorded. (Configure Filter)
+# 
+# domains list (Optional)
+# The list of domains to be included in the recordings.
+# 
+# entity_globs list (Optional)
+# Include all entities matching a listed pattern from recordings (e.g., sensor.weather_*).
+
+# entities list (Optional)
+# The list of entity ids to be included in the recordings.
 
 domains:
   - light
@@ -14,9 +25,9 @@ domains:
   - lock
   - media_player
   - vacuum
-  - binary_sensor
   - camera
   - alarm_control_panel
+  - binary_sensor
   - input_boolean
   - input_number
   - input_select
@@ -26,7 +37,28 @@ domains:
   - automation
   - person
   - zone
+  - weather           # weather 
 entity_globs:
   - sensor.vacuum_*
   - automation.vacuum_*
   - sensor.flightradar24*
+  - sensor.vmplex001
+  # ---energy start -----------------
+  - sensor.*_current
+  - sensor.*_energy
+  - sensor.*_energy_sum
+  - sensor.*_power
+  - sensor.*_voltage
+  # ---energy end -----------------
+  # ---weather start -----------------
+  - sensor.netatmo_*
+  - sensor.arcachon_*
+  - sensor.bordeaux_*
+  - sensor.la_rochelle_*
+  - sensor.mimizan_*
+  - sensor.marmande_*
+  - sensor.pornichet_*
+  - sensor.royan_*
+  - sensor.vieux_boucau_*
+  # ---weather end -----------------
+

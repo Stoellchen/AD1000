@@ -18,28 +18,28 @@ alarm_control_panel:
     name: my_alarm
     code: !secret alarm_code
     code_arm_required: true     # (optional, default: true)   If true, the code is required to arm the alarm.
-    arming_time: 10             # (optional, default: 60)     The time in seconds of the ‘arming’ state before effecting a state change.
-    delay_time: 10              # (optional, default: 60)     The time in seconds of the ‘pending’ state before triggering the alarm.
-    trigger_time: 20           # (optional, default: 120)    The time in seconds of the ‘triggered’ state in which the alarm is firing. 
+    arming_time: 30             # (optional, default: 60)     The time in seconds of the ‘arming’ state before effecting a state change.
+    delay_time: 60              # (optional, default: 60)     The time in seconds of the ‘pending’ state before triggering the alarm.
+    trigger_time: 120           # (optional, default: 120)    The time in seconds of the ‘triggered’ state in which the alarm is firing. 
     armed_custom_bypass:
       arming_time: 10           # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
       trigger_time: 20         # (optional)                  State specific setting for trigger_time (all states except triggered)
       delay_time: 10            # (optional)                  State specific setting for delay_time (all states except triggered)
     armed_home:
       arming_time: 5            # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
-      trigger_time: 10         # (optional)                  State specific setting for trigger_time (all states except triggered)
-      delay_time: 5             # (optional)                  State specific setting for delay_time (all states except triggered)
+      trigger_time: 60         # (optional)                  State specific setting for trigger_time (all states except triggered)
+      delay_time: 120             # (optional)                  State specific setting for delay_time (all states except triggered)
     armed_away:
-      arming_time: 10           # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
-      trigger_time: 10         # (optional)                  State specific setting for trigger_time (all states except triggered)
-      delay_time: 10            # (optional)                  State specific setting for delay_time (all states except triggered)
+      arming_time: 30           # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
+      trigger_time: 60         # (optional)                  State specific setting for trigger_time (all states except triggered)
+      delay_time: 120            # (optional)                  State specific setting for delay_time (all states except triggered)
     armed_night:
-      arming_time: 10           # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
-      trigger_time: 10         # (optional)                  State specific setting for trigger_time (all states except triggered)
-      delay_time: 10            # (optional)                  State specific setting for delay_time (all states except triggered)
+      arming_time: 30           # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
+      trigger_time: 60         # (optional)                  State specific setting for trigger_time (all states except triggered)
+      delay_time: 120            # (optional)                  State specific setting for delay_time (all states except triggered)
     armed_vacation:
-      arming_time: 10           # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
-      trigger_time: 10         # (optional)                  State specific setting for trigger_time (all states except triggered)
+      arming_time: 30           # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
+      trigger_time: 60         # (optional)                  State specific setting for trigger_time (all states except triggered)
       delay_time: 10            # (optional)                  State specific setting for delay_time (all states except triggered)
     disarmed:
       # arming_time: 60         # (optional)                  State specific setting for arming_time (all states except disarmed and triggered)
@@ -229,7 +229,7 @@ automation:
           prio: M
           title: "Alarmanlage arming"
           message: >
-            ALARM! Die Alarmanlage ist im status pending um {{ states('sensor.time') }}
+            ALARM! Die Alarmanlage ist im status arming um {{ states('sensor.time') }}
 
   - id: 'alarm_presence_somebody_is_coming_home_disarmed'
     alias: "ALARM presence somebody is coming home diasrmed (alarm_ha_alarm)"
@@ -273,19 +273,10 @@ automation:
         entity_id:
           - binary_sensor.template_occupied_home_1
         to: "off"
-#      - platform: state
-#        entity_id: group.family
-#        to: not_home
-#      - platform: state
-#        entity_id: group.family
-#        to: unavailable
-#      - platform: state
-#        entity_id: group.family
-#        to: unknown
-#      - platform: state
-#        entity_id: group.family
-#        to: away
     condition:
+      - condition: state
+        entity_id: alarm_control_panel.my_alarm
+        state: disarmed
     action:
       - service: alarm_control_panel.alarm_arm_away
         data:
@@ -410,10 +401,10 @@ automation:
         entity_id: light.alarm
       - service: script.notify_dispatch
         data:
-          prio: M
+          prio: L
           title: "Alarmanlage pending"
           message: >
-            ALARM! Die Alarmanlage ist im status pending um {{ states('sensor.time') }}
+            ALARM! Die Alarmanlage ist im status pending seit {{ states('sensor.time') }}
 
 
   - id: alarm_send_notification_when_alarm_is_disarmed
