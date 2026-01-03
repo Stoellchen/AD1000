@@ -1,0 +1,23 @@
+##################################################################################################################
+##
+##  history EXCLUDE Configuration
+##
+################################################################################################################
+
+entity_globs:
+  - sensor.vacuum_*
+  - automation.vacuum_*
+  - sensor.flightradar24*
+  - switch.echo_*                 # alle Echo-Schalter
+  - select.echo_*                 # alle Echo-Select
+  - media_player.echo_*           # alle Echo-media_player
+  - binary_sensor.echo_*          # alle Echo-Sensoren
+  - switch.ble_*                  # alle BLE-Sensoren
+  - select.ble_*                  # alle BLE-Sensoren
+  - sensor.ble_*                  # alle BLE-Sensoren
+  - number.ble_*                  # alle BLE-Sensoren
+  - switch.atom_*                 # alle Atom-Einheiten
+  - sensor.m5dial_*    # alles vom M5 Dial
+entities:
+  - sensor.rest980
+  - camera.roomba

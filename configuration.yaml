@@ -45,7 +45,7 @@ python_script:
 ###############################################################################################
 ifttt:
   key:
-    ZWOOKY: n2-58e6LAMN94QaKtgteu_SSz_ppVzXzUz7-gC4yOk8
+    ZWOOKY: !secret ifttt_key_ZWOOKY
 #    YOUR_KEY_NAME2: YOUR_API_KEY2
 
 
@@ -63,52 +63,53 @@ logbook:
       - switch.atom_*      # alle Atom-Einheiten
       - sensor.m5dial_*    # alles vom M5 Dial
 
-recorder:
-  db_url: postgresql://homeassistant:srinagar@postgresql001.main.arpa:5432/homeassistant_db
-  purge_keep_days: 60
-  commit_interval: 30
-  auto_purge: true
-  auto_repack: true
-
-  exclude:
-    entity_globs:
-      - sensor.vacuum_*
-      - automation.vacuum_*
-      - sensor.flightradar24*
-      - switch.echo_*      # alle Echo-Schalter
-      - select.echo_*      # alle Echo-Select
-      - media_player.echo_*      # alle Echo-media_player
-      - binary_sensor.echo_*      # alle Echo-Sensoren
-      - switch.ble_*       # alle BLE-Sensoren
-      - select.ble_*       # alle BLE-Sensoren
-      - sensor.ble_*       # alle BLE-Sensoren
-      - number.ble_*       # alle BLE-Sensoren
-      - switch.atom_*      # alle Atom-Einheiten
-      - sensor.m5dial_*    # alles vom M5 Dial
-    entities:
-      - sensor.rest980
-      - camera.roomba
+# recorder:
+#   db_url: !secret recorder_db_url
+#   purge_keep_days: 60
+#   commit_interval: 30
+#   auto_purge: true
+#   auto_repack: true
+# 
+#   exclude:
+#     entity_globs:
+#       - sensor.vacuum_*
+#       - automation.vacuum_*
+#       - sensor.flightradar24*
+#       - switch.echo_*      # alle Echo-Schalter
+#       - select.echo_*      # alle Echo-Select
+#       - media_player.echo_*      # alle Echo-media_player
+#       - binary_sensor.echo_*      # alle Echo-Sensoren
+#       - switch.ble_*       # alle BLE-Sensoren
+#       - select.ble_*       # alle BLE-Sensoren
+#       - sensor.ble_*       # alle BLE-Sensoren
+#       - number.ble_*       # alle BLE-Sensoren
+#       - switch.atom_*      # alle Atom-Einheiten
+#       - sensor.m5dial_*    # alles vom M5 Dial
+#     entities:
+#       - sensor.rest980
+#       - camera.roomba
 
 # keep Sensor data History !!!
-history:
-  exclude:
-    domains:
-      - automation
-      - updater
-    entities:
-      - sensor.last_boot
-      - sensor.date
-    entity_globs:
-      - switch.echo_*      # alle Echo-Schalter
-      - select.echo_*      # alle Echo-Select
-      - media_player.echo_*      # alle Echo-media_player
-      - binary_sensor.echo_*      # alle Echo-Sensoren
-      - switch.ble_*       # alle BLE-Sensoren
-      - select.ble_*       # alle BLE-Sensoren
-      - sensor.ble_*       # alle BLE-Sensoren
-      - number.ble_*       # alle BLE-Sensoren
-      - switch.atom_*      # alle Atom-Einheiten
-      - sensor.m5dial_*    # alles vom M5 Dial
+# history:
+#  exclude:
+#    domains:
+#      - automation
+#      - updater
+#    entities:
+#      - sensor.last_boot
+#      - sensor.date
+#    entity_globs:
+#      - switch.echo_*      # alle Echo-Schalter
+#      - select.echo_*      # alle Echo-Select
+#      - media_player.echo_*      # alle Echo-media_player
+#      - binary_sensor.echo_*      # alle Echo-Sensoren
+#      - switch.ble_*       # alle BLE-Sensoren
+#      - select.ble_*       # alle BLE-Sensoren
+#      - sensor.ble_*       # alle BLE-Sensoren
+#      - number.ble_*       # alle BLE-Sensoren
+#      - switch.atom_*      # alle Atom-Einheiten
+#      - sensor.m5dial_*    # alles vom M5 Dial
+
 
       
 

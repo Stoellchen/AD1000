@@ -1,0 +1,32 @@
+##################################################################################################################
+##
+##  history INCLUDE Configuration
+##
+################################################################################################################
+
+domains:
+  - light
+  - switch
+  - fan
+  - climate
+  - sensor
+  - cover
+  - lock
+  - media_player
+  - vacuum
+  - binary_sensor
+  - camera
+  - alarm_control_panel
+  - input_boolean
+  - input_number
+  - input_select
+  - input_text
+  - script
+  - scene
+  - automation
+  - person
+  - zone
+entity_globs:
+  - sensor.vacuum_*
+  - automation.vacuum_*
+  - sensor.flightradar24*
