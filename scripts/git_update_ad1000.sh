@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # -----------------------------------------------------------------------------
 # Git Update Script für AD1000
 #
@@ -28,6 +29,6 @@ MSG="${1:-HA trigger: git update}"
 git add .
 git commit -m "$MSG"
 
-GIT_SSH_COMMAND='ssh -o UserKnownHostsFile=/config/.ssh/known_hosts -o StrictHostKeyChecking=yes -i /root/.ssh/id_ed25519' git push
-
+GIT_SSH_COMMAND="ssh -i /root/.ssh/id_ed25519 -o UserKnownHostsFile=/config/.ssh/known_hosts -o StrictHostKeyChecking=yes" \
+git push
 
