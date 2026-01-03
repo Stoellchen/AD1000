@@ -20,13 +20,14 @@ cd /config
 MSG="${1:-HA trigger: git update}"
 
 # Prüfen, ob Änderungen vorhanden sind
-if git diff --quiet; then
-  echo "No changes detected – nothing to commit."
-  exit 0
-fi
+# if git diff --quiet; then
+#  echo "No changes detected – nothing to commit."
+#  exit 0
+#fi
 
 git add .
 git commit -m "$MSG"
-git push
+
+GIT_SSH_COMMAND='ssh -o UserKnownHostsFile=/config/.ssh/known_hosts -o StrictHostKeyChecking=yes -i /root/.ssh/id_ed25519' git push
 
 
