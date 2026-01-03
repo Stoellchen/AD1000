@@ -9,6 +9,8 @@
 # - Sauberer HA-Service
 # - Kann geloggt, automatisiert oder erweitert werden
 # -----------------------------------------------------------------------------
+#
+#
 
 script:
   git_update_ad1000:
