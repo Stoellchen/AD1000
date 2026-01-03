@@ -22,7 +22,5 @@ script:
     sequence:
       - service: shell_command.git_update_ad1000
         data:
-          message: >
-            Manual update via HA
-            {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+          message: Manual update via HA {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
 
