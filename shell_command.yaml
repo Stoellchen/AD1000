@@ -36,6 +36,6 @@ run_backup_pfsense: /bin/bash /config/scripts/pfsense/backup.sh
 # - Nutzt exakt den getesteten CLI-Workflow
 # -----------------------------------------------------------------------------
 #
-#
+# 7
 git_update_ad1000: >
   /usr/bin/env bash /config/scripts/git_update_ad1000.sh "{{ message }}"
