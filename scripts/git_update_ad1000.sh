@@ -16,7 +16,8 @@ ROOT=$(dirname ${WDIR})
 if [ -x "${WDIR}/make_fake_secrets.sh" ]; then
   "${WDIR}/make_fake_secrets.sh"
 else
-  echo "Error: make_fake_secrets.sh not found or not executable"
+    echo "Error: make_fake_secrets.sh not found or not executable"
+    echo "${NOW} Error: make_fake_secrets.sh not found or not executable" >> /config/logs/git.log 2>&1
   # exit 1
 fi
 
@@ -27,22 +28,26 @@ HOST="github.com"
 
 # Check if the host is already in known_hosts
 if ! grep -q "$HOST" "$KNOWN_HOSTS_FILE"; then
-  echo "Adding $HOST to known_hosts..."
-  ssh-keyscan "$HOST" >> "$KNOWN_HOSTS_FILE"
+    echo "Adding $HOST to known_hosts..."
+    echo "${NOW} Adding $HOST to known_hosts..." >> /config/logs/git.log 2>&1
+    ssh-keyscan "$HOST" >> "$KNOWN_HOSTS_FILE"
 else
-  echo "$HOST already present in known_hosts."
+    echo "$HOST already present in known_hosts."
+    echo "${NOW} $HOST already present in known_hosts." > /config/logs/git.log 2>&1
 fi
 
 
 # Git config
-git config --global user.name Stoellchen
-git config --global user.email homeasssistantgithub-reg@zwooky.com
-
+    echo "${NOW} git config --global user.name Stoellchen" >> /config/logs/git.log 2>&1
+    git config --global user.name Stoellchen
+    echo "${NOW} git config --global user.email homeasssistantgithub-reg@zwooky.com" >> /config/logs/git.log 2>&1
+    git config --global user.email homeasssistantgithub-reg@zwooky.com
+ 
 # Add new files
 git add . >> /config/logs/git.log 2>&1
 echo "-----> git add done"
 
-git status
+git status >> /config/logs/git.log 2>&1
 echo "-----> git status done"
 
 # Use first argument as commit message, or prompt if missing/blank
