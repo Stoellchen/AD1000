@@ -35,10 +35,4 @@ run_backup_pfsense: /bin/bash /config/scripts/pfsense/backup.sh
 # - Keine AppDaemon-Abhängigkeit
 # - Nutzt exakt den getesteten CLI-Workflow
 # -----------------------------------------------------------------------------
-git_update_ad1000: >
-  cd /config &&
-  git diff --quiet || (
-    git add . &&
-    git commit -m "{{ message }}" &&
-    git push
-  )
+git_update_ad1000: /config/scripts/git_update_ad1000.sh "{{ message }}"    
