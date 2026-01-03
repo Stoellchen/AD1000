@@ -183,6 +183,7 @@ automation:
   - id: 'alarm_arming'
     alias: "ALARM arming (alarm_ha_alarm)"
     description: ""
+    mode: single
     trigger:
       - platform: state
         entity_id:
@@ -195,17 +196,12 @@ automation:
         data:
           title: my_alarm
           message: Arming
-      - service: notify.sony
+      - service: script.notify_dispatch
         data:
-          title: My_Alarm
-          message: "Arming"
-          data:
-            fontsize: large
-            position: center
-            duration: 5
-            transparency: 50%
-            color: red
-    mode: single
+          prio: M
+          title: "Alarmanlage arming"
+          message: >
+            ALARM! Die Alarmanlage ist im status pending um {{ states('sensor.time') }}
 
   - id: 'alarm_presence_somebody_is_coming_home_disarmed'
     alias: "ALARM presence somebody is coming home diasrmed (alarm_ha_alarm)"
@@ -644,6 +640,33 @@ script:
       entity_id: script.play_song_media_speakers
     mode: single
 
+
+###########################################################################################
+#### Security presense BEGIN
+#############################################################################################
+  alarm_presence_away:
+    alias: "Alarm Presence AWAY"
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.presense_simulation_profile
+          option: away
+
+  alarm_presence_night:
+    alias: "Alarm Presence NIGHT"
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.presense_simulation_profile
+          option: night
+
+  alarm_presence_off:
+    alias: "Alarm Presence OFF"
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.presense_simulation_profile
+          option: off
 
 ## ---------------------------------------------------------------------------------------
 ##

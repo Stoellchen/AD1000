@@ -33,6 +33,15 @@
 #   
 
 
+input_select:
+  presense_simulation_profile:
+    name: Presense Simulation Profile
+    options:
+      - off
+      - away
+      - night
+
+
 template:
   - sensor:
       - name: "Presence Simulation Active Devices"
@@ -53,8 +62,12 @@ template:
 
 
 group:
-  presense_simulationen_group:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
-    name: "Presense Simulation Group (Dynamic - label presense) (alarm_ha_presense_simulation)"
+  presense_simulationen_target:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presense Simulation Group TARGET for use in presense simulation service (alarm_ha_presense_simulation)"
+    entities:
+      - light.dummy
+  presense_simulationen_group_away:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presense Simulation Group AWAY (Dynamic - label presense) (alarm_ha_presense_simulation)"
     entities:
       - light.dummy
   presense_simulationen_group_near:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
@@ -143,9 +156,9 @@ automation:
         data:
           # Resulting group entity:
           #   group.presense_simulationen_group enthält near und far
-          object_id: presense_simulationen_group
+          object_id: presense_simulationen_group_away
 
-          # Build entity list dynamically from label `presense_var` oder `presense_near`
+          # Build entity list dynamically from label `presense_vaf` oder `presense_near`
           entities: >
             {% set ns = namespace(list=[]) %}
 
@@ -209,3 +222,101 @@ automation:
             {% endfor %}
             {{ ns.list }}
 
+
+
+  - id: presence_simulation_profile_switch
+    alias: "Presence Simulation – Switch Profile (alarm_ha_presense_simulation)"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_select.presense_simulation_profile
+
+    action:
+      - choose:
+          # ----------------------------------------------------
+          # AWAY → NEAR + FAR
+          # ----------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: input_select.presense_simulation_profile
+                state: away
+            sequence:
+              - service: group.set
+                data:
+                  object_id: presense_simulationen_target
+                  entities: "{{ states.group.presense_simulationen_group_away.attributes.entity_id }}"
+              - service: presence_simulation.start
+          # ----------------------------------------------------
+          # NIGHT → FAR only
+          # ----------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: input_select.presense_simulation_profile
+                state: night
+            sequence:
+              - service: group.set
+                data:
+                  object_id: presense_simulationen_target
+                  entities: "{{ states.group.presense_simulationen_group_night.attributes.entity_id }}"
+              - service: presence_simulation.start
+        default:
+          - service: presence_simulation.stop
+
+  - id: alarm_presence_profile_sync
+    alias: "ALARM → Presence Simulation Profile Sync"
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: alarm_control_panel.my_alarm
+    action:
+      - choose:
+          # --------------------------------------------------
+          # ARMED NIGHT → Presence NIGHT
+          # --------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_night
+            sequence:
+              - service: input_select.select_option
+                data:
+                  entity_id: input_select.presense_simulation_profile
+                  option: night
+          # --------------------------------------------------
+          # ARMED AWAY → Presence AWAY
+          # --------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_away
+            sequence:
+              - service: input_select.select_option
+                data:
+                  entity_id: input_select.presense_simulation_profile
+                  option: away
+          # --------------------------------------------------
+          # ARMED VACATION → Presence AWAY
+          # --------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_vacation
+            sequence:
+              - service: input_select.select_option
+                data:
+                  entity_id: input_select.presense_simulation_profile
+                  option: away
+
+          # --------------------------------------------------
+          # DISARMED → Presence OFF
+          # --------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: disarmed
+            sequence:
+              - service: input_select.select_option
+                data:
+                  entity_id: input_select.presense_simulation_profile
+                  option: off

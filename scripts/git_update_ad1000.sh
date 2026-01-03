@@ -9,7 +9,7 @@ LOG="/config/logs/git.log"
 mkdir -p /config/logs
 
 NOW=$(date +"%d/%m/%Y %H:%M")
-echo "[$NOW] Git Update start" >> "$LOG"
+echo "[$NOW] Git Update start" > "$LOG"
 
 cd /config
 

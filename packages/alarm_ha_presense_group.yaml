@@ -32,7 +32,8 @@ group:
   thomas:
     name: Thomas
     entities:
-      - device_tracker.5t0ll                      #iPhone 17 Pro Max
+      # - device_tracker.5t0ll                      #iPhone 17 Pro Max
+      - device_tracker.iphone_17
       - person.thomas
     
   manu:
@@ -58,8 +59,14 @@ template:
         {{ 
            is_state('person.thomas', 'home') 
         or is_state('person.manu', 'home') 
-        or is_state('person.thomas', 'Thomas') 
-        or is_state('person.manu', 'Thomas') 
+        or is_state('person.thomas', 'HOME') 
+        or is_state('person.manu', 'HOME') 
+
+        or is_state('person.thomas', 'home thomas') 
+        or is_state('person.manu', 'home thomas') 
+
+        or is_state('person.thomas', 'HOME THOMAS') 
+        or is_state('person.manu', 'THOMAS THOMAS') 
         }}
       attributes:
         friendly_name: "Buchserstrasse 5"
