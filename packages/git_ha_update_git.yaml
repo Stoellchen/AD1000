@@ -13,7 +13,18 @@
 #
 # 888
 
+input_text:
+  git_commit_message:
+    name: Git Commit Message
+    max: 120
+    initial: "Manual update via Lovelace"
 
+sensor:
+  - platform: command_line
+    name: Git AD1000 Last Commit
+    command: "cd /config && git log -1 --pretty=format:'%h – %s'"
+    scan_interval: 300
+    
 script:
   git_update_ad1000:
     alias: "Git Update AD1000 (git_ha_update_git)"
@@ -22,5 +33,5 @@ script:
     sequence:
       - service: shell_command.git_update_ad1000
         data:
-          message: Manual update via HA {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
-
+          message: >
+            {{ states('input_text.git_commit_message') }} - {{ now().strftime('%Y%m%d %H:%M') }}
