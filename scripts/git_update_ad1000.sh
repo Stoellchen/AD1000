@@ -21,7 +21,7 @@ cd /config
 # --exclude *.pyc           dito
 # kein -L                   keine Symlinks auflösen
 APPD_SRC="/addon_configs/a0d7b954_appdaemon/"
-APPD_DST="/config/_appdaemon-mirror/"
+APPD_DST="/config/__appdaemon-mirror/"
 
 echo "[${NOW}] rsync AppDaemon → config mirror" >> /config/logs/git.log 2>&1
 echo "[${NOW}] SRC: $APPD_SRC" >> /config/logs/git.log 2>&1

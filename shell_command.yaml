@@ -40,3 +40,11 @@ run_backup_pfsense: /bin/bash /config/scripts/pfsense/backup.sh
 
 git_update_ad1000:  '/config/scripts/git_update_ad1000.sh  "{{message}}"'
 
+appdaemon_rsync_dryrun: >
+  rsync -av --delete --dry-run
+  --exclude='__pycache__/'
+  --exclude='*.pyc'
+  --exclude='compiled/'
+  --exclude='*.log'
+  /addon_configs/a0d7b954_appdaemon/
+  /config/__appdaemon-mirror/
