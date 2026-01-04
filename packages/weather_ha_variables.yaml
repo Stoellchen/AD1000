@@ -1,0 +1,37 @@
+##########################################################################################
+##
+##  Variabeln für wetterbezogene Automatisierungen und Sensoren
+##
+##########################################################################################
+
+
+# Änderung
+# Reicht Reload?     
+# Variablen (variables:)    ❌ nein
+# Automationen              ✅ Reload Automations
+# Scripts                   ✅ Reload Scripts
+# Templates                 ⚠️ meistens ja
+# Packages-Struktur         ❌ nein
+
+
+template:
+  - binary_sensor:
+      - unique_id: weather_forecast_map_de
+        name: weather_forecast_map_de
+        state: "on"
+        attributes:
+          sunny: "sonnig"
+          clear-night: "klare Nacht"
+          partlycloudy: "leicht bewölkt"
+          cloudy: "bewölkt"
+          fog: "neblig"
+          rainy: "regnerisch"
+          pouring: "starker Regen"
+          lightning: "Gewitter"
+          lightning-rainy: "Gewitter mit Regen"
+          snowy: "schneereich"
+          snowy-rainy: "Schneeregen"
+          hail: "Hagel"
+          windy: "windig"
+          windy-variant: "windig mit Wolken"
+          exceptional: "extreme Wetterlage"

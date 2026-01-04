@@ -1,0 +1,77 @@
+##########################################################################################
+##
+##  Informationen über die wetterprognose zwei tage wie Wetterwarnungen etc.
+##
+##########################################################################################
+
+
+##  https://www.home-assistant.io/integrations/meteoalarm
+
+
+automation:
+- id: 'weather_info_2_days_forecast_marmande'
+  alias: "Weather Wetteransage 2 Tage Marmande (weather_ha_forecast)"
+  description: Spricht das Wetter für heute und morgen um 10 Uhr
+  mode: single
+  trigger:
+    - platform: time
+      at: "10:00:00"
+  condition: []
+  action:
+    # Forecast holen
+    - service: weather.get_forecasts
+      data:
+        entity_id: weather.marmande
+        type: daily
+      response_variable: wf
+
+    # Variablen definieren
+    - variables:
+        weather_map: "{{ states['binary_sensor.weather_forecast_map_de'].attributes }}"
+
+        today: "{{ wf['weather.marmande'].forecast[0] }}"
+        today_p1: "{{ wf['weather.marmande'].forecast[1] }}"
+        today_p2: "{{ wf['weather.marmande'].forecast[2] }}"
+        temp_now: "{{ state_attr('weather.marmande','temperature') }}"
+
+        state_now: >
+          {{ weather_map.get(states('weather.marmande'), states('weather.marmande')) }}
+
+        today_cond: >
+          {{ weather_map.get(today.condition, today.condition) }}
+
+        today_p1_cond: >
+          {{ weather_map.get(today_p1.condition, today_p1.condition) }}
+        today_p2_cond: >
+          {{ weather_map.get(today_p2.condition, today_p2.condition) }}
+
+        ebenfalls_p1: >
+          {% if today.condition == today_p1.condition %}
+            ebenfalls
+          {% else %}
+          {% endif %}
+
+        ebenfalls_p2: >
+          {% if today_p1.condition == today_p2.condition %}
+            ebenfalls
+          {% else %}
+          {% endif %}
+
+    # Ausgabe
+    - service: script.notify_dispatch
+      data:
+        prio: L
+        title: "Wetterprognose"
+        message: >
+          Guten Morgen.
+
+           Heute in Marmande {{ state_now }}
+           bei {{ temp_now }} Grad.
+           Die Höchsttemperatur liegt bei {{ today.temperature }} Grad,
+           die Tiefsttemperatur bei {{ today.templow }} Grad.
+
+           Morgen wird es {{ ebenfalls_p1 }} {{ today_p1_cond }}
+           mit Temperaturen bis {{ today_p1.temperature }} Grad.
+
+           Übermorgen sollte es {{ ebenfalls_p2 }} {{ today_p2_cond }}
+           mit Temperaturen bis {{ today_p2.temperature }} Grad werden.
