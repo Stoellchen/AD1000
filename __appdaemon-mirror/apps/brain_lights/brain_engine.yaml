@@ -1,4 +1,0 @@
-brain_lights_engine:
-  module: brain_lights_engine
-  class: BrainLightsEngine
-  config: brain_lights_config.yaml

@@ -280,9 +280,9 @@ rooms:
                 state: "on"
                 invert: false
             active_times:
-              - "06:00-09:00"
+              - "06:00-08:59"
               - "16:00-23:59"
-              - "00:01-02:00"
+              - "00:01-01:59"
             lux:
               sensor: sensor.ms1_illuminance
               below: 60
@@ -332,3 +332,238 @@ rooms:
                   brightness_pct: circadian
                   transition: 3
 
+  schlafzimmer:
+    debug_level: 10            # overrides engine
+    priority: 0
+    zones:
+      bett:
+        contexts:
+          - id: bett_nacht_links
+            activate: "on"
+            priority: 10
+            minimum_brightness: 1   # Prozent (0–100)
+            triggers:
+              - sensor: binary_sensor.ms8_occupancy
+            enable:
+              sensor: input_boolean.motion_eval_enabled_schlafzimmer_links
+              state: "off"
+              invert: false
+            manual_timer:
+              enable:
+                sensor: input_boolean.manual_timer_schlafzimmer_links
+                state: "on"
+                invert: false
+            active_times:
+              - "22:30-23:59"
+              - "00:01-06:59"
+            lux:
+              sensor: sensor.ms8_illuminance
+              below: 10
+            timeout_min: 1
+            transition_off_sec: 15
+            block_if_any_on:
+              - light.nothingblocking
+              - light.nothingblocking
+            # --------------------------------------------------
+            # Actions when context activates
+            # --------------------------------------------------
+            actions:
+              lights_on:
+                - entity: light.sstrip3
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 1
+
+          - id: bett_nacht_rechts
+            activate: "on"
+            priority: 10
+            minimum_brightness: 1   # Prozent (0–100)
+            triggers:
+              - sensor: binary_sensor.ms5_occupancy
+            enable:
+              sensor: input_boolean.motion_eval_enabled_schlafzimmer_recchts
+              state: "off"
+              invert: false
+            manual_timer:
+              enable:
+                sensor: input_boolean.manual_timer_schlafzimmer_rechts
+                state: "on"
+                invert: false
+            active_times:
+              - "22:30-23:59"
+              - "00:01-06:59"
+            lux:
+              sensor: sensor.ms5_illuminance
+              below: 10
+            timeout_min: 1
+            transition_off_sec: 15
+            block_if_any_on:
+              - light.nothingblocking
+              - light.nothingblocking
+            # --------------------------------------------------
+            # Actions when context activates
+            # --------------------------------------------------
+            actions:
+              lights_on:
+                - entity: light.sstrip2
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 1
+
+          - id: bett_in_and_out
+            activate: "on"
+            priority: 90
+            minimum_brightness: 2   # Prozent (0–100)
+            triggers:
+              - sensor: binary_sensor.ms5_occupancy
+              - sensor: binary_sensor.ms8_occupancy
+            enable:
+              sensor: input_boolean.motion_eval_enabled_schlafzimmer_links
+              state: "off"
+              invert: false
+            manual_timer:
+              enable:
+                sensor: input_boolean.manual_timer_schlafzimmer_links
+                state: "on"
+                invert: false
+            active_times:
+              - "07:00-08:29"
+              - "18:00-22:29"
+            lux:
+              sensor: sensor.ms8_illuminance
+              below: 10
+            timeout_min: 10
+            transition_off_sec: 15
+            block_if_any_on:
+              - light.nothingblocking
+              - light.nothingblocking
+            # --------------------------------------------------
+            # Actions when context activates
+            # --------------------------------------------------
+            actions:
+              lights_on:
+                - entity: light.sstrip1
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 5
+
+                - entity: light.sstrip2
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 5
+
+                - entity: light.sstrip3
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 5
+
+          - id: bett_day
+            activate: "on"
+            priority: 80
+            minimum_brightness: 2   # Prozent (0–100)
+            triggers:
+              - sensor: binary_sensor.ms5_occupancy
+              - sensor: binary_sensor.ms8_occupancy
+            enable:
+              sensor: input_boolean.motion_eval_enabled_schlafzimmer_links
+              state: "off"
+              invert: false
+            manual_timer:
+              enable:
+                sensor: input_boolean.manual_timer_schlafzimmer_links
+                state: "on"
+                invert: false
+            active_times:
+              - "08:30-17:59"
+            lux:
+              sensor: sensor.ms8_illuminance
+              below: 10
+            timeout_min: 5
+            transition_off_sec: 15
+            block_if_any_on:
+              - light.nothingblocking
+              - light.nothingblocking
+            # --------------------------------------------------
+            # Actions when context activates
+            # --------------------------------------------------
+            actions:
+              lights_on:
+                - entity: light.sstrip1
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 2
+
+                - entity: light.sstrip2
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 2
+
+                - entity: light.sstrip3
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 2
+
+                - entity: light.s1
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 2
+
+                - entity: light.s2
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 2
+
+      decke:
+        contexts:
+          - id: spots
+            activate: "on"
+            priority: 80
+            minimum_brightness: 2   # Prozent (0–100)
+            triggers:
+              - sensor: binary_sensor.ms5_occupancy
+              - sensor: binary_sensor.ms8_occupancy
+            enable:
+              sensor: input_boolean.motion_eval_enabled_schlafzimmer_links
+              state: "off"
+              invert: false
+            manual_timer:
+              enable:
+                sensor: input_boolean.manual_timer_schlafzimmer_links
+                state: "on"
+                invert: false
+            active_times:
+              - "08:30-17:59"
+            lux:
+              sensor: sensor.ms8_illuminance
+              below: 10
+            timeout_min: 3
+            transition_off_sec: 15
+            block_if_any_on:
+              - light.nothingblocking
+              - light.nothingblocking
+            # --------------------------------------------------
+            # Actions when context activates
+            # --------------------------------------------------
+            actions:
+              lights_on:
+                - entity: light.s1
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 2
+
+                - entity: light.s2
+                  mode: circadian
+                  color: kelvin
+                  brightness_pct: circadian
+                  transition: 2

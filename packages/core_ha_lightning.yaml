@@ -42,14 +42,14 @@ input_boolean:
     icon: mdi:motion-sensor
 
   motion_eval_enabled_schlafzimmer_1:
-    name: Motion Schlafzimmer Rechts (off)
+    name: Motion Schlafzimmer 1 (off)
     icon: mdi:motion-sensor
 
   motion_eval_enabled_schlafzimmer_2:
     name: Motion Schlafzimmer 2 (off)
     icon: mdi:motion-sensor
 
-  motion_eval_enabled_schlafzimmer_2:
+  motion_eval_enabled_schlafzimmer_3:
     name: Motion Schlafzimmer 3 (off)
     icon: mdi:motion-sensor
 
@@ -86,14 +86,14 @@ input_boolean:
     icon: mdi:timer-lock
 
   manual_timer_enabled_schlafzimmer_1:
-    name: Timer Schlafzimmer Rechts (off)
+    name: Timer Schlafzimmer 1 (off)
     icon: mdi:timer-lock
 
   manual_timer_enabled_schlafzimmer_2:
     name: Timer Schlafzimmer 2 (off)
     icon: mdi:timer-lock
 
-  manual_timer_enabled_schlafzimmer_2:
+  manual_timer_enabled_schlafzimmer_3:
     name: Timer Schlafzimmer 3 (off)
     icon: mdi:timer-lock
 
