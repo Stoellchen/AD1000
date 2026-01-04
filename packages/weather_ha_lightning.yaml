@@ -1,0 +1,70 @@
+###############################################################################
+# core_ha_lighting.yaml
+#
+# Zentrale Lighting-Optionen für das gesamte System
+#
+# Dieses Package enthält KEINE Logik für Lampen oder Räume.
+# Es stellt ausschließlich globale Schalter / Optionen bereit,
+# die von AppDaemon / Automationen ausgewertet werden.
+#
+# Architektur:
+#   - Circadian Lighting läuft IMMER
+#   - Spezialeffekte (z. B. Blue Hour) sind OPTIONEN
+#
+# Wichtig:
+#   - Keine Zeitlogik hier
+#   - Kein Sonnenstand hier
+#   - Nur Schalter / Flags
+###############################################################################
+
+###############################################################################
+# Globaler Schalter für optionale Blue-Hour-Modulation (systemweit)
+###############################################################################
+######################################################################
+# @CCOSTAN - Follow Me on X
+# For more info visit https://www.vcloudinfo.com/click-here
+# Original Repo : https://github.com/CCOSTAN/Home-AssistantConfig
+# -------------------------------------------------------------------
+# Lightning Alerts - Nearby strike warnings and snooze workflow
+# Related Issue: 1550
+#  Keeps push alerts but also logs to Activity feed.
+# -------------------------------------------------------------------
+# Guide: https://www.vcloudinfo.com/2020/08/adding-a-lightning-sensor-to-home-assistant.html | Existing Issue #392
+######################################################################
+
+automation:
+  - id: weather_lightning_notifiacation_france
+    alias: 'Weather Lightning Notification France (weather_ha_lightning)'
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.france_lightning_counter
+    condition:
+      - condition: numeric_state
+        entity_id: sensor.france_lightning_counter
+        above: 0
+    action:
+      - service: script.notify_dispatch
+        data:
+          prio: M
+          title: "Blitzortung!"
+          message: >
+            "Blitz wurden in der Nähe erkannt in {{(states('sensor.france_lightning_counter') | int ) | round (1, 'floor')}} Kilometer Entfernung vom Haus.  Aufpassen wenn Ihr draussen seid."
+
+  - id: weather_lightning_notifiacation_switzerland
+    alias: 'Weather Lightning Notification Switzerland (weather_ha_lightning)'
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.switzerland_lightning_counter
+    condition:
+      - condition: numeric_state
+        entity_id: sensor.switzerland_lightning_counter
+        above: 0
+    action:
+      - service: script.notify_dispatch
+        data:
+          prio: M
+          title: "Blitzortung!"
+          message: >
+            "Blitz wurden in der Nähe erkannt in {{(states('sensor.switzerland_lightning_counter') | int ) | round (1, 'floor')}} Kilometer Entfernung vom Haus.  Aufpassen wenn Ihr draussen seid."

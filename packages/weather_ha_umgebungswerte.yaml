@@ -9,8 +9,8 @@
 
 
 automation:
-- id: 'info_trigger_temperature_above_15'
-  alias: "INFO L - Temperature above 15 (info_speak_umgebungswerte)"
+- id: 'weather_info_trigger_temperature_above_15'
+  alias: "Weather INFO L - Temperature above 15 (weather_ha_mgebungswerte)"
   mode: single
   description: 'INFO - Temperature above 15'
   trigger:
@@ -35,8 +35,8 @@ automation:
 
 
 
-- id: 'info_trigger_temperature_below_2'
-  alias: "INFO A - Temperature below 2  (info_speak_umgebungswerte)"
+- id: 'weather_info_trigger_temperature_below_2'
+  alias: "Weather INFO A - Temperature below 2  (weather_ha_mgebungswerte)"
   mode: single
   description: ""
   trigger:
@@ -61,8 +61,8 @@ automation:
 
 
 
-- id: 'info_trigger_windspeed_above_40'
-  alias: "INFO M - Wind speed > 40 (info_speak_umgebungswerte)"
+- id: 'weather_info_trigger_windspeed_above_40'
+  alias: "Weather INFO M - Wind speed > 40 (weather_ha_mgebungswerte)"
   description: ""
   mode: single
   trigger:

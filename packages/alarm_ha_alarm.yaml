@@ -462,7 +462,7 @@ automation:
                   prio: L
                   title: "Alarmanlage armed away"
                   message: >
-                    ALARM! Die Alarmanlage ist scharf (abwesend) seit {{ states('sensor.time') }}
+                    Die Alarmanlage ist scharf (abwesend) seit {{ states('sensor.time') }}
 
           # ----------------------------
           # NIGHT
@@ -478,7 +478,7 @@ automation:
                   prio: L
                   title: "Alarmanlage armed night"
                   message: >
-                    ALARM! Die Alarmanlage ist scharf (Nachtmodus) seit {{ states('sensor.time') }}
+                    Die Alarmanlage ist scharf (Nachtmodus) seit {{ states('sensor.time') }}
 
           # ----------------------------
           # VACATION
@@ -494,7 +494,7 @@ automation:
                   prio: L
                   title: "Alarmanlage armed vacation"
                   message: >
-                    ALARM! Die Alarmanlage ist scharf (Urlaubsmodus) seit {{ states('sensor.time') }}
+                    Die Alarmanlage ist scharf (Urlaubsmodus) seit {{ states('sensor.time') }}
 
           # ----------------------------
           # CUSTOM BYPASS
@@ -510,7 +510,7 @@ automation:
                   prio: L
                   title: "Alarmanlage armed custom bypass"
                   message: >
-                    ALARM! Die Alarmanlage ist scharf (Benutzerdefinierter Modus) seit {{ states('sensor.time') }}
+                    Die Alarmanlage ist scharf (Benutzerdefinierter Modus) seit {{ states('sensor.time') }}
 
 
 
