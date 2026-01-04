@@ -1,0 +1,101 @@
+circadian_location:
+  module: circadiansunandmore
+  class: CircadianSunAndMore
+  city: location
+  debug_level: 0
+  lat: 44.8378
+  lon: -0.5792
+  timezone: Europe/Paris
+  tz: Europe/Paris
+  utcoffset: '+1:00'
+  colortemp_night: 2000
+  colortemp_astro: 2100
+  colortemp_nauti: 2200
+  colortemp_dawn: 2300
+  colortemp_rise: 2500
+  colortemp_noon: 6500
+  colortemp_start: dawn
+  brightness_night: 2
+  brightness_astro: 4
+  brightness_nauti: 6
+  brightness_dawn: 8
+  brightness_rise: 10
+  brightness_dayli: 255
+  brightness_start: dawn
+    
+circadian_bordeaux:
+  module: circadiansunandmore
+  class: CircadianSunAndMore
+  city: Bordeaux
+  debug_level: 0
+  lat: 44.8378
+  lon: -0.5792
+  timezone: Europe/Paris
+  tz: Europe/Paris
+  utcoffset: '+1:00'
+  colortemp_night: 2000
+  colortemp_astro: 2100
+  colortemp_nauti: 2200
+  colortemp_dawn: 2300
+  colortemp_rise: 2500
+  colortemp_noon: 6500
+  colortemp_start: dawn
+  brightness_night: 2
+  brightness_astro: 4
+  brightness_nauti: 6
+  brightness_dawn: 8
+  brightness_rise: 10
+  brightness_dayli: 255
+  brightness_start: dawn
+
+circadian_daellikon:
+  module: circadiansunandmore
+  class: CircadianSunAndMore
+  city: Daellikon
+  debug_level: 0
+  lat: 47.4395
+  lon: 8.4354
+  timezone: Europe/Zurich
+  tz: Europe/Zurich
+  utcoffset: '+1:00'
+  colortemp_night: 2000
+  colortemp_astro: 2100
+  colortemp_nauti: 2200
+  colortemp_dawn: 2300
+  colortemp_rise: 2500
+  colortemp_noon: 6500
+  colortemp_start: dawn
+  brightness_night: 2
+  brightness_astro: 4
+  brightness_nauti: 6
+  brightness_dawn: 8
+  brightness_rise: 10
+  brightness_dayli: 255
+  brightness_start: dawn
+
+circadian_stockholm:
+  module: circadiansunandmore
+  class: CircadianSunAndMore
+  city: Stockholm
+  debug_level: 0
+  lat: 59.3038451
+  lon: 18.003756
+  timezone: Europe/Stockholm
+  tz: Europe/Stockholm
+  utcoffset: '+1:00'
+  colortemp_night: 2000
+  colortemp_astro: 2100
+  colortemp_nauti: 2200
+  colortemp_dawn: 2300
+  colortemp_rise: 2500
+  colortemp_noon: 6500
+  colortemp_start: dawn
+  brightness_night: 2
+  brightness_astro: 4
+  brightness_nauti: 6
+  brightness_dawn: 8
+  brightness_rise: 10
+  brightness_dayli: 255
+  brightness_start: dawn
+
+

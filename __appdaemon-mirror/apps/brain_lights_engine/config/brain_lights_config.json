@@ -1,0 +1,138 @@
+{
+  "engine": {
+    "enabled": true,
+    "debug_level": 9,
+    "mode": "exclusive",
+    "reset_timeout_on_motion": true
+  },
+
+  "rooms": {
+    "esszimmer": {
+      "description": "Dining room with multiple light zones",
+
+      "lux": {
+        "sensor": "sensor.lux_esszimmer",
+        "threshold": 120
+      },
+
+      "default_transition_off_sec": 20,
+
+      "zones": {
+        "table": {
+          "description": "Dining table main lighting",
+
+          "sensors": {
+            "motion": [
+              "binary_sensor.motion_esszimmer_tisch"
+            ]
+          },
+
+          "contexts": [
+            {
+              "id": "table_day",
+              "priority": 10,
+              "active_times": ["09:00-17:59"],
+
+              "lux": {
+                "threshold": 200
+              },
+
+              "activate": [
+                {
+                  "type": "light",
+                  "entities": [
+                    "light.e1",
+                    "light.e2"
+                  ],
+                  "timeout_min": 20,
+                  "transition_off_sec": 10,
+                  "brightness": {
+                    "type": "brightness",
+                    "value": 180
+                  }
+                }
+              ]
+            },
+
+            {
+              "id": "table_evening",
+              "priority": 20,
+              "active_times": ["18:00-22:30"],
+
+              "activate": [
+                {
+                  "type": "light",
+                  "entities": [
+                    "light.e1",
+                    "light.e2"
+                  ],
+                  "timeout_min": 60,
+                  "transition_off_sec": 30,
+                  "brightness": {
+                    "type": "circadian",
+                    "scale": 255
+                  }
+                }
+              ]
+            },
+
+            {
+              "id": "table_night",
+              "priority": 30,
+              "active_times": ["22:30-06:00"],
+
+              "activate": [
+                {
+                  "type": "light",
+                  "entities": [
+                    "light.e1"
+                  ],
+                  "timeout_min": 10,
+                  "transition_off_sec": 15,
+                  "brightness": {
+                    "type": "brightness",
+                    "value": 40
+                  }
+                }
+              ]
+            }
+          ]
+        },
+
+        "ambient": {
+          "description": "Indirect ambient lighting",
+
+          "sensors": {
+            "motion": [
+              "binary_sensor.motion_esszimmer_raum"
+            ]
+          },
+
+          "contexts": [
+            {
+              "id": "ambient_evening",
+              "priority": 15,
+              "active_times": ["18:00-23:00"],
+
+              "activate": [
+                {
+                  "type": "light",
+                  "entities": [
+                    "light.e3",
+                    "light.e4"
+                  ],
+                  "timeout_min": 30,
+                  "transition_off_sec": 20,
+                  "brightness": {
+                    "type": "circadian",
+                    "scale": 180
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

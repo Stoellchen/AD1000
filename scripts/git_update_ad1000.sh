@@ -20,23 +20,26 @@ cd /config
 # --exclude __pycache__     Python-Müll
 # --exclude *.pyc           dito
 # kein -L                   keine Symlinks auflösen
-APPD_SRC="/addon_configs/a0d7b954_appdaemon/"
-APPD_DST="/config/__appdaemon-mirror/"
 
-echo "[${NOW}] rsync AppDaemon → config mirror" >> /config/logs/git.log 2>&1
-echo "[${NOW}] SRC: $APPD_SRC" >> /config/logs/git.log 2>&1
-echo "[${NOW}] DST: $APPD_DST" >> /config/logs/git.log 2>&1
-if [ -d "$APPD_SRC" ]; then
-  #  --dry-run nach -- delete um zu testen, was passieren würde
-  rsync -av --delete  --dry-run \
-    --exclude='__pycache__/' \
-    --exclude='*.pyc' \
-    --exclude='*.log' \
-    "$APPD_SRC" "$APPD_DST" >> /config/logs/git.log 2>&1
-  echo "[${NOW}] rsync AppDaemon DONE" >> /config/logs/git.log 2>&1
-else
-  echo "[${NOW}] ERROR: AppDaemon source not found: $APPD_SRC" >> /config/logs/git.log 2>&1
-fi
+# klappt noch nicht - keine lösung gefunden bis jetzt - muss von hand kopiert werden
+
+# APPD_SRC="/addon_configs/a0d7b954_appdaemon/"
+# APPD_DST="/config/__appdaemon-mirror/"
+# 
+# echo "[${NOW}] rsync AppDaemon → config mirror" >> /config/logs/git.log 2>&1
+# echo "[${NOW}] SRC: $APPD_SRC" >> /config/logs/git.log 2>&1
+# echo "[${NOW}] DST: $APPD_DST" >> /config/logs/git.log 2>&1
+# if [ -d "$APPD_SRC" ]; then
+#   #  --dry-run nach -- delete um zu testen, was passieren würde
+#   rsync -av --delete  --dry-run \
+#     --exclude='__pycache__/' \
+#     --exclude='*.pyc' \
+#     --exclude='*.log' \
+#     "$APPD_SRC" "$APPD_DST" >> /config/logs/git.log 2>&1
+#   echo "[${NOW}] rsync AppDaemon DONE" >> /config/logs/git.log 2>&1
+# else
+#   echo "[${NOW}] ERROR: AppDaemon source not found: $APPD_SRC" >> /config/logs/git.log 2>&1
+# fi
 # ---------- rsync AppDaemon to config mirror end ---------- ####################################################
 
 
