@@ -1,0 +1,381 @@
+##########################################################################################
+##
+##  NFC TAGreader automations etc...
+##
+##########################################################################################
+
+
+##########################################################################################
+##
+##  usto stuff for TAGreader stuff ... Global desaster warnings
+##
+##########################################################################################
+##
+##
+##  https://www.home-assistant.io/blog/2020/09/15/home-assistant-tags/
+##
+##
+##  K2 RED: tts:TV blau|scene:tv_blue
+##  K3 RED: tts:Wohnzimmer Nachtlichter|scene:living_room_nightlight
+##  K4 RED: tts:Wohnzimmer gedimmt|scene:living_room_dimmed
+##  K5 RED: tts:Wohnzimmer hell|scene:living_room_bright
+##  K6 RED: tts:Wohnzimmer relaxed|scene:living_room_relax
+##  P2 RED: tts:Tropical Vipes|vol:3|spotify:playlist:37i9dQZF1DX6RA5ZrA5a23
+##  P3 RED: tts:Chill Out Music|vol:3|spotify:playlist:37i9dQZF1DX32oVqaQE8BM
+##  P4 RED: tts:Spa Lounge|vol:3|spotify:playlist:37i9dQZF1DX0psQULQgJwx
+##  P5 RED: tts:Jazz Romance|vol:3|spotify:playlist:37i9dQZF1DWTbzY5gOVvKd
+##  P6 RED: tts:2 tausender Mix|vol:3|spotify:playlist:37i9dQZF1EQn4jwNIohw50
+##  P7 RED: tts:2 tausender zehn Mix|vol:3|spotify:playlist:37i9dQZF1EQqedj0y9Uwvu
+##  P8 RED: tts:Weekly Mix|vol:3|spotify:playlist:37i9dQZEVXcCWXzH3VAHJV
+##  P9 RED: tts:Adele|vol:3|spotify:artist:4dpARuHxo51G3z768sgnrY
+##  PJ RED: tts:Radio 24|vol:4|stream:https://icecast.radio24.ch/radio24-rc-96-aac
+##  PQ RED: tts:SWR 3|vol:4|stream:https://liveradio.swr.de/sw282p3/swr3/play.mp3
+
+
+input_boolean:
+  global_tagreader_info:
+    name: TagReader Info
+    initial: off
+
+input_text:
+  global_tagreader_name:
+    name: Reader Name
+    initial: none
+
+  global_tagreader_tagid:
+    name: Tag ID
+    initial: none
+
+  global_tagreader_action:
+    name: Tag Action
+    initial: none
+
+var:
+  tag_scan_tts:
+    friendly_name: 'TAG Scan TTS'
+    initial_value: "-"
+  tag_scan_volume:
+    friendly_name: 'TAG Scan Volume'
+    initial_value: 2
+  tag_scan_stream:
+    friendly_name: 'TAG Scan Stream'
+    initial_value: "-"
+  tag_scan_spotify:
+    friendly_name: 'TAG Scan Spotify'
+    initial_value: "-"
+  tag_scan_script:
+    friendly_name: 'TAG Scan Script'
+    initial_value: "-"
+  tag_scan_scene:
+    friendly_name: 'TAG Scan Scene'
+    initial_value: "-"
+
+
+automation:
+- id: nfc_handle_tag_scan_generic_info
+  alias: "NFC Handle Tag Scan generic info (nfc_ha_tagreader)"
+  mode: single
+  # Hide warnings when triggered while in delay.
+  max_exceeded: silent
+  # Map tag ID to content
+  trigger:
+    platform: event
+    event_type: tag_scanned
+  condition:
+    - condition: state
+      entity_id: input_boolean.global_tagreader_info
+      state: "on"
+  action:
+    - service: notify.sony
+      data:
+        title: "TAGreader info:"
+        message: "Device:{{ trigger.event.data.device_id }} TAG:{{ trigger.event.data.tag_id }} "
+        data:
+          fontsize: large
+          position: bottom-right
+          duration: 10
+          transparency: 70%
+          color: green    
+    - service: persistent_notification.create
+      data:
+        title: >
+          "TAGreader info: Device: {{ trigger.event.data.device_id }}
+        message: "Tag: {{ trigger.event.data.tag_id }}"
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.global_tagreader_name
+      data:
+        value: "{{ trigger.event.data.device_id }}"
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.global_tagreader_tagid
+      data:
+        value: "{{ trigger.event.data.tag_id }} }}"
+
+
+    - service: system_log.write
+      data:
+        message: "Device:{{ trigger.event.data.device_id }} TAG:{{ trigger.event.data.tag_id }} "
+        level: info
+        
+
+- id: nfc_handle_tag_scan
+  alias: "NFC Handle Tag Scan (nfc_ha_tagreader)"
+  mode: single
+  # Hide warnings when triggered while in delay.
+  max_exceeded: silent
+    # Map scanner device ID to media player entity ID
+  variables:
+    tagA1: "none"
+    tagA2: "none"
+    # Map scanner device ID to media player entity ID - this is to get all together
+    readers:
+      a35e7a510da87ab665ffd4d0ae30689a: 
+        name: TagReader01
+        location: "Richard Osman - The Man Died TWICE"
+        players: media_player.stereo
+        volume: 2
+      9b245a8344407ef2b69b662555f705ab:
+        name: TagReader02
+        location: "Ken Follet - The evening and the morning"
+        players: media_player.stereo
+        volume: 2
+      8e11dc860c960fee48e70590d1c8fa68:
+        name: TagReader03
+        location: "Felicitas Fuchs - Minna"
+        players: media_player.stereo
+        volume: 2
+      7a96f473baf125f19e8c1a85c64cbf65:
+        name: "Adonno01"
+        location: "Adonno Black 01"
+        players: media_player.stereo
+        volume: 2
+    tags:
+      04-82-7C-32-94-51-80: # xSIID Blue - left Hand Thomas
+      04-DC-4B-32-0A-54-80: # NeXT right Hand Thomas
+
+  trigger:
+    platform: event
+    event_type: tag_scanned
+  condition:
+    # Test that we support this device and tag
+    - "{{ trigger.event.data.device_id in readers }}"
+  action:
+    - variables:
+        reader:   "{{ readers[trigger.event.data.device_id].name }}"
+        location: "{{ readers[trigger.event.data.device_id].location }}"
+        players:  "{{ readers[trigger.event.data.device_id].players }}"
+        volume:  "{{ readers[trigger.event.data.device_id].volume }}"
+        actiontype: "{{  trigger.event.data.tag_id.split(':')[0]|trim  }}"
+        stream: "{{  trigger.event.data.tag_id.replace(actiontype + ':','' )|trim  }}"
+    - variables:
+#        tagid:   "{{ trigger.event.data.tag_id }}"
+        tagid:   "{{ trigger.event.data.tag_id.replace('%7C','|').replace('%20',' ') }}"
+#        tagid:   "vol:4|tts:SWR drei|stream:https://liveradio.swr.de/sw282p3/swr3/play.mp3"
+#        tagid:   "tts:TV blau|scene:tv_blue"
+    - variables:
+        tagidArr:   "{{ tagid.split('|') }}"
+        tagidArr_count:   "{{ tagidArr|count|int }}"
+        tagidArr_i:   "{{ 0 | int }}"
+    # service : scene call scene ...
+    # service : script call script ...
+    # service : spotify for album playlist artist etc...
+    # service : stream for radio urls etc...
+    # service : TTS if available...
+
+    # set default volume for Reader ....
+    - service: var.set
+      data_template:
+        entity_id: >-
+          var.tag_scan_volume
+        value: >-
+          {{ readers[trigger.event.data.device_id].volume /10 | int }}
+    - repeat:
+          while:
+            # Don't do it too many times
+            - condition: template
+              value_template: "{{ repeat.index <= tagidArr_count and repeat.index <= 5 }}"
+          sequence:
+          # check items of url and extract
+          - variables:
+              tagid_Item:   "{{ tagidArr[ repeat.index - 1 ] }}"
+              tagid_Action: "{{  tagid_Item.split(':')[0]|trim  }}"
+              tagid_Value:  "{{  tagid_Item.replace(tagid_Action + ':','' )|trim  }}"
+          - choose:
+              # get volume if available ######################################
+              - conditions: "{{ tagid_Action == 'vol' }}"
+                sequence:
+                - service: var.set
+                  data_template:
+                    entity_id: >-
+                      var.tag_scan_volume
+                    value: >-
+                      {{ tagid_Value / 10 |int }}
+              # get TTS if available #########################################
+              - conditions: "{{ tagid_Action == 'tts' }}"
+                sequence:
+                - service: var.set
+                  data_template:
+                    entity_id: >-
+                      var.tag_scan_tts
+                    value: >-
+                      {{ tagid_Value }}
+              # get stream value #############################################
+              - conditions: "{{ tagid_Action == 'stream' }}"
+                sequence:
+                - service: var.set
+                  data_template:
+                    entity_id: >-
+                      var.tag_scan_stream
+                    value: >-
+                      {{ tagid_Value|trim  }}
+              # get scene value ##############################################
+              - conditions: "{{ tagid_Action == 'scene' }}"
+                sequence:
+                - service: var.set
+                  data_template:
+                    entity_id: >-
+                      var.tag_scan_scene
+                    value: >-
+                      {{ tagid_Value|trim  }}
+              # get script value #############################################
+              - conditions: "{{ tagid_Action == 'script' }}"
+                sequence:
+                - service: var.set
+                  data_template:
+                    entity_id: >-
+                      var.tag_scan_script
+                    value: >-
+                      {{ tagid_Value|trim  }}
+
+              # get spotify value ############################################
+              - conditions: "{{ tagid_Action == 'spotify' }}"
+                sequence:
+                - service: var.set
+                  data_template:
+                    entity_id: >-
+                      var.tag_scan_spotify
+                    value: >-
+                      {{ tagid_Value|trim  }}
+
+
+    - choose:
+        # speak TTS if available ######################################
+        - conditions: "{{ states('var.tag_scan_tts')|count > 1 }}"
+          sequence:
+          - service: tts.cloud_say
+            data:
+              entity_id: "{{ players }}"
+              message: "{{ states('var.tag_scan_tts') }}"
+          - delay: 7 # timeout before we allow processing next scan
+
+    - choose:
+        # call SCENE action #############################################################
+        - conditions: "{{ states('var.tag_scan_scene')|count > 3 }}"
+          sequence:
+          - service: scene.turn_on
+            target:
+              entity_id: "{{ 'scene.'+ states('var.tag_scan_scene') }}"
+
+    - choose:
+        # call STREAM action #############################################################
+        - conditions: "{{ states('var.tag_scan_stream')|count > 5 }}"
+          sequence:
+            - service: script.turn_on
+              data:
+                variables:
+                  volume: "{{ states('var.tag_scan_volume') }}"
+                  speakers: "{{ players }}"
+                  stream: "{{ states('var.tag_scan_stream') }}"
+              entity_id: script.play_radio_media_speakers
+
+        # call SPOTIFY action #############################################################
+        - conditions: "{{ states('var.tag_scan_spotify')|count > 5 }}"
+          sequence:
+          - service: spotcast.start
+            data:
+              device_name: 'Living Room pair'
+              uri: "{{ 'spotify:' + states('var.tag_scan_spotify') }}"
+
+
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.global_tagreader_name
+      data:
+        value: "{{ reader }} - {{ location }}"
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.global_tagreader_tagid
+      data:
+        value: "{{ trigger.event.data.tag_id }}"
+
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.global_tagreader_action
+      data:
+        value: "{{ stream }}"
+
+    - service: script.notify_dispatch
+      data:
+        prio: L
+        title: "TAG Reader Scan"
+        only: tv
+        message: >
+          "Speaker:{{ players }} Content:{{ stream }}"
+
+
+
+# reset all vars for next scan!!!
+    - service: var.set
+      data_template:
+        entity_id: >-
+          var.tag_scan_tts
+        value: >-
+          "-"
+    - service: var.set
+      data_template:
+        entity_id: >-
+          var.tag_scan_volume
+        value: >-
+          2
+    - service: var.set
+      data_template:
+        entity_id: >-
+          var.tag_scan_stream
+        value: >-
+          "-"
+    - service: var.set
+      data_template:
+        entity_id: >-
+          var.tag_scan_spotify
+        value: >-
+          "-"
+    - service: var.set
+      data_template:
+        entity_id: >-
+          var.tag_scan_script
+        value: >-
+          "-"
+    - service: var.set
+      data_template:
+        entity_id: >-
+          var.tag_scan_scene
+        value: >-
+          "-"
+
+
+script:
+  tagreader_tts_with_delay:
+    alias: tagreader_tts_with_delay
+    sequence:
+    - service: tts.cloud_say
+      data:
+        entity_id: "{{ players }}"
+        message: "{{ mtts }}"
+    
+
+
+#  (nfc_ha_tagreader)

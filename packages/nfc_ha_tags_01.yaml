@@ -1,0 +1,216 @@
+##########################################################################################
+##
+##  NFC TAGreader automations etc...
+##
+##########################################################################################
+
+
+##########################################################################################
+##
+##  usto stuff for TAGreader stuff ... Global desaster warnings
+##
+##########################################################################################
+##
+##
+##  https://www.home-assistant.io/blog/2020/09/15/home-assistant-tags/
+##
+##
+##  K2 RED: tts:TV blau|scene:tv_blue
+##  K3 RED: tts:Wohnzimmer Nachtlichter|scene:living_room_nightlight
+##  K4 RED: tts:Wohnzimmer gedimmt|scene:living_room_dimmed
+##  K5 RED: tts:Wohnzimmer hell|scene:living_room_bright
+##  K6 RED: tts:Wohnzimmer relaxed|scene:living_room_relax
+##  P2 RED: tts:Tropical Vipes|vol:3|spotify:playlist:37i9dQZF1DX6RA5ZrA5a23
+##  P3 RED: tts:Chill Out Music|vol:3|spotify:playlist:37i9dQZF1DX32oVqaQE8BM
+##  P4 RED: tts:Spa Lounge|vol:3|spotify:playlist:37i9dQZF1DX0psQULQgJwx
+##  P5 RED: tts:Jazz Romance|vol:3|spotify:playlist:37i9dQZF1DWTbzY5gOVvKd
+##  P6 RED: tts:2 tausender Mix|vol:3|spotify:playlist:37i9dQZF1EQn4jwNIohw50
+##  P7 RED: tts:2 tausender zehn Mix|vol:3|spotify:playlist:37i9dQZF1EQqedj0y9Uwvu
+##  P8 RED: tts:Weekly Mix|vol:3|spotify:playlist:37i9dQZEVXcCWXzH3VAHJV
+##  P9 RED: tts:Adele|vol:3|spotify:artist:4dpARuHxo51G3z768sgnrY
+##  PJ RED: tts:Radio 24|vol:4|stream:https://icecast.radio24.ch/radio24-rc-96-aac
+##  PQ RED: tts:SWR 3|vol:4|stream:https://liveradio.swr.de/sw282p3/swr3/play.mp3
+
+
+
+automation:
+  - id: 'nfc_1714922758742'
+    alias: "dash_services (nfc_ha_tags_01)"
+    description: ''
+    trigger: []
+    condition: []
+    action:
+    - service: cast.show_lovelace_view
+      data:
+        entity_id: media_player.info_3
+        view_path: Services
+        dashboard_path: dashboard-steuerung
+    - service: cast.show_lovelace_view
+      data:
+        entity_id: media_player.info_3
+        dashboard_path: dashboard-karten
+        view_path: '0'
+    mode: single
+
+  - id: 'nfc_1733679306841'
+    alias: "Tag Elsa_01 is scanned (nfc_ha_tags_01)"
+    description: ''
+    triggers:
+    - trigger: tag
+      tag_id: Elsa
+    conditions: []
+    actions:
+    - parallel:
+      - action: script.play_song_cow_mooing_3
+        metadata: {}
+        data: {}
+      - action: light.turn_on
+        metadata: {}
+        data:
+          transition: 10
+        target:
+          area_id: wohnzimmer
+    mode: single
+
+  - id: 'nfc_1733681123504'
+    alias: "Tag Elsa_02 is scanned (nfc_ha_tags_01)"
+    description: ''
+    triggers:
+    - trigger: tag
+      tag_id: Elsa_02
+    conditions: []
+    actions:
+    - parallel:
+      - action: script.play_song_cow_mooing_3
+        metadata: {}
+        data: {}
+      - action: scene.turn_on
+        metadata: {}
+        target:
+          entity_id: scene.wohnzimmer_farbig_1
+    mode: single
+
+  - id: 'nfc_1733681225681'
+    alias: "Tag Elsa_03 is scanned (nfc_ha_tags_01)"
+    description: ''
+    triggers:
+    - trigger: tag
+      tag_id: Elsa_03
+    conditions: []
+    actions:
+    - parallel:
+      - action: script.play_song_cow_mooing_3
+        metadata: {}
+        data: {}
+      - action: scene.turn_on
+        metadata: {}
+        target:
+          entity_id: scene.wohnzimmer_farbig_2
+    mode: single
+
+  - id: 'nfc_1733681475760'
+    alias: "Tag Elsa_04 is scanned (nfc_ha_tags_01)"
+    description: ''
+    triggers:
+    - trigger: tag
+      tag_id: Elsa_04
+    conditions: []
+    actions:
+    - parallel:
+      - action: script.play_song_cow_mooing_3
+        metadata: {}
+        data: {}
+      - action: scene.turn_on
+        metadata: {}
+        target:
+          entity_id: scene.wohnzimmer_farbig_3
+    mode: single
+
+  - id: 'nfc_1733681836564'
+    alias: "Tag Elsa_05 is scanned (nfc_ha_tags_01)"
+    description: ''
+    triggers:
+    - trigger: tag
+      tag_id: Elsa_05
+    conditions: []
+    actions:
+    - parallel:
+      - action: script.play_song_cow_mooing_3
+        metadata: {}
+        data: {}
+      - action: scene.turn_on
+        metadata: {}
+        target:
+          entity_id: scene.wohnzimmer_farbig_3
+      - action: script.mediaplayer_start_screensaver_on_googletv
+        metadata: {}
+        data: {}
+      - action: script.mediaplayer_start_radio_browser_claudia
+        data: {}
+    mode: single
+
+  - id: 'nfc_1733682926432'
+    alias: "Tag Elsa_19 is scanned (nfc_ha_tags_01)"
+    description: Info Display 3 - Kuh Elsa
+    triggers:
+    - trigger: tag
+      tag_id: Elsa_19
+    conditions: []
+    actions:
+    - parallel:
+      - action: script.play_song_cow_mooing_3
+        metadata: {}
+        data: {}
+      - action: media_player.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: media_player.info_3
+    - delay:
+        hours: 0
+        minutes: 0
+        seconds: 2
+        milliseconds: 0
+    - action: media_player.volume_set
+      metadata: {}
+      data:
+        volume_level: 0.75
+      target:
+        entity_id: media_player.info_3
+    - action: media_player.play_media
+      target:
+        entity_id: media_player.info_3
+      data:
+        media_content_type: video/mp4
+        media_content_id: http://ad1000.main.arpa:8123/local/mp3/Die_Kuh_Elsa.mp4
+        extra:
+          metadata:
+            metadataType: 1
+            title: Die Kuh Elsa
+            subtitle: By Dieter Hallervorden
+            images:
+            - url: http://ad1000.main.arpa:8123/local/mp3/Die_Kuh_Elsa.jpg
+    - delay:
+        hours: 0
+        minutes: 2
+        seconds: 10
+        milliseconds: 0
+    - action: media_player.turn_off
+      metadata: {}
+      data: {}
+      target:
+        entity_id: media_player.info_3
+    mode: single
+
+  - id: 'nfc_1739874752792'
+    alias: "Tag Arm Trainer is scanned (nfc_ha_tags_01)"
+    description: ''
+    triggers:
+    - trigger: tag
+      tag_id: 3d073249-3571-4ea4-993f-0cfc34d4b1a8
+    conditions: []
+    actions:
+    - action: script.start_arm_trainer
+      metadata: {}
+      data: {}
+    mode: single

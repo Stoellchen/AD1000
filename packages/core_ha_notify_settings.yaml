@@ -339,29 +339,6 @@ script:
           title: "test 5"
           message: "Test fünf. Diese Meldung geht an alle Ausgabekanäle."
 
-  play_song_media_speakers:
-    alias: play_song_media_speakers
-    sequence:
-    - service: media_player.volume_set
-      data_template:
-        entity_id: '{{ speakers }}'
-        volume_level: '{{ volume }}'
-    - service: media_player.turn_on
-      data_template:
-        entity_id: '{{ speakers }}'
-    - delay: '2'
-    - service: media_player.volume_set
-      data_template:
-        entity_id: '{{ speakers }}'
-        volume_level: '{{ volume }}'
-    - service: media_player.play_media
-      data_template:
-        entity_id: '{{ speakers }}'
-        media_content_id: http://ad1000.main.arpa:8123/local/mp3/{{ media }}
-        media_content_type: audio/mp3
-    mode: parallel
-    max: 10
-
 
 ################################################################################
 ## SCRIPT 1 – NOTIFY DISPATCH (SINGLE ENTRY POINT)
@@ -370,6 +347,7 @@ script:
 ##
 ## Parameter:
 ##   prio:    A | H | M | L
+##   title:   Text
 ##   message: Text
 ##   status:  ON | OFF        (nur für ALERT relevant)
 ##   only:    Filter-String   (z. B. tvttsdisplay, tv,tts,display)

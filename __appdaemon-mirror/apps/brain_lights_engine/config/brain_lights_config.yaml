@@ -258,7 +258,7 @@ rooms:
 
 
   wohnzimmer:
-    debug_level: 10            # overrides engine
+    debug_level: 1            # overrides engine
     priority: 0
     zones:
       sitzecke:
@@ -333,7 +333,7 @@ rooms:
                   transition: 3
 
   schlafzimmer:
-    debug_level: 10            # overrides engine
+    debug_level: 1            # overrides engine
     priority: 0
     zones:
       bett:
@@ -362,8 +362,7 @@ rooms:
             timeout_min: 1
             transition_off_sec: 15
             block_if_any_on:
-              - light.nothingblocking
-              - light.nothingblocking
+              - light.sstrip2
             # --------------------------------------------------
             # Actions when context activates
             # --------------------------------------------------
@@ -373,7 +372,7 @@ rooms:
                   mode: circadian
                   color: kelvin
                   brightness_pct: circadian
-                  transition: 1
+                  transition: 5
 
           - id: bett_nacht_rechts
             activate: "on"
@@ -382,7 +381,7 @@ rooms:
             triggers:
               - sensor: binary_sensor.ms5_occupancy
             enable:
-              sensor: input_boolean.motion_eval_enabled_schlafzimmer_recchts
+              sensor: input_boolean.motion_eval_enabled_schlafzimmer_rechts
               state: "off"
               invert: false
             manual_timer:
@@ -399,8 +398,7 @@ rooms:
             timeout_min: 1
             transition_off_sec: 15
             block_if_any_on:
-              - light.nothingblocking
-              - light.nothingblocking
+              - light.sstrip3
             # --------------------------------------------------
             # Actions when context activates
             # --------------------------------------------------
@@ -410,9 +408,10 @@ rooms:
                   mode: circadian
                   color: kelvin
                   brightness_pct: circadian
-                  transition: 1
+                  transition: 5
 
-          - id: bett_in_and_out
+
+          - id: bett_in_and_out_boden
             activate: "on"
             priority: 90
             minimum_brightness: 2   # Prozent (0–100)
@@ -456,11 +455,45 @@ rooms:
                   brightness_pct: circadian
                   transition: 5
 
+
+          - id: bett_in_and_out_kopf
+            activate: "on"
+            priority: 90
+            minimum_brightness: 2   # Prozent (0–100)
+            triggers:
+              - sensor: binary_sensor.ms5_occupancy
+              - sensor: binary_sensor.ms8_occupancy
+            enable:
+              sensor: input_boolean.motion_eval_enabled_schlafzimmer_links
+              state: "off"
+              invert: false
+            manual_timer:
+              enable:
+                sensor: input_boolean.manual_timer_schlafzimmer_links
+                state: "on"
+                invert: false
+            active_times:
+              - "07:30-08:29"
+              - "18:00-21:00"
+            lux:
+              sensor: sensor.ms8_illuminance
+              below: 10
+            timeout_min: 5
+            transition_off_sec: 15
+            block_if_any_on:
+              - light.nothingblocking
+              - light.nothingblocking
+            # --------------------------------------------------
+            # Actions when context activates
+            # --------------------------------------------------
+            actions:
+              lights_on:
                 - entity: light.sstrip3
                   mode: circadian
                   color: kelvin
                   brightness_pct: circadian
                   transition: 5
+
 
           - id: bett_day
             activate: "on"
