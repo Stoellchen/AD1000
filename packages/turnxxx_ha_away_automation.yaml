@@ -14,7 +14,6 @@
 
 
 
-
 group:
   turnoff_away_devices_5:     # 5 min                         #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
     name: "Turnoff AWAY Devices after 5 Minutes"

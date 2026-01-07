@@ -230,7 +230,7 @@ automation:
           title: "Alarmanlage arming"
           message: >
             ALARM! Die Alarmanlage ist im status arming um {{ states('sensor.time') }}
-
+            
   - id: 'alarm_presence_somebody_is_coming_home_disarmed'
     alias: "ALARM presence somebody is coming home diasrmed (alarm_ha_alarm)"
     description: ''
