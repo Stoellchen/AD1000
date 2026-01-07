@@ -239,7 +239,7 @@ automation:
     ## Nobody at home #############################################
       - platform: state
         entity_id:
-          - binary_sensor.template_occupied_home_1
+          - binary_sensor.occupied_home_1
         to: "on"
     action:
       - service: alarm_control_panel.alarm_disarm
@@ -271,7 +271,7 @@ automation:
     ## Nobody at home #############################################
       - platform: state
         entity_id:
-          - binary_sensor.template_occupied_home_1
+          - binary_sensor.occupied_home_1
         to: "off"
     condition:
       - condition: state

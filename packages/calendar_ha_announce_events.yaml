@@ -1,0 +1,189 @@
+########################################################################################################
+##
+##
+##  Calender Events vorlesen mit tagesvorschaut
+##
+##  source:  https://community.home-assistant.io/t/using-google-tts-say-to-speak-the-days-calendar-events/614881/2
+##
+########################################################################################################
+
+
+## get events anstatt list-events - beschreibung
+##    https://community.home-assistant.io/t/template-calendar-list-events-calendar-get-events/658257
+##    https://community.home-assistant.io/t/migrating-from-calendar-list-events-to-calendar-get-events/652303
+##
+##
+##  list will be depracieted with version 2024.6
+##
+##
+
+
+
+automation:
+- id: 'calendar_announcments_events_from_google_calendar'
+  alias: calendar annaouncments events from google calendar (calendar_ha_announce_events)
+  description: calendar_announcments_events_from_google_calendar
+  mode: single
+  trigger:
+    - platform: time
+      at: "07:00:00"
+      id: morning
+    - platform: time
+      at: "22:00:00"
+      id: evening
+    - platform: time_pattern
+      minutes: /30
+      id: next30minutes
+  condition: []
+  action:
+    - if:
+        - condition: trigger
+          id: next30minutes
+        - condition: time
+          after: "05:59:00"
+          before: "22:35:00"
+          weekday:
+            - sun
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+      then:
+        - service: script.calendar_announce_events
+          data:
+            start_date_time: "{{ (now() | as_datetime + timedelta(minutes=59))  }}"
+            end_date_time: "{{ (now() | as_datetime + timedelta(minutes=89))  }}"
+            calendrier: calendar.thomas_zwooky_com
+            description: "on"
+            location: "on"
+          response_variable: resp_array
+        - if:
+            - condition: template
+              value_template: "{{ resp_array|length > 0 }}"
+          then:
+            - service: script.notify_dispatch
+              data:
+                prio: M
+                title: "Kommende Termine"
+                message: >
+                  {% for key, value in resp_array.items() %}
+                    {%- if key[-5:] != "00:00" %}
+                      {{- key[-5:] + " " + value }}
+                    {%- else %}
+                      {{ value }}  
+                    {%- endif %}
+                  {% endfor %}
+
+    - if:
+        - condition: trigger
+          id: morning
+      then:
+        - service: script.calendar_announce_events
+          data:
+            start_date_time: "{% import 'date.jinja' as dt %} {{ dt.today() }}"
+            end_date_time: "{% import 'date.jinja' as dt %} {{ dt.tomorrow() }}"
+            calendrier: calendar.thomas_zwooky_com
+            description: "off"
+            location: "on"
+          response_variable: resp_array
+        - if:
+            - condition: template
+              value_template: "{{ resp_array|length > 0 }}"
+          then:
+             - service: script.notify_dispatch
+               data:
+                  prio: M
+                  title: "Kommende Termine"
+                  message: >
+                    {% for key, value in resp_array.items() %}
+                      {%- if key[-5:] != "00:00" %}
+                        {{- key[-5:] + " " + value }}
+                      {%- else %}
+                        {{ value }}  
+                      {%- endif %}
+                    {% endfor %}
+                    
+    - if:
+        - condition: trigger
+          id: evening
+      then:
+        - service: script.calendar_announce_events
+          data:
+            start_date_time: "{% import 'date.jinja' as dt %} {{ dt.tomorrow() }}"
+            end_date_time: "{% import 'date.jinja' as dt %} {{ dt.day_after_tomorrow() }}"
+            calendrier: calendar.thomas_zwooky_com
+            description: "off"
+            location: "on"
+          response_variable: resp_array
+        - if:
+            - condition: template
+              value_template: "{{ resp_array|length > 0 }}"
+          then:
+            - service: script.notify_dispatch
+              data:
+                prio: M
+                title: "Kommende Termine"
+                message: >
+                  {% for key, value in resp_array.items() %}
+                    {%- if key[-5:] != "00:00" %}
+                      {{- key[-5:] + " " + value }}
+                    {%- else %}
+                      {{ value }}  
+                    {%- endif %}
+                  {% endfor %}
+
+  
+
+
+script:
+  calendar_announce_events:
+    alias: calendar_announce_events from google calendar (calendar_ha_announce_events)
+    sequence:
+    - service: calendar.get_events
+      target:
+        entity_id: "{{ calendrier }}"
+      data:
+        start_date_time: "{{ start_date_time }}"
+        end_date_time: "{{ end_date_time }}"
+      response_variable: eventlist
+    - variables:
+        reponse: >-
+          {%- set ns = namespace(events={} , itemtext="" , get_descr = 0 , get_loc = 0) %}
+          {%- if description == "on" %}
+            {%- set ns.get_descr = 1 %}
+          {%- endif %}
+          {%- if location == "on" %}
+            {%- set ns.get_loc = 1 %}
+          {%- endif %}
+
+          {%- for key, value in eventlist.items() %}
+            {%- for event in value.events %}
+
+              {%- set default_time = "00:00:00Z" %}
+              {%- set date_format = "%Y-%m-%dT%H:%M:%S%z" %}
+              {%- set datetime_var = strptime(event.start if "T" in event.start else event.start + "T" + default_time, date_format) %}
+              {%- set hour = datetime_var.strftime("%d/%m/%Y %H:%M") if "T" in event.start else datetime_var.strftime("%d/%m/%Y 00:00") %}
+
+              {%- set ns.itemtext = event.summary %}
+
+              {%- if event.location is defined and ns.get_loc == 1 %}
+                {%- set ns.itemtext = ns.itemtext + " ("+event.location+")" %}
+              {% endif -%}
+
+              {%- if event.description is defined and ns.get_descr == 1 %}
+                {%- set ns.itemtext = ns.itemtext + " ("+event.description+")" %}
+              {% endif -%}
+
+              {%- set ns.events = dict(ns.events, **{hour:ns.itemtext}) %}
+
+            {%- endfor %}
+          {%- endfor %}
+          {{ ns.events }}
+
+    - stop: Success
+      response_variable: reponse
+    mode: single
+    icon: mdi:calendar-alert-outline
+

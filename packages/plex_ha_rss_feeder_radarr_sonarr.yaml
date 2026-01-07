@@ -1,0 +1,189 @@
+##########################################################################################
+##
+##  plex_ha_rss_feedreader.yaml
+##
+##  Zweck:
+##  - Plex Watchlist per RSS pollen
+##  - neue Filme → Radarr
+##  - neue Serien → Sonarr
+##
+##  Architektur:
+##  REST Sensor  →  Template Parser  →  Polling Automation
+##
+##########################################################################################
+
+
+############################################
+# 1️⃣ Roh-RSS per HTTP pollen
+############################################
+#
+# Dieser Sensor holt alle 5 Minuten den RSS Feed.
+# Der State ist absichtlich statisch ("OK"),
+# wir arbeiten ausschließlich mit dem XML-Body.
+#
+
+sensor:
+  - platform: rest
+    name: plex_watchlist_raw
+    resource: !secret plex_feed
+    scan_interval: 60
+
+    # HIER speichern wir den kompletten RSS-XML als State
+    value_template: "{{ value }}"
+
+############################################
+# 2️⃣ RSS XML → strukturierte Einträge
+############################################
+#
+# Wir extrahieren aus jedem <item>:
+# - title
+# - guid   (imdb://… oder tvdb://…)
+# - category (movie / show)
+#
+# Ergebnis liegt in:
+#   state_attr('sensor.plex_watchlist_items','items')
+#
+template:
+  - sensor:
+      - name: plex_watchlist_items
+        state: "{{ now().timestamp() }}"
+        attributes:
+          items: >
+            {% set xml = states('sensor.plex_watchlist_raw') %}
+            {% if xml in ['unknown','unavailable',''] %}
+              []
+            {% else %}
+              {{
+                xml
+                | regex_findall(
+                  '<item>.*?<title>(.*?)</title>.*?<guid.*?>(.*?)</guid>.*?<category>(.*?)</category>',
+                  multiline=True
+                )
+                | map('list')
+                | map('zip', ['title','guid','category'])
+                | map('dict')
+                | list
+              }}
+            {% endif %}
+
+############################################
+# 3️⃣ Merker: letzte verarbeitete GUID
+############################################
+#
+# Damit verhindern wir doppelte Requests.
+# Plex liefert RSS immer "neu → alt".
+#
+input_text:
+  plex_watchlist_last_guid:
+    name: Plex Watchlist – letzte GUID
+    max: 255
+
+
+
+############################################
+# 4️⃣ REST-Kommandos für Radarr & Sonarr
+############################################
+#
+# Die URLs und API-Keys kommen komplett aus secrets.yaml
+#
+rest_command:
+
+  radarr_add_movie:
+    url: !secret radarr_api_url
+    method: POST
+    headers:
+      X-Api-Key: !secret radarr_api_key
+      Content-Type: application/json
+    payload: >
+      {
+        "imdbId": "{{ imdb_id }}",
+        "qualityProfileId": 1,
+        "rootFolderPath": "/movies",
+        "monitored": true,
+        "addOptions": {
+          "searchForMovie": true
+        }
+      }
+
+  sonarr_add_series:
+    url: !secret sonarr_api_url
+    method: POST
+    headers:
+      X-Api-Key: !secret sonarr_api_key
+      Content-Type: application/json
+    payload: >
+      {
+        "tvdbId": {{ tvdb_id }},
+        "qualityProfileId": 1,
+        "rootFolderPath": "/tv",
+        "seasonFolder": true,
+        "monitored": true,
+        "addOptions": {
+          "searchForMissingEpisodes": true
+        }
+      }
+
+
+
+############################################
+# 5️⃣ Automation: Polling + Verarbeitung
+############################################
+#
+# Läuft alle 5 Minuten:
+# - holt alle RSS-Einträge
+# - verarbeitet nur neue (bis last_guid)
+# - bricht sauber ab, sobald bekannte GUID erreicht ist
+#
+automation:
+  - id: plex_watchlist_rss_polling
+    alias: "Plex Watchlist RSS → Radarr / Sonarr (Polling)"
+
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+
+    variables:
+      items: "{{ state_attr('sensor.plex_watchlist_items','items') }}"
+      last_guid: "{{ states('input_text.plex_watchlist_last_guid') }}"
+
+    condition:
+      - condition: template
+        value_template: "{{ items | length > 0 }}"
+
+    action:
+      - repeat:
+          for_each: "{{ items }}"
+          sequence:
+
+            # Stoppt, sobald wir bei der letzten bekannten GUID sind
+            - condition: template
+              value_template: >
+                {{ repeat.item.guid != last_guid }}
+
+            # Film oder Serie unterscheiden
+            - choose:
+                - conditions: "{{ repeat.item.category == 'movie' }}"
+                  sequence:
+                    - service: rest_command.radarr_add_movie
+                      data:
+                        imdb_id: "{{ repeat.item.guid | replace('imdb://','') }}"
+
+                - conditions: "{{ repeat.item.category == 'show' }}"
+                  sequence:
+                    - service: rest_command.sonarr_add_series
+                      data:
+                        tvdb_id: "{{ repeat.item.guid | replace('tvdb://','') }}"
+
+            # Letzte verarbeitete GUID speichern
+            - service: input_text.set_value
+              data:
+                entity_id: input_text.plex_watchlist_last_guid
+                value: "{{ repeat.item.guid }}"
+
+            # Optionales Debug-Logging
+            - service: system_log.write
+              data:
+                level: info
+                message: >
+                  Plex RSS verarbeitet:
+                  {{ repeat.item.title }} ({{ repeat.item.guid }})

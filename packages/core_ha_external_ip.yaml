@@ -1,0 +1,57 @@
+#
+#
+#
+# External IP
+# https://community.home-assistant.io/t/display-public-ip-notify-of-change/74655/18
+#
+#
+#
+#
+
+# sample php code for the formatting #############################################
+# <?php
+# 
+# echo '{"ip": "' . $_SERVER['REMOTE_ADDR'] . '"}'
+# 
+# ?> 
+
+
+
+
+sensor:
+  - platform: rest
+    name: External IP
+    scan_interval: 300
+    resource: https://zwooky.com/remoteip.php
+    value_template: "{{ value_json.ip }}"
+
+
+# automation:
+# - id: "ip_change"
+#   alias: "IP Change"
+#   trigger:
+#     - platform: state
+#       entity_id:
+#         - sensor.external_ip
+#   condition: []
+#   action:
+#     # Updated the IP address for DuckDNS
+#     - service: rest_command.duckdns_update
+#       data: {}
+# 
+#     # Send a notification to all mobile devices
+#     - service: notify.all_devices
+#       metadata: {}
+#       data:
+#         message: New external IP address is {{ states('sensor.external_ip') }}
+#         data:
+#           actions:
+#             - action: URI
+#               title: Check external access works
+#               uri: https://YOUR_SUBDOMAIN.duckdns.org
+#           importance: high
+#           ledColor: red
+#   mode: single
+# 
+# 
+

@@ -49,12 +49,13 @@ group:
 ##      changed on 30.4.24 from device_tracker to person tracker
 ##
 ##  Attention: This generates entities like:   binary_sensor.template_occupied_home_1
+##  jetzt ist das wieder anders - klappt jetzt!!!!
 ##
 template:
   - binary_sensor:
   ## if anybody Manu or Thomas is at home, than the home is occupied
     # Buchserstrasse 5
-    - unique_id: occupied_home_1
+    - name: occupied_home_1
       state: >
         {{ 
            is_state('person.thomas', 'home') 
@@ -68,28 +69,22 @@ template:
         or is_state('person.thomas', 'HOME THOMAS') 
         or is_state('person.manu', 'THOMAS THOMAS') 
         }}
-      attributes:
-        friendly_name: "Buchserstrasse 5"
 
     #  oberhausensteig 10 wettswil am albis
-    - unique_id: occupied_home_2
+    - name: occupied_home_2
       state: >
         {{ 
            is_state('person.thomas', 'Manus Home') 
         or is_state('person.manu', 'Manus Home') 
         }}
-      attributes:
-        friendly_name: "Oberhausensteig 10"
 
     # Hinterbergstrasse 56
-    - unique_id: occupied_home_3
+    - name: occupied_home_3
       state: >
         {{ 
            is_state('person.thomas', 'Hinterberg') 
         or is_state('person.manu', 'Hinterberg') 
         }}
-      attributes:
-        friendly_name: "Hinterbergstrasse 56"
 
 
 

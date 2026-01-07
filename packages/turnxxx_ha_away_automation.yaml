@@ -1,0 +1,247 @@
+################################################################################
+#   
+# turnXXX off and on when away 
+#   
+################################################################################
+# Der switch um die presense simulation zu aktivieren/deaktivieren
+# der Sitch wird automatisch von der integration erstellt und kann soll umbenannt werden
+# in der Automation verwendet werden um die presense simulation zu aktivieren/deaktivieren
+#   input_boolean:
+#     presense_simulation_activ:                     #  Wird in der Alarm Automation verwendet um die Presense Simulation zu aktivieren/deaktivieren
+#       name: Presense Simulation Aktivieren
+#       icon: mdi:home-automation
+#   
+
+
+
+
+group:
+  turnoff_away_devices_5:     # 5 min                         #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Turnoff AWAY Devices after 5 Minutes"
+    entities:
+      - light.dummy
+  turnoff_away_devices_30:    # 30 min                         #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Turnoff AWAY Devices after 30 Minutes"
+    entities:
+      - light.dummy
+  turnoff_away_devices_120:    # 120 min                         #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Turnoff AWAY Devices after 120 Minutes"
+    entities:
+      - light.dummy
+
+  turnoff_away_devices_720:    # 12h = 720 min                   #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Turnoff AWAY Devices after 720 Minutes"
+    entities:
+      - light.dummy
+
+
+
+automation:
+  - id: turnoff_away_devices_update_groups
+    alias: "turnoff away devices update groups (turnxxx_away_automation)"
+    mode: single
+
+    trigger:
+      # Update group on Home Assistant start
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: automation_reloaded
+
+      # Periodic refresh to catch label changes
+      - platform: time_pattern
+        minutes: "/5"
+
+    action:
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.turnoff_devices_10 alle Geräte mit label away_5
+          object_id: turnoff_away_devices_5
+          # Build entity list dynamically from label away_5
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for entity in label_entities('away_5') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          object_id: turnoff_away_devices_30
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for entity in label_entities('away_30') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          object_id: turnoff_away_devices_120
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for entity in label_entities('away_120') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          object_id: turnoff_away_devices_720
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for entity in label_entities('away_720') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+            {{ ns.list }}
+
+
+  - id: turnoff_away_devices_after_5
+    alias: "Turnoff AWAY devices after 5 minutes (turnxxx_away_automation)"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.occupied_home_1
+        to: "off"
+    action:
+      - wait_for_trigger:
+          - platform: state
+            entity_id: binary_sensor.occupied_home_1
+            to: "on"
+        timeout: "00:05:00"
+
+      - condition: state
+        entity_id: binary_sensor.occupied_home_1
+        state: "off"
+
+      - service: script.turnoff_entities_from_group
+        data:
+          group_entity: group.turnoff_away_devices_5
+
+  - id: turnoff_away_devices_after_30
+    alias: "Turnoff AWAY devices after 30 minutes (turnxxx_away_automation)"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.occupied_home_1
+        to: "off"
+    action:
+      - wait_for_trigger:
+          - platform: state
+            entity_id: binary_sensor.occupied_home_1
+            to: "on"
+        timeout: "00:30:00"
+
+      - condition: state
+        entity_id: binary_sensor.occupied_home_1
+        state: "off"
+
+      - service: script.turnoff_entities_from_group
+        data:
+          group_entity: group.turnoff_away_devices_30
+
+  - id: turnoff_away_devices_after_120
+    alias: "Turnoff AWAY devices after 120 minutes (turnxxx_away_automation)"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.occupied_home_1
+        to: "off"
+    action:
+      - wait_for_trigger:
+          - platform: state
+            entity_id: binary_sensor.occupied_home_1
+            to: "on"
+        timeout: "02:00:00"
+
+      - condition: state
+        entity_id: binary_sensor.occupied_home_1
+        state: "off"
+
+      - service: script.turnoff_entities_from_group
+        data:
+          group_entity: group.turnoff_away_devices_120
+
+  - id: turnoff_away_devices_after_720
+    alias: "Turnoff AWAY devices after 720 minutes (turnxxx_away_automation)"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.occupied_home_1
+        to: "off"
+    action:
+      - wait_for_trigger:
+          - platform: state
+            entity_id: binary_sensor.occupied_home_1
+            to: "on"
+        timeout: "12:00:00"
+
+      - condition: state
+        entity_id: binary_sensor.occupied_home_1
+        state: "off"
+
+      - service: script.turnoff_entities_from_group
+        data:
+          group_entity: group.turnoff_away_devices_720
+
+
+script:
+  turnoff_away_devices_from_group:
+    alias: "Turn off entities from group (domain-safe) (turnxxx_away_automation)"
+    mode: queued
+    fields:
+      group_entity:
+        description: "Group entity_id, z.B. group.turnoff_away_devices_30"
+        example: "group.turnoff_away_devices_30"
+    sequence:
+      # --------------------------------------------------
+      # Entities aus Gruppe holen
+      # --------------------------------------------------
+      - variables:
+          entities: "{{ state_attr(group_entity, 'entity_id') | default([]) }}"
+
+          lights: "{{ entities | select('search', '^light\\.') | list }}"
+          switches: "{{ entities | select('search', '^switch\\.') | list }}"
+          fans: "{{ entities | select('search', '^fan\\.') | list }}"
+          media_players: "{{ entities | select('search', '^media_player\\.') | list }}"
+      # --------------------------------------------------
+      # Lights
+      # --------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ lights | length > 0 }}"
+        then:
+          - service: light.turn_off
+            target:
+              entity_id: "{{ lights }}"
+      # --------------------------------------------------
+      # Switches
+      # --------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ switches | length > 0 }}"
+        then:
+          - service: switch.turn_off
+            target:
+              entity_id: "{{ switches }}"
+      # --------------------------------------------------
+      # Fans
+      # --------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ fans | length > 0 }}"
+        then:
+          - service: fan.turn_off
+            target:
+              entity_id: "{{ fans }}"
+      # --------------------------------------------------
+      # Media Player
+      # --------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ media_players | length > 0 }}"
+        then:
+          - service: media_player.turn_off
+            target:
+              entity_id: "{{ media_players }}"
