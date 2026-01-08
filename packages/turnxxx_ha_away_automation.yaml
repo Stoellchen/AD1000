@@ -34,6 +34,45 @@ group:
       - light.dummy
 
 
+template:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    sensor:
+      - name: "turnoff_away_devices_table"
+        state: "ok"
+        availability: >
+          {{ states.group
+             | selectattr('entity_id','match','group\\.turnoff_away_devices_\\d+$')
+             | list | count > 0 }}
+        json_attributes_template: >
+          {% set groups =
+             states.group
+             | selectattr('entity_id','match','group\\.turnoff_away_devices_\\d+$')
+             | list
+          %}
+          {% set ns = namespace(rows=[]) %}
+          {% for g in groups %}
+            {% set minutes = g.entity_id.split('_')[-1] %}
+            {% for e in expand(g.entity_id) %}
+              {% set ns.rows = ns.rows + [{
+                "room": area_name(e.entity_id) or "Ohne Raum",
+                "type": (
+                  "💡" if e.domain == "light"
+                  else "🌀" if e.domain == "fan"
+                  else "📺" if e.domain == "media_player"
+                  else "🔌" if e.domain == "switch"
+                  else "⚙️"
+                ),
+                "name": e.name,
+                "state": ("AN" if e.state == "on" else "AUS"),
+                "time": minutes ~ " min"
+              }] %}
+            {% endfor %}
+          {% endfor %}
+          {{ {"table": ns.rows} | tojson }}
+
+
 
 automation:
   - id: turnoff_away_devices_update_groups

@@ -1,0 +1,358 @@
+###############################################################################
+# AUTOTIMER – KOMPLETTES PACKAGE
+# --------------------------------
+# Default-Zeit über Labels: AUTOTIMER_xx  (xx = Minuten)
+# GUI-Override über input_number.autotimer_helper
+# Laufzeit-Speicher über input_datetime pro Entity
+###############################################################################
+
+
+group:
+  autotimer_target:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "autotimer target - alle entities (power_ha_timers)"
+    entities:
+      - light.dummy
+
+############################
+# 1) GUI Helper (Override)
+############################
+input_number:
+  autotimer_helper:
+    name: "AutoTimer – Override Minuten"
+    min: 1
+    max: 480
+    step: 1
+    mode: slider
+    icon: mdi:timer-edit
+
+
+####################################
+# 2) Laufzeit-Speicher (pro Entity)
+#    → MUSS statisch existieren
+####################################
+input_datetime:
+  autotimer_until_ll_dose_1:
+    name: "AutoTimer LL Dose 1 – bis"
+    has_date: true
+    has_time: true
+
+  autotimer_until_ll_dose_2:
+    name: "AutoTimer LL Dose 2 – bis"
+    has_date: true
+    has_time: true
+
+  autotimer_until_ll_dose_3:
+    name: "AutoTimer LL Dose 3 – bis"
+    has_date: true
+    has_time: true
+
+  autotimer_until_ll_usb:
+    name: "AutoTimer LL USB – bis"
+    has_date: true
+    has_time: true
+
+
+template:
+  - trigger:
+      - platform: time_pattern
+        seconds: "/10"
+    sensor:
+      - name: "AutoTimer – Devices"
+        state: "ok"
+        attributes:
+          devices: >
+            {% set ns = namespace(list=[]) %}
+
+            {% for lid in labels() %}
+              {% set lname = label_name(lid) | lower %}
+              {% if lname.startswith('autotimer_') %}
+                {% set minutes = lname.replace('autotimer_', '') | int(0) %}
+                {% for e in label_entities(lid) %}
+                  {% set ns.list = ns.list + [{
+                    "entity": e,
+                    "default_minutes": minutes
+                  }] %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+
+            {{ ns.list | tojson }}
+
+    sensor:
+      - name: "AutoTimer Status"
+        icon: mdi:timer-cog
+        state: "ok"
+        attributes:
+          devices: >
+            {% set ns = namespace(list=[]) %}
+            {% set now_ts = now().timestamp() %}
+
+            {% for lid in labels() %}
+              {% set lname = label_name(lid) | lower %}
+              {% if lname.startswith('autotimer_') %}
+                {% set default_min = lname.replace('autotimer_', '') | int(0) %}
+                {% for e in label_entities(lid) %}
+
+                  {% set until = states('input_datetime.autotimer_until_' ~ e.split('.')[1]) %}
+                  {% if until not in ('unknown','unavailable','') %}
+                    {% set remaining = ((as_timestamp(until) - now_ts) / 60) | round(0) %}
+                  {% else %}
+                    {% set remaining = 0 %}
+                  {% endif %}
+
+                  {% set ns.list = ns.list + [{
+                    "entity": e,
+                    "name": state_attr(e, 'friendly_name') or e,
+                    "room": area_name(e) or "Ohne Raum",
+                    "default_min": default_min,
+                    "remaining_min": remaining if remaining > 0 else 0,
+                    "active": remaining > 0,
+                    "expired": remaining <= 0
+                  }] %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+
+            {{ ns.list | tojson }}
+
+
+####################################
+# 3) Script – Override anwenden
+#    → wird vom GUI-Button aufgerufen
+####################################
+script:
+  autotimer_apply_over:
+    alias: "AutoTimer – Override anwenden (power_ha_timers)"
+    description: "Setzt die Laufzeit aus dem Helper und startet den Timer "
+    mode: single
+    fields:
+      target_entity:
+        description: Zielgerät (z. B. switch.ll_dose_1)
+        example: switch.ll_dose_1
+    sequence:
+      # 1️⃣ input_datetime setzen
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: >
+            {{ 'input_datetime.autotimer_until_' ~ target_entity.split('.')[1] }}
+        data:
+          datetime: >
+            {{ (now() + timedelta(
+                minutes = states('input_number.autotimer_helper') | int(0)
+              )).strftime('%Y-%m-%d %H:%M:%S') }}
+
+      # 2️⃣ Gerät einschalten (falls es aus ist)
+      - choose:
+          - conditions: >
+              {{ states(target_entity) != 'on' }}
+            sequence:
+              - service: homeassistant.turn_on
+                target:
+                  entity_id: "{{ target_entity }}"
+
+  autotimer_set_time:
+    alias: "AutoTimer – Zeit setzen (power_ha_timers)"
+    description: Setzt eine neue Laufzeit aus dem Helper. Diese Zeit wird zur neuen Session-Max-Zeit, ohne das Gerät automatisch zu starten.
+    mode: single
+
+    fields:
+      target_entity:
+        description: Zielgerät (z. B. switch.ll_dose_1)
+        example: switch.ll_dose_1
+
+    sequence:
+      # 1️⃣ Minuten aus Helper lesen
+      - variables:
+          minutes: "{{ states('input_number.autotimer_helper') | int(0) }}"
+          datetime_entity: >
+            {{ 'input_datetime.autotimer_until_' ~ target_entity.split('.')[1] }}
+
+      # 2️⃣ input_datetime setzen (definiert neue Session-Max)
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: "{{ datetime_entity }}"
+        data:
+          datetime: >
+            {{ (now() + timedelta(minutes=minutes))
+              .strftime('%Y-%m-%d %H:%M:%S') }}
+
+      # 3️⃣ (optional, aber sinnvoll) JSON-Sensor sofort aktualisieren
+      - service: homeassistant.update_entity
+        target:
+          entity_id: sensor.autotimer_status
+
+
+########################################################
+# 4) Automation – Default-Zeit aus AUTOTIMER_xx Label
+#    → wird gesetzt, wenn Gerät eingeschaltet wird
+########################################################
+automation:
+  - id: autotimer_set_default_from_label
+    alias: "AutoTimer – Default aus Label setzen (power_ha_timers)"
+    mode: parallel
+
+    trigger:
+      - platform: event
+        event_type: state_changed
+
+    condition:
+      # Nur wenn new_state existiert und auf "on" gewechselt wurde
+      - condition: template
+        value_template: >
+          {{ trigger.event.data.new_state is not none
+             and trigger.event.data.old_state is not none
+             and trigger.event.data.new_state.state == 'on'
+             and trigger.event.data.old_state.state != 'on' }}
+
+      # Entity muss Labels besitzen
+      - condition: template
+        value_template: >
+          {{ trigger.event.data.new_state.attributes.labels is defined }}
+
+    action:
+      - variables:
+          entity: "{{ trigger.event.data.entity_id }}"
+          labels: "{{ trigger.event.data.new_state.attributes.labels }}"
+          autotimer_label: >
+            {{ labels
+               | select('match', '^AUTOTIMER_[0-9]+$')
+               | list
+               | first
+               | default('') }}
+          minutes: >
+            {{ autotimer_label.replace('AUTOTIMER_', '') | int(0) }}
+          datetime_entity: >
+            {{ 'input_datetime.autotimer_until_' ~ entity.split('.')[1] }}
+
+      # Nur wenn ein gültiges AUTOTIMER_xx existiert
+      - condition: template
+        value_template: "{{ minutes > 0 }}"
+
+      # Nur wenn kein aktiver Timer läuft
+      - condition: template
+        value_template: >
+          {% set t = states(datetime_entity) %}
+          {{ t in ('unknown','unavailable','')
+             or as_timestamp(t) < now().timestamp() }}
+
+      # Default-Endzeit setzen
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: "{{ datetime_entity }}"
+        data:
+          datetime: >
+            {{ (now() + timedelta(minutes=minutes))
+               .strftime('%Y-%m-%d %H:%M:%S') }}
+
+               
+
+########################################################
+# 5) Automation – Abschalten, wenn Zeit abgelaufen ist
+########################################################
+  - id: autotimer_execute_turnoff
+    alias: "AutoTimer – Abschalten  (power_ha_timers)"
+    mode: parallel
+
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+
+    action:
+      - variables:
+          devices:
+            - group.autotimer_target
+
+      - repeat:
+          for_each: "{{ devices }}"
+          sequence:
+            - variables:
+                dt_entity: >
+                  {{ 'input_datetime.autotimer_until_' ~ repeat.item.split('.')[1] }}
+                until: "{{ states(dt_entity) }}"
+
+            - condition: template
+              value_template: >
+                {{ until not in ('unknown','unavailable','')
+                   and as_timestamp(until) <= now().timestamp() }}
+
+            - service: switch.turn_off
+              target:
+                entity_id: "{{ repeat.item }}"
+
+
+
+  - id: autoteimer_update_group
+    alias: "AUTOTIMER  – Update Entity Group (power_ha_timers)"
+    mode: single
+
+    trigger:
+      # Update group on Home Assistant start
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: automation_reloaded
+
+      # Periodic refresh to catch label changes
+      - platform: time_pattern
+        minutes: "/5"
+
+    action:
+
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presense_simulationen_group_near
+          object_id: autotimer_target
+
+          # Build entity list dynamically from label `presense_near`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+
+            {% for lid in labels() %}
+              {% set lname = label_name(lid) | default('') %}
+              {% if lname.lower().startswith('autotimer_') %}
+                {% for e in label_entities(lid) %}
+                  {% set ns.list = ns.list + [e] %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+
+            {{ ns.list | unique | list }}
+
+
+  - alias: "AutoTimer – Default bei Einschalten"
+    mode: parallel
+
+    trigger:
+      - platform: state
+        entity_id:
+          - group.autotimer_target
+        to: "on"
+
+    condition:
+      - condition: template
+        value_template: >
+          {{ trigger.event.data.new_state is not none
+             and trigger.event.data.new_state.state == 'on' }}
+
+    action:
+      - variables:
+          devices: "{{ state_attr('sensor.autotimer_devices','devices') | from_json }}"
+          entity: "{{ trigger.event.data.entity_id }}"
+          match: >
+            {{ devices | selectattr('entity','equalto',entity) | list | first }}
+
+      - condition: template
+        value_template: "{{ match is not none }}"
+
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: >
+            {{ 'input_datetime.autotimer_until_' ~ entity.split('.')[1] }}
+        data:
+          datetime: >
+            {{ (now() + timedelta(minutes=match.default_minutes))
+               .strftime('%Y-%m-%d %H:%M:%S') }}
+
+
+
