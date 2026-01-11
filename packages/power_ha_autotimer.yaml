@@ -117,30 +117,68 @@
 #               {% endif %}
 #             primary: |
 #               {{ state_attr(entity,'friendly_name') }}
-#             secondary: >
-#               {% set d = state_attr('pyscript.autotimer_status', entity) %} {%
-#               if d and d.active %}
-#                 ⏱ {{ '%02d:%02d' | format(d.remaining_sec // 60, d.remaining_sec % 60) }}
-#                    of ({{ d.default_sec // 60 }} min)
+#             secondary: |
+# 
+#               {% set d = state_attr('pyscript.autotimer_status', entity) %}
+#               {% if d and d.active %}
+#                 {% set sec = d.remaining_sec | int %}
+#                 {% set h = sec // 3600 %}
+#                 {% set m = (sec % 3600) // 60 %}
+#                 {% set s = sec % 60 %}
+# 
+#                 ⏱
+#                 {% if h > 0 %}
+#                   {{ '%d:%02d:%02d' | format(h, m, s) }}
+#                 {% else %}
+#                   {{ '%02d:%02d' | format(m, s) }}
+#                 {% endif %}
+#                 of
+#                 {% if d.default_sec >= 3600 %}
+#                   ({{ (d.default_sec // 3600) }} h {{ ((d.default_sec % 3600) // 60) }} min)
+#                 {% else %}
+#                   ({{ (d.default_sec // 60) }} min)
+#                 {% endif %}
+# 
 #               {% elif d %}
-#                 ({{ d.default_sec // 60 }} min)
+#                 {% if d.default_sec >= 3600 %}
+#                   ({{ (d.default_sec // 3600) }} h {{ ((d.default_sec % 3600) // 60) }} min)
+#                 {% else %}
+#                   ({{ (d.default_sec // 60) }} min)
+#                 {% endif %}
 #               {% else %}
 #                 —
-#               {% endif %}              
+#               {% endif %}
+#                · {{ area_name(entity) }}
+#                
 #             icon_color: >
+# 
 #               {% set d = state_attr('pyscript.autotimer_status', entity) %} {%
-#               if not d or not d.active %}
+#               if not d or not d.active or d.default_sec == 0 %}
 #                 grey
-#               {% elif d.remaining_sec > 4800 %}
-#                 lightgreen
-#               {% elif d.remaining_sec > 3600 %}
-#                 green
-#               {% elif d.remaining_sec > 1800 %}
-#                 orange
-#               {% elif d.remaining_sec > 0 %}
-#                 amber
 #               {% else %}
-#                 red
+#                 {% set pct = (d.remaining_sec / d.default_sec * 100) | round(0) %}
+# 
+#                 {% if pct > 90 %}
+#                   green
+#                 {% elif pct > 80 %}
+#                   light-green
+#                 {% elif pct > 70 %}
+#                   green
+#                 {% elif pct > 60 %}
+#                   yellow
+#                 {% elif pct > 50 %}
+#                   yellow
+#                 {% elif pct > 40 %}
+#                   amber
+#                 {% elif pct > 30 %}
+#                   orange
+#                 {% elif pct > 20 %}
+#                   deep-orange
+#                 {% elif pct > 10 %}
+#                   red
+#                 {% else %}
+#                   red
+#                 {% endif %}
 #               {% endif %}
 #             tap_action:
 #               action: call-service
@@ -157,7 +195,7 @@
 #               service: pyscript.autotimer_start
 #               data:
 #                 entity_id: this.entity_id
-#  
+# 
 ## -----------------------------------------------------------------------------------------------------------------
 
 

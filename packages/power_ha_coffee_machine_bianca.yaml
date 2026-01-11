@@ -131,206 +131,6 @@ sensor:
       - 'time_date'
       - 'time_utc'
 
-- platform: template
-  sensors:
-    coffee_brita_bottle:
-        friendly_name: "Brita Filter Bottle"
-        value_template: >
-          {{ (((as_timestamp(states.input_datetime.coffee_brita_bottle.state) + ( 1  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }} days
-        attribute_templates:
-          days: 30
-          reminder: 3          
-          running: >          
-            {{ (((as_timestamp(states.input_datetime.coffee_brita_bottle.state) + ( (state_attr('sensor.coffee_brita_bottle', 'days') | int)  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}
-          send_reminder: >
-            {{ (((as_timestamp(states.input_datetime.coffee_brita_bottle.state) + ( ((state_attr('sensor.coffee_brita_bottle', 'days') | int) -(state_attr('sensor.coffee_brita_bottle', 'reminder') | int) )  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}
-          running_text: >          
-            {{ state_attr('sensor.coffee_brita_bottle', 'running') | int }} days
-          running_of_text: >          
-            {{ state_attr('sensor.coffee_brita_bottle', 'running') | int }} of {{ state_attr('sensor.coffee_brita_bottle', 'days') | int }} days
-          reminder_text: >          
-            Reminder {{ state_attr('sensor.coffee_brita_bottle', 'reminder') | int }} days before ({{ (state_attr('input_datetime.coffee_brita_bottle', 'timestamp') + ( state_attr('sensor.coffee_brita_bottle', 'days')|int - state_attr('sensor.coffee_brita_bottle', 'reminder')|int )*86400) | timestamp_custom('%B %-d, %Y')}})
-          checked: >          
-            {{ as_timestamp (state_attr('automation.coffee_brita_bottle_reminder', 'last_triggered') ) |timestamp_custom('%d.%m. %H:%M', default=0) }}
-          color: >
-            {% if (state_attr( 'sensor.coffee_brita_bottle' , 'running') | int )  >= ( state_attr( 'sensor.coffee_brita_bottle' , 'reminder') | int ) %}
-              black
-            {% else %}
-              red
-            {% endif %}
-
-- platform: template
-  sensors:
-    coffee_brita_machine:
-        friendly_name: "Brita Filter Machine"
-        value_template: >
-          {{ (((as_timestamp(states.input_datetime.coffee_brita_machine.state) + ( 1  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }} days
-        attribute_templates:
-          days: 90
-          reminder: 10          
-          running: >          
-            {{ (((as_timestamp(states.input_datetime.coffee_brita_machine.state) + ( (state_attr('sensor.coffee_brita_machine', 'days') | int)  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}
-          send_reminder: >
-            {{ (((as_timestamp(states.input_datetime.coffee_brita_machine.state) + ( ((state_attr('sensor.coffee_brita_machine', 'days') | int) -(state_attr('sensor.coffee_brita_machine', 'reminder') | int) )  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}
-          running_text: >          
-            {{ state_attr('sensor.coffee_brita_machine', 'running') | int }} days
-          running_of_text: >          
-            {{ state_attr('sensor.coffee_brita_machine', 'running') | int }} of {{ state_attr('sensor.coffee_brita_machine', 'days') | int }} days
-          reminder_text: >          
-           Reminder {{ state_attr('sensor.coffee_brita_machine', 'reminder') | int }} days before ({{ (state_attr('input_datetime.coffee_brita_machine', 'timestamp') + ( state_attr('sensor.coffee_brita_machine', 'days')|int - state_attr('sensor.coffee_brita_machine', 'reminder')|int )*86400) | timestamp_custom('%B %-d, %Y')}})
-          checked: >          
-            {{ as_timestamp (state_attr('automation.coffee_brita_machine_reminder', 'last_triggered') ) |timestamp_custom('%d.%m. %H:%M', default=0) }}
-          color: >
-            {% if (state_attr( 'sensor.coffee_brita_machine' , 'running') | int )  >= ( state_attr( 'sensor.coffee_brita_machine' , 'reminder') | int ) %}
-              black
-            {% else %}
-              red
-            {% endif %}
-
-- platform: template
-  sensors:
-    coffee_machine_weekly:
-        friendly_name: "Coffee machine weekly service"
-        value_template: >
-          {{ (((as_timestamp(states.input_datetime.coffee_machine_weekly.state) + ( 1  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }} days
-        attribute_templates:
-          days: 7
-          reminder: 2          
-          running: >          
-            {{ (((as_timestamp(states.input_datetime.coffee_machine_weekly.state) + ( (state_attr('sensor.coffee_machine_weekly', 'days') | int)  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}
-          send_reminder: >
-            {{ (((as_timestamp(states.input_datetime.coffee_machine_weekly.state) + ( ((state_attr('sensor.coffee_machine_weekly', 'days') | int) -(state_attr('sensor.coffee_machine_weekly', 'reminder') | int) )  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}
-          running_text: >          
-            {{ state_attr('sensor.coffee_machine_weekly', 'running') | int }} days
-          running_of_text: >          
-            {{ state_attr('sensor.coffee_machine_weekly', 'running') | int }} of {{ state_attr('sensor.coffee_machine_weekly', 'days') | int }} days
-          reminder_text: >          
-            Reminder {{ state_attr('sensor.coffee_machine_weekly', 'reminder') | int }} days before ({{ (state_attr('input_datetime.coffee_machine_weekly', 'timestamp') + ( state_attr('sensor.coffee_machine_weekly', 'days')|int - state_attr('sensor.coffee_machine_weekly', 'reminder')|int )*86400) | timestamp_custom('%B %-d, %Y')}})
-          checked: >          
-            {{ as_timestamp (state_attr('automation.coffee_machine_weekly_reminder', 'last_triggered') ) |timestamp_custom('%d.%m. %H:%M', default=0) }}
-          color: >
-            {% if (state_attr( 'sensor.coffee_machine_weekly' , 'running') | int )  >= ( state_attr( 'sensor.coffee_machine_weekly' , 'reminder') | int ) %}
-              black
-            {% else %}
-              red
-            {% endif %}
-
-- platform: template
-  sensors:
-    coffee_machine_yearly:
-        friendly_name: "Coffee machine yearly service"
-        value_template: >
-          {{ (((as_timestamp(states.input_datetime.coffee_machine_yearly.state) + ( 1  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }} days
-        attribute_templates:
-          days: 360
-          reminder: 30          
-          running: >          
-            {{ (((as_timestamp(states.input_datetime.coffee_machine_yearly.state) + ( (state_attr('sensor.coffee_machine_yearly', 'days') | int)  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}
-          send_reminder: >
-            {{ (((as_timestamp(states.input_datetime.coffee_machine_yearly.state) + ( ((state_attr('sensor.coffee_machine_yearly', 'days') | int) -(state_attr('sensor.coffee_machine_yearly', 'reminder') | int) )  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}
-          running_text: >          
-            {{ state_attr('sensor.coffee_machine_yearly', 'running') | int }} days
-          running_of_text: >          
-            {{ state_attr('sensor.coffee_machine_yearly', 'running') | int }} of {{ state_attr('sensor.coffee_machine_yearly', 'days') | int }} days
-          reminder_text: >          
-            Reminder {{ state_attr('sensor.coffee_machine_yearly', 'reminder') | int }} days before ({{ (state_attr('input_datetime.coffee_machine_yearly', 'timestamp') + ( state_attr('sensor.coffee_machine_yearly', 'days')|int - state_attr('sensor.coffee_machine_yearly', 'reminder')|int )*86400) | timestamp_custom('%B %-d, %Y')}})
-          checked: >          
-            {{ as_timestamp (state_attr('automation.coffee_machine_yearly_reminder', 'last_triggered') ) |timestamp_custom('%d.%m. %H:%M', default=0) }}
-          color: >
-            {% if (state_attr( 'sensor.coffee_machine_yearly' , 'running') | int )  >= ( state_attr( 'sensor.coffee_machine_yearly' , 'reminder') | int ) %}
-              black
-            {% else %}
-              red
-            {% endif %}
-
-
-
-## reminder on, if minutes > last time used
-## turn off reminder if unixtime = 4092700000
-- platform: template
-  sensors:
-    coffee_machine_timer_ready:
-        friendly_name: "Coffee Machine - Timer (ready to use)"
-        value_template: >
-          "this is working only with attributes..."
-        attribute_templates:
-          minutes: 180
-          startup_time: > 
-            {{ as_timestamp(states.timer.coffee_machine_timer_ready.last_changed)|int }}
-          startup_time_text: >
-            {{ ( state_attr( 'sensor.coffee_machine_timer_ready' , 'startup_time')|int )|timestamp_custom("%d.%m. %H:%M") }}
-          send_reminder: >-
-            {% if  (state_attr( 'sensor.coffee_machine_timer_ready' , 'startup_time')|int + (state_attr( 'sensor.coffee_machine_timer_ready' , 'minutes')|int * 60)|int )
-              >= ( as_timestamp(now())|int) %}
-              off
-            {% else %}
-              {% if (as_timestamp(states.input_datetime.coffee_machine_timer_uptime_last_action.state)|int) == 4092700000 %}
-                off
-              {% else %}
-                on
-              {% endif %}
-            {% endif %}
-
-
-##        value_template: >
-##          {{ (((as_timestamp(states.input_datetime.coffee_machine_timer_running.state) + ( 1  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }} days
-##    machine_started is initialiced with last change of timer 
-# Sekunden funktionieren nicht - oder vielmehr werden nicht im Sensor wiedergespiegelt
-- platform: template
-  sensors:
-    coffee_machine_timer_uptime:
-        friendly_name: "Coffee Machine - Timer (UpTime poweron reminder)"
-        value_template: >
-          {% if as_timestamp(states.input_datetime.coffee_machine_timer_uptime_last_action.state)|int == 4092700000 %}
-            off
-          {% else %}
-            on
-          {% endif %}
-        attribute_templates:
-          minutes: 180
-          machine_started: > 
-            {{  state_attr( 'sensor.coffee_machine_timer_ready' , 'startup_time') }}
-          machine_started_text: >
-            {{  state_attr( 'sensor.coffee_machine_timer_ready' , 'startup_time_text') }}
-          machine_last_action: > 
-            {% if ( states.input_datetime.coffee_machine_timer_uptime_last_action == None
-                   or states.input_datetime.coffee_machine_timer_uptime_last_action == ""
-              ) %}
-                {{ ( as_timestamp(now())|int) }}
-            {% else %}              
-             {{   (as_timestamp(states.input_datetime.coffee_machine_timer_uptime_last_action.state)|int) }}
-            {% endif %}
-          machine_last_action_text: >-
-            {{ ( state_attr( 'sensor.coffee_machine_timer_uptime' , 'machine_last_action')|int )|timestamp_custom("%d.%m. %H:%M") }}
-          send_reminder: >-
-            {% if  (state_attr( 'sensor.coffee_machine_timer_uptime' , 'machine_last_action')|int 
-                 + (state_attr( 'sensor.coffee_machine_timer_uptime' , 'minutes')|int * 60)|int )
-               >= ( as_timestamp(now())|int) %}
-              off
-            {% else %}
-              on
-            {% endif %}
-
-          machine_timer_text: >
-            {% set f = state_attr('timer.coffee_machine_timer_ready', 'finishes_at') %}
-            {% if f == None %}
-              {% if states.sensor.coffee_machine_timer_uptime.state in  ['on','On','unkown','Unkown'] %}
-              Bianca is ON
-              {% else %} 
-              Bianca is OFF
-              {% endif %}
-            {% else %} 
-            {{  (as_datetime(f) - now()).total_seconds() | timestamp_custom('%-M', false)  }} Min
-            {% endif %}
-          machine_timer_ready_text: >
-            {% set f = state_attr('timer.coffee_machine_timer_ready', 'finishes_at') %}
-            {% if f == None %}
-            {% else %} 
-            {{  as_timestamp(f) | timestamp_custom('%H:%M', true)  }} Uhr
-            {% endif %}
-
-
-
 
 automation:
 - id: coffee_brita_bottle_set_date
@@ -599,35 +399,6 @@ automation:
       message: "Kaffee Maschine ist nun ausgeschaltet! Danke Euch!"
 
 
-##  Coffee Machine Ready reminder
-# - id: coffee_machine_timer_ready_start
-#  alias: 'Coffee machine timer ready start'
-#  description: 'Coffee Machine timer ready starten'
-#  trigger:
-#    - platform: conversation
-#      command:
-#        - Kafi maschine isch iigschaltet
-#        - Coffee machine turn on
-#        - warm up timer
-#  condition:
-#  action:
-#  - service: timer.start
-#    target:
-#      entity_id: timer.coffee_machine_timer_ready
-#  ## zeit setzen wie lange die Kaffeemaschine läuft - nach X Minuten erinnern, dass sie noch ein ist
-#  - data_template:
-#      datetime: >
-#        {{ now() }}
-#    entity_id: input_datetime.coffee_machine_timer_uptime
-#    service: input_datetime.set_datetime
-
-
-#  - data_template:
-#      datetime: >
-#        {{ now() }}
-#    entity_id: input_datetime.coffee_machine_timer_ready
-#    service: input_datetime.set_datetime
-
 - id: coffee_machine_timer_ready_pause
   alias: 'Coffee machine timer ready pause (power_ha_coffee_machine_bianca)'
   description: 'Coffee machine timer ready pausieren'
@@ -691,41 +462,12 @@ automation:
       entity_id: timer.coffee_machine_timer_ready
   condition:
   action:
-  - if:
-      - condition: state
-        entity_id: input_boolean.notify_tts_prio_low
-        state: "on"
-    then:
-    - service: script.turn_on
-      entity_id: script.notify_tts_speak
-      data:
-        variables:
-          volume: 0.4
-          speakers: group.tts_notify_speaker_low
-          language: de-CH
-          message: Kaffee Maschine ist bereit um Kaffee zu machen!
-    ## zeit setzen wie lange die Kaffeemaschine läuft - nach X Minuten erinnern, dass sie noch ein ist
-    - data_template:
-        datetime: >
-          {{ now() }}
-      entity_id: input_datetime.coffee_machine_timer_uptime
-      service: input_datetime.set_datetime
-  - if:
-      - condition: state
-        entity_id: input_boolean.notify_tv_prio_medium
-        state: "on"
-    then:
-    - service: notify.sony
-      data:
-        title: Kaffee Maschine Bianca
-        message: >-
-          ist jetzt Bereit um Kaffe zu machen
-        data:
-          fontsize: large
-          position: bottom-right
-          duration: 5
-          transparency: 90%
-          color: green
+  - service: script.notify_dispatch
+    data:
+      prio: L
+      title: "Kaffee Maschine Bianca"
+      message: "Kaffee Maschine ist bereit um Kaffee zu machen!"
+
 
 
 ##
@@ -762,61 +504,42 @@ automation:
             - condition: template
               value_template: >
                {{  ( 20 - repeat.index ) in [ 1 , 4 , 9 , 14 , 19 ]  }}
-            - condition: state
-              entity_id: input_boolean.notify_tts_prio_low
-              state: "on"
             then:
-            - service: script.turn_on
-              entity_id: script.notify_tts_speak
+            - service: script.notify_dispatch
               data:
-                variables:
-                  volume: 0.4
-                  speakers: group.tts_notify_speaker_low
-                  language: de-CH
-                  message: >
-                    {% if repeat.index == 1 %}
-                      Kaffee Maschine wärmt auf.  Sie wird in circa 20 Minuten bereit sein. Ein Reminder ist eingestellt und wird dich um {{as_timestamp( state_attr (  'timer.coffee_machine_timer_ready' ,'finishes_at' ))
-                      |timestamp_custom('%H:%M') }} daran erinnern!
-                    {% else %}
-                      Kaffee Maschine wärmt auf seit {{ repeat.index -1 }} Minuten.  In {{ (20 - repeat.index) }} Minuten, um {{as_timestamp( state_attr (  'timer.coffee_machine_timer_ready' ,'finishes_at' ))
-                      |timestamp_custom('%H:%M') }} ist sie bereit!
-                    {% endif %}
-
+                prio: L
+                title: "Kaffee Maschine Bianca"
+                message: >
+                  {% if repeat.index == 1 %}
+                    Kaffee Maschine wärmt auf.  Sie wird in circa 20 Minuten bereit sein. Ein Reminder ist eingestellt und wird dich um {{as_timestamp( state_attr (  'timer.coffee_machine_timer_ready' ,'finishes_at' ))
+                    |timestamp_custom('%H:%M') }} daran erinnern!
+                  {% else %}
+                    Kaffee Maschine wärmt auf seit {{ repeat.index -1 }} Minuten.  In {{ (20 - repeat.index) }} Minuten, um {{as_timestamp( state_attr (  'timer.coffee_machine_timer_ready' ,'finishes_at' ))
+                    |timestamp_custom('%H:%M') }} ist sie bereit!
+                  {% endif %}
           - if:
             - condition: template
               value_template: >
                {{  ( 20 - repeat.index ) in [ 1 , 4 , 9 , 14 , 19 ]  }}
-            - condition: state
-              entity_id: input_boolean.notify_display_prio_low
-              state: "on"
             then:
             - service: cast.show_lovelace_view
               data:
                 entity_id: media_player.info_3
                 dashboard_path: display-screens
                 view_path: coffee-machine-bianca-ready
-
-
           - if:
             - condition: template
               value_template: >
                {{  ( 20 - repeat.index ) in [ 1 , 2  , 18 ]  }}
-            - condition: state
-              entity_id: input_boolean.notify_tv_prio_low
-              state: "on"
             then:
-            - service: notify.sony
+            - service: script.notify_dispatch
               data:
-                title: Coffee machine
-                message: >-
+                prio: L
+                only: tv
+                title: "Kaffee Maschine Bianca"
+                message: >
                   Achtung! Kaffee Maschine wärmt noch auf und ist eingeschaltet seit:  
                   {{ as_timestamp( states.input_datetime.coffee_machine_timer_uptime.state)|int|timestamp_custom('%H:%M') }} Uhr
-                data:
-                  fontsize: large
-                  position: top-right
-                  duration: 10
-                  transparency: 90%
-                  color: red
           - delay:
               minutes: 1
 
@@ -874,14 +597,11 @@ automation:
               entity_id: input_boolean.notify_tts_prio_low
               state: "on"
             then:
-            - service: script.turn_on
-              entity_id: script.notify_tts_speak
+            - service: script.notify_dispatch
               data:
-                variables:
-                  volume: 0.4
-                  speakers: group.tts_notify_speaker_low
-                  language: de-CH
-                  message: >
+                prio: L
+                title: "Kaffee Maschine Bianca"
+                message: >
                     {% if repeat.index == 1 %}
                       Achtung! Kaffee Maschine ist immer noch eingeschaltet.
                     {% else %}
@@ -894,32 +614,14 @@ automation:
             - condition: template
               value_template: >
                {{  repeat.index % 20  == 0 }}
-            - condition: state
-              entity_id: input_boolean.notify_tv_prio_high
-              state: "on"
             then:
-            - service: notify.sony
+            - service: script.notify_dispatch
               data:
-                title: Coffee machine
-                message: >-
+                prio: L
+                title: "Kaffee Maschine Bianca"
+                message: >
                   Achtung! Kaffee Maschine ist immer noch eingeschaltet und dies seit 
                   {{ as_timestamp( states.input_datetime.coffee_machine_timer_uptime.state)|int|timestamp_custom('%H:%M') }} 
-                data:
-                  fontsize: large
-                  position: top-right
-                  duration: 10
-                  transparency: 90%
-                  color: red
-          - if:
-            - condition: state
-              entity_id: input_boolean.notify_display_prio_low
-              state: "on"
-            then:
-            - service: cast.show_lovelace_view
-              data:
-                entity_id: media_player.info_3
-                dashboard_path: display-screens
-                view_path: coffee-machine-bianca-ready
           - delay:
               minutes: 1
 
@@ -1284,3 +986,172 @@ counter:
 ##     file_paths:
 ##     - /config/home-assistant_v2.db
     
+
+template:
+- sensor:
+  - default_entity_id: sensor.coffee_brita_bottle
+    attributes:
+      days: '30'
+      reminder: '3'
+      running: '{{ (((as_timestamp(states.input_datetime.coffee_brita_bottle.state)
+        + ( (state_attr(''sensor.coffee_brita_bottle'', ''days'') | int)  * 86400)
+        ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}'
+      send_reminder: '{{ (((as_timestamp(states.input_datetime.coffee_brita_bottle.state)
+        + ( ((state_attr(''sensor.coffee_brita_bottle'', ''days'') | int) -(state_attr(''sensor.coffee_brita_bottle'',
+        ''reminder'') | int) )  * 86400) ) - as_timestamp(states.sensor.date.state))
+        /86400)|round(0) }}'
+      running_text: '{{ state_attr(''sensor.coffee_brita_bottle'', ''running'') |
+        int }} days'
+      running_of_text: '{{ state_attr(''sensor.coffee_brita_bottle'', ''running'')
+        | int }} of {{ state_attr(''sensor.coffee_brita_bottle'', ''days'') | int
+        }} days'
+      reminder_text: Reminder {{ state_attr('sensor.coffee_brita_bottle', 'reminder')
+        | int }} days before ({{ (state_attr('input_datetime.coffee_brita_bottle',
+        'timestamp') + ( state_attr('sensor.coffee_brita_bottle', 'days')|int - state_attr('sensor.coffee_brita_bottle',
+        'reminder')|int )*86400) | timestamp_custom('%B %-d, %Y')}})
+      checked: '{{ as_timestamp (state_attr(''automation.coffee_brita_bottle_reminder'',
+        ''last_triggered'') ) |timestamp_custom(''%d.%m. %H:%M'', default=0) }}'
+      color: "{% if (state_attr( 'sensor.coffee_brita_bottle' , 'running') | int )
+        \ >= ( state_attr( 'sensor.coffee_brita_bottle' , 'reminder') | int ) %}\n
+        \ black\n{% else %}\n  red\n{% endif %}"
+    name: Brita Filter Bottle
+    state: '{{ (((as_timestamp(states.input_datetime.coffee_brita_bottle.state) +
+      ( 1  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}
+      days'
+
+  - default_entity_id: sensor.coffee_machine_timer_uptime
+    attributes:
+      minutes: '180'
+      machine_started: '{{  state_attr( ''sensor.coffee_machine_timer_ready'' , ''startup_time'')
+        }}'
+      machine_started_text: '{{  state_attr( ''sensor.coffee_machine_timer_ready''
+        , ''startup_time_text'') }}'
+      machine_last_action: "{% if ( states.input_datetime.coffee_machine_timer_uptime_last_action
+        == None\n       or states.input_datetime.coffee_machine_timer_uptime_last_action
+        == \"\"\n  ) %}\n    {{ ( as_timestamp(now())|int) }}\n{% else %}              \n
+        {{   (as_timestamp(states.input_datetime.coffee_machine_timer_uptime_last_action.state)|int)
+        }}\n{% endif %}"
+      machine_last_action_text: '{{ ( state_attr( ''sensor.coffee_machine_timer_uptime''
+        , ''machine_last_action'')|int )|timestamp_custom("%d.%m. %H:%M") }}'
+      send_reminder: "{% if  (state_attr( 'sensor.coffee_machine_timer_uptime' , 'machine_last_action')|int
+        \n     + (state_attr( 'sensor.coffee_machine_timer_uptime' , 'minutes')|int
+        * 60)|int )\n   >= ( as_timestamp(now())|int) %}\n  off\n{% else %}\n  on\n{%
+        endif %}"
+      machine_timer_text: "{% set f = state_attr('timer.coffee_machine_timer_ready',
+        'finishes_at') %} {% if f == None %}\n  {% if states.sensor.coffee_machine_timer_uptime.state
+        in  ['on','On','unkown','Unkown'] %}\n  Bianca is ON\n  {% else %} \n  Bianca
+        is OFF\n  {% endif %}\n{% else %}  {{  (as_datetime(f) - now()).total_seconds()
+        | timestamp_custom('%-M', false)  }} Min {% endif %}"
+      machine_timer_ready_text: '{% set f = state_attr(''timer.coffee_machine_timer_ready'',
+        ''finishes_at'') %} {% if f == None %} {% else %}  {{  as_timestamp(f) | timestamp_custom(''%H:%M'',
+        true)  }} Uhr {% endif %}'
+    name: Coffee Machine - Timer (UpTime poweron reminder)
+    state: "{% if as_timestamp(states.input_datetime.coffee_machine_timer_uptime_last_action.state)|int
+      == 4092700000 %}\n  off\n{% else %}\n  on\n{% endif %}"
+
+  - default_entity_id: sensor.coffee_machine_timer_ready
+    attributes:
+      minutes: '180'
+      startup_time: '{{ as_timestamp(states.timer.coffee_machine_timer_ready.last_changed)|int
+        }}'
+      startup_time_text: '{{ ( state_attr( ''sensor.coffee_machine_timer_ready'' ,
+        ''startup_time'')|int )|timestamp_custom("%d.%m. %H:%M") }}'
+      send_reminder: "{% if  (state_attr( 'sensor.coffee_machine_timer_ready' , 'startup_time')|int
+        + (state_attr( 'sensor.coffee_machine_timer_ready' , 'minutes')|int * 60)|int
+        )\n  >= ( as_timestamp(now())|int) %}\n  off\n{% else %}\n  {% if (as_timestamp(states.input_datetime.coffee_machine_timer_uptime_last_action.state)|int)
+        == 4092700000 %}\n    off\n  {% else %}\n    on\n  {% endif %}\n{% endif %}"
+    name: Coffee Machine - Timer (ready to use)
+    state: '"this is working only with attributes..."'
+
+  - default_entity_id: sensor.coffee_machine_yearly
+    attributes:
+      days: '360'
+      reminder: '30'
+      running: '{{ (((as_timestamp(states.input_datetime.coffee_machine_yearly.state)
+        + ( (state_attr(''sensor.coffee_machine_yearly'', ''days'') | int)  * 86400)
+        ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}'
+      send_reminder: '{{ (((as_timestamp(states.input_datetime.coffee_machine_yearly.state)
+        + ( ((state_attr(''sensor.coffee_machine_yearly'', ''days'') | int) -(state_attr(''sensor.coffee_machine_yearly'',
+        ''reminder'') | int) )  * 86400) ) - as_timestamp(states.sensor.date.state))
+        /86400)|round(0) }}'
+      running_text: '{{ state_attr(''sensor.coffee_machine_yearly'', ''running'')
+        | int }} days'
+      running_of_text: '{{ state_attr(''sensor.coffee_machine_yearly'', ''running'')
+        | int }} of {{ state_attr(''sensor.coffee_machine_yearly'', ''days'') | int
+        }} days'
+      reminder_text: Reminder {{ state_attr('sensor.coffee_machine_yearly', 'reminder')
+        | int }} days before ({{ (state_attr('input_datetime.coffee_machine_yearly',
+        'timestamp') + ( state_attr('sensor.coffee_machine_yearly', 'days')|int -
+        state_attr('sensor.coffee_machine_yearly', 'reminder')|int )*86400) | timestamp_custom('%B
+        %-d, %Y')}})
+      checked: '{{ as_timestamp (state_attr(''automation.coffee_machine_yearly_reminder'',
+        ''last_triggered'') ) |timestamp_custom(''%d.%m. %H:%M'', default=0) }}'
+      color: "{% if (state_attr( 'sensor.coffee_machine_yearly' , 'running') | int
+        )  >= ( state_attr( 'sensor.coffee_machine_yearly' , 'reminder') | int ) %}\n
+        \ black\n{% else %}\n  red\n{% endif %}"
+    name: Coffee machine yearly service
+    state: '{{ (((as_timestamp(states.input_datetime.coffee_machine_yearly.state)
+      + ( 1  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0)
+      }} days'
+
+- sensor:
+  - default_entity_id: sensor.coffee_machine_weekly
+    attributes:
+      days: '7'
+      reminder: '2'
+      running: '{{ (((as_timestamp(states.input_datetime.coffee_machine_weekly.state)
+        + ( (state_attr(''sensor.coffee_machine_weekly'', ''days'') | int)  * 86400)
+        ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}'
+      send_reminder: '{{ (((as_timestamp(states.input_datetime.coffee_machine_weekly.state)
+        + ( ((state_attr(''sensor.coffee_machine_weekly'', ''days'') | int) -(state_attr(''sensor.coffee_machine_weekly'',
+        ''reminder'') | int) )  * 86400) ) - as_timestamp(states.sensor.date.state))
+        /86400)|round(0) }}'
+      running_text: '{{ state_attr(''sensor.coffee_machine_weekly'', ''running'')
+        | int }} days'
+      running_of_text: '{{ state_attr(''sensor.coffee_machine_weekly'', ''running'')
+        | int }} of {{ state_attr(''sensor.coffee_machine_weekly'', ''days'') | int
+        }} days'
+      reminder_text: Reminder {{ state_attr('sensor.coffee_machine_weekly', 'reminder')
+        | int }} days before ({{ (state_attr('input_datetime.coffee_machine_weekly',
+        'timestamp') + ( state_attr('sensor.coffee_machine_weekly', 'days')|int -
+        state_attr('sensor.coffee_machine_weekly', 'reminder')|int )*86400) | timestamp_custom('%B
+        %-d, %Y')}})
+      checked: '{{ as_timestamp (state_attr(''automation.coffee_machine_weekly_reminder'',
+        ''last_triggered'') ) |timestamp_custom(''%d.%m. %H:%M'', default=0) }}'
+      color: "{% if (state_attr( 'sensor.coffee_machine_weekly' , 'running') | int
+        )  >= ( state_attr( 'sensor.coffee_machine_weekly' , 'reminder') | int ) %}\n
+        \ black\n{% else %}\n  red\n{% endif %}"
+    name: Coffee machine weekly service
+    state: '{{ (((as_timestamp(states.input_datetime.coffee_machine_weekly.state)
+      + ( 1  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0)
+      }} days'
+
+  - default_entity_id: sensor.coffee_brita_machine
+    attributes:
+      days: '90'
+      reminder: '10'
+      running: '{{ (((as_timestamp(states.input_datetime.coffee_brita_machine.state)
+        + ( (state_attr(''sensor.coffee_brita_machine'', ''days'') | int)  * 86400)
+        ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}'
+      send_reminder: '{{ (((as_timestamp(states.input_datetime.coffee_brita_machine.state)
+        + ( ((state_attr(''sensor.coffee_brita_machine'', ''days'') | int) -(state_attr(''sensor.coffee_brita_machine'',
+        ''reminder'') | int) )  * 86400) ) - as_timestamp(states.sensor.date.state))
+        /86400)|round(0) }}'
+      running_text: '{{ state_attr(''sensor.coffee_brita_machine'', ''running'') |
+        int }} days'
+      running_of_text: '{{ state_attr(''sensor.coffee_brita_machine'', ''running'')
+        | int }} of {{ state_attr(''sensor.coffee_brita_machine'', ''days'') | int
+        }} days'
+      reminder_text: Reminder {{ state_attr('sensor.coffee_brita_machine', 'reminder')
+        | int }} days before ({{ (state_attr('input_datetime.coffee_brita_machine',
+        'timestamp') + ( state_attr('sensor.coffee_brita_machine', 'days')|int - state_attr('sensor.coffee_brita_machine',
+        'reminder')|int )*86400) | timestamp_custom('%B %-d, %Y')}})
+      checked: '{{ as_timestamp (state_attr(''automation.coffee_brita_machine_reminder'',
+        ''last_triggered'') ) |timestamp_custom(''%d.%m. %H:%M'', default=0) }}'
+      color: "{% if (state_attr( 'sensor.coffee_brita_machine' , 'running') | int
+        )  >= ( state_attr( 'sensor.coffee_brita_machine' , 'reminder') | int ) %}\n
+        \ black\n{% else %}\n  red\n{% endif %}"
+    name: Brita Filter Machine
+    state: '{{ (((as_timestamp(states.input_datetime.coffee_brita_machine.state) +
+      ( 1  * 86400) ) - as_timestamp(states.sensor.date.state)) /86400)|round(0) }}
+      days'

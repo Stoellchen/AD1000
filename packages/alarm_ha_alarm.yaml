@@ -64,39 +64,21 @@ input_text:
   alarm_trigger_room:
     name: Alarm – Raum
     initial: none
-    
 
-sensor:
-  - platform: template
-    sensors:
-      template_motion_sensor_light_brightness:
-        friendly_name: Motion Sensor Brightness pct
-        unit_of_measurement : 'brightness'
-        value_template: >-
-          {% if states.input_select.time_of_day.state == 'Afternoon' %}
-            100
-          {% elif states.input_select.time_of_day.state == 'Evening' %}
-            50
-          {% elif states.input_select.time_of_day.state == 'Night' %}
-            1
-          {% elif states.input_select.time_of_day.state == 'Morning' %}
-            {% if now().hour <= 5 %}
-              5
-            {% elif now().hour <= 6 %}
-              10
-            {% elif now().hour <= 7 %}
-              30
-            {% elif now().hour <= 8 %}
-              60
-            {% elif now().hour <= 9 %}
-              70
-            {% else %}
-              100
-            {% endif %} 
-          {% else %}
-            5
-          {% endif %}
-          
+template:
+- sensor:
+  - default_entity_id: sensor.template_motion_sensor_light_brightness
+    unit_of_measurement: brightness
+    name: Motion Sensor Brightness pct
+    state: "{% if states.input_select.time_of_day.state == 'Afternoon' %}\n  100\n{%
+      elif states.input_select.time_of_day.state == 'Evening' %}\n  50\n{% elif states.input_select.time_of_day.state
+      == 'Night' %}\n  1\n{% elif states.input_select.time_of_day.state == 'Morning'
+      %}\n  {% if now().hour <= 5 %}\n    5\n  {% elif now().hour <= 6 %}\n    10\n
+      \ {% elif now().hour <= 7 %}\n    30\n  {% elif now().hour <= 8 %}\n    60\n
+      \ {% elif now().hour <= 9 %}\n    70\n  {% else %}\n    100\n  {% endif %} \n{%
+      else %}\n  5\n{% endif %}"
+
+
 
 group:
   alarm_sensor_group:       #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
