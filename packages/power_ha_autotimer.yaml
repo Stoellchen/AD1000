@@ -1,0 +1,290 @@
+###############################################################################
+# AUTOTIMER – KOMPLETTES PACKAGE
+# --------------------------------
+###############################################################################
+# AutoTimer – Overview
+# ===================
+# 
+# 1) group.autotimer_target
+# -------------------------
+# This group defines which entities are managed by AutoTimer.
+# 
+# Only entities inside this group are:
+# - monitored for manual on/off state changes
+# - allowed to start or stop an AutoTimer
+# - displayed in the AutoTimer dashboard
+# 
+# Supported entity domains:
+# - switch
+# - light
+# - fan
+# - media_player
+# 
+# Entities not included in this group are ignored completely by AutoTimer.
+# 
+# 
+# 2) input_number.autotimer_helper
+# --------------------------------
+# This helper provides a temporary runtime override (in minutes).
+# 
+# Behavior:
+# - When an AutoTimer is started via the dashboard, the helper value is read.
+# - If the value is greater than 0, it overrides the default runtime
+#   for the current session only.
+# - If the value is 0, the entity uses its configured default time.
+# 
+# The helper does NOT permanently change defaults.
+# It only affects the next start action.
+# 
+# 
+# 3) AutoTimer Labels (AUTOTIMER_xx)
+# ----------------------------------
+# Each AutoTimer entity must have exactly one label:
+# 
+#   AUTOTIMER_XX
+# 
+# Where XX is the default runtime in minutes.
+# 
+# Examples:
+# - AUTOTIMER_180  → 180 minutes default
+# - AUTOTIMER_5    → 5 minutes default
+# 
+# These labels define the baseline default time used when:
+# - a device is switched on manually
+# - no helper override is active
+# - the AutoTimer system initializes
+# 
+# 
+# 4) Pyscript AutoTimer Engine
+# ----------------------------
+# All AutoTimer logic is implemented in a single pyscript.
+# 
+# The pyscript is responsible for:
+# - registering default runtimes per entity
+# - applying helper-based runtime overrides
+# - tracking remaining runtime per entity
+# - decrementing timers continuously
+# - switching devices off when time expires
+# - detecting manual on/off state changes
+# - publishing status data to pyscript.autotimer_status
+# 
+# Home Assistant automations and dashboards do NOT contain timer logic.
+# They only:
+# - call pyscript services
+# - display data provided by the pyscript
+# 
+# This design keeps AutoTimer:
+# - deterministic
+# - easy to debug
+# - independent from YAML automation timing
+# 
+## -----------------------------------------------------------------------------------------------------------------
+# type: vertical-stack
+# cards:
+#   - type: entities
+#     title: AutoTimer – Zeitübersteuerung
+#     entities:
+#       - input_number.autotimer_helper
+#   - type: custom:auto-entities
+#     card:
+#       type: vertical-stack
+#     card_param: cards
+#     filter:
+#       include:
+#         - group: group.autotimer_target
+#           options:
+#             type: custom:mushroom-template-card
+#             entity: this.entity_id
+#             layout: horizontal
+#             icon: >
+#               {% set s = states(entity) %} {% set domain = entity.split('.')[0]
+#               %}
+# 
+#               {% if domain == 'switch' %}
+#                 {{ 'mdi:power-plug-outline' if s == 'on' else 'mdi:power-plug-off-outline' }}
+# 
+#               {% elif domain == 'light' %}
+#                 {{ 'mdi:lightbulb' if s == 'on' else 'mdi:lightbulb-off' }}
+# 
+#               {% elif domain == 'media_player' %}
+#                 {{ 'mdi:play-circle' if s in ['playing','on'] else 'mdi:television-off' }}
+# 
+#               {% elif domain == 'fan' %}
+#                 {{ 'mdi:fan' if s == 'on' else 'mdi:fan-off' }}
+# 
+#               {% else %}
+#                 {{ 'mdi:cog' if s == 'on' else 'mdi:cog-outline' }}
+#               {% endif %}
+#             primary: |
+#               {{ state_attr(entity,'friendly_name') }}
+#             secondary: >
+#               {% set d = state_attr('pyscript.autotimer_status', entity) %} {%
+#               if d and d.active %}
+#                 ⏱ {{ '%02d:%02d' | format(d.remaining_sec // 60, d.remaining_sec % 60) }}
+#                    of ({{ d.default_sec // 60 }} min)
+#               {% elif d %}
+#                 ({{ d.default_sec // 60 }} min)
+#               {% else %}
+#                 —
+#               {% endif %}              
+#             icon_color: >
+#               {% set d = state_attr('pyscript.autotimer_status', entity) %} {%
+#               if not d or not d.active %}
+#                 grey
+#               {% elif d.remaining_sec > 4800 %}
+#                 lightgreen
+#               {% elif d.remaining_sec > 3600 %}
+#                 green
+#               {% elif d.remaining_sec > 1800 %}
+#                 orange
+#               {% elif d.remaining_sec > 0 %}
+#                 amber
+#               {% else %}
+#                 red
+#               {% endif %}
+#             tap_action:
+#               action: call-service
+#               service: pyscript.autotimer_start
+#               data:
+#                 entity_id: this.entity_id
+#             hold_action:
+#               action: call-service
+#               service: pyscript.autotimer_stop
+#               data:
+#                 entity_id: this.entity_id
+#             double_tap_action:
+#               action: call-service
+#               service: pyscript.autotimer_start
+#               data:
+#                 entity_id: this.entity_id
+#  
+## -----------------------------------------------------------------------------------------------------------------
+
+
+group:
+  autotimer_target:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "autotimer target - alle entities (power_ha_timers)"
+    entities:
+      - light.dummy
+
+############################
+# 1) GUI Helper (Override)
+############################
+input_number:
+  autotimer_helper:
+    name: "AutoTimer – Override Minuten"
+    min: 1
+    max: 480
+    step: 1
+    mode: slider
+    icon: mdi:timer-edit
+
+
+
+########################################################
+# 4) Automation – Default-Zeit aus AUTOTIMER_xx Label
+#    → wird gesetzt, wenn Gerät eingeschaltet wird
+########################################################
+automation:
+  - id: autotimer_update_group_with_entities
+    alias: "AUTOTIMER  – Update Entity Group (power_ha_timers)"
+    mode: single
+    trigger:
+      # Update group on Home Assistant start
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: automation_reloaded
+
+      # Periodic refresh to catch label changes
+      - platform: time_pattern
+        minutes: "/5"
+    action:
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presense_simulationen_group_near
+          object_id: autotimer_target
+
+          # Build entity list dynamically from label `presense_near`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for lid in labels() %}
+              {% set lname = label_name(lid) | default('') %}
+              {% if lname.lower().startswith('autotimer_') %}
+                {% for e in label_entities(lid) %}
+                  {% set ns.list = ns.list + [e] %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.list | unique | list }}
+
+
+  - id: autotimer_defaults_registring_from_labels
+    alias: "AUTOTIMER – Defaults aus Labels registrieren (power_ha_timers)"
+    mode: single
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - service: pyscript.autotimer_register_defaults
+        data:
+          devices: >
+            {% set ns = namespace(list=[]) %}
+            {% for lid in labels() %}
+              {% set lname = label_name(lid) | lower %}
+              {% if lname.startswith('autotimer_') %}
+                {% set minutes = lname.replace('autotimer_', '') | int(0) %}
+                {% for e in label_entities(lid) %}
+                  {% set ns.list = ns.list + [{
+                    "entity": e,
+                    "minutes": minutes
+                  }] %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.list }}
+
+
+  - id: autotimer_manual_event_occured
+    alias: "AUTOTIMER – manuelle Änderung erkennen"
+    mode: parallel
+    trigger:
+      - platform: event
+        event_type: state_changed
+    condition:
+      # 1️⃣ Sicherheitscheck
+      - condition: template
+        value_template: >
+          {{ trigger.event.data is defined
+            and trigger.event.data.entity_id is defined
+            and trigger.event.data.new_state is not none
+            and trigger.event.data.old_state is not none }}
+      # 2️⃣ Nur relevante Domains
+      - condition: template
+        value_template: >
+          {% set domain = trigger.event.data.entity_id.split('.')[0] %}
+          {{ domain in ['light','switch','fan','media_player'] }}
+      # 3️⃣ Nur Entities aus der AutoTimer-Gruppe
+      - condition: template
+        value_template: >
+          {% set members = state_attr('group.autotimer_target','entity_id') or [] %}
+          {{ trigger.event.data.entity_id in members }}
+      # 4️⃣ Nur echte on/off Wechsel
+      - condition: template
+        value_template: >
+          {{ trigger.event.data.old_state.state != trigger.event.data.new_state.state
+            and trigger.event.data.new_state.state in ['on','off'] }}
+      # 5️⃣ Optional: nur manuelle Aktionen (UI / App)
+      # → auskommentieren, falls Sprachassistent mit soll
+      # - condition: template
+      #   value_template: >
+      #     {{ trigger.event.data.new_state.context.user_id is not none }}
+    action:
+      - service: pyscript.autotimer_manual_event
+        data:
+          entity_id: "{{ trigger.event.data.entity_id }}"
+          new_state: "{{ trigger.event.data.new_state.state }}"
+
+
+

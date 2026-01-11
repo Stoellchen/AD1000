@@ -35,6 +35,18 @@ homeassistant:
 # python_script:
 python_script:
 
+###############################################################################
+# Globaler Schalter für pyscript
+###############################################################################
+# pyscript:
+#  allow_all_imports: true
+#  hass_is_global: true
+pyscript:
+  allow_all_imports: true
+  hass_is_global: true
+
+
+
 # Location Sharing with google maps https://www.home-assistant.io/integrations/google_maps/
 # device_tracker:
 #  - platform: google_maps
