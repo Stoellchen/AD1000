@@ -1,0 +1,168 @@
+views:
+  - type: panel
+    path: wetter
+    title: Wetter
+    cards:
+      - type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          grid-template-columns: 50% 50%
+          grid-template-areas: |
+            "header header"
+            "left   right"
+        cards:
+          - type: custom:auto-entities
+            view_layout:
+              grid-area: header
+            card:
+              type: grid
+              columns: 1
+              square: false
+            card_param: cards
+            filter:
+              include:
+                - domain: sensor
+                  entity_id: sensor.*_weather_alert
+                  options:
+                    type: custom:meteoalarm-card
+                    integration: meteofrance
+                    title: '{{ state_attr(this.entity_id, ''friendly_name'') }}'
+                    entities:
+                      - entity: this.entity_id
+              exclude:
+                - state: Vert
+            else:
+              type: heading
+              heading: Keine Warnungen – alles im Grünen
+              heading_style: title
+              icon: mdi:weather-cloudy-alert
+          - type: weather-forecast
+            view_layout:
+              grid-area: left
+            show_current: true
+            show_forecast: true
+            entity: weather.bordeaux
+            forecast_type: daily
+            forecast_slots: 18
+          - type: weather-forecast
+            view_layout:
+              grid-area: right
+            show_current: true
+            show_forecast: true
+            entity: weather.marmande
+            forecast_type: daily
+            forecast_slots: 18
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: weather-forecast
+                    show_current: true
+                    show_forecast: true
+                    entity: weather.la_rochelle
+                    forecast_type: daily
+                    forecast_slots: 10
+                    grid_options:
+                      columns: 14
+                      rows: 2
+                  - type: custom:marees-france-card
+                    device_id: 02b3a74e90c4cd675392a7bc84a2d002
+                    show_header: true
+                    title: null
+                    card_type: full
+              - type: vertical-stack
+                cards:
+                  - type: weather-forecast
+                    show_current: true
+                    show_forecast: true
+                    entity: weather.royan
+                    forecast_type: daily
+                    forecast_slots: 10
+                    grid_options:
+                      columns: 14
+                      rows: 2
+                  - type: custom:marees-france-card
+                    device_id: 98b61a38fabae6d88938afcd5138a801
+                    show_header: true
+                    title: null
+                    card_type: full
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: weather-forecast
+                    show_current: true
+                    show_forecast: true
+                    entity: weather.arcachon
+                    forecast_type: daily
+                    forecast_slots: 10
+                    grid_options:
+                      columns: 14
+                      rows: 2
+                  - type: custom:marees-france-card
+                    device_id: bbb978af3b07fe90c10be0f672e4355e
+                    show_header: true
+                    title: null
+                    card_type: full
+              - type: vertical-stack
+                cards:
+                  - type: weather-forecast
+                    show_current: true
+                    show_forecast: true
+                    entity: weather.mimizan
+                    forecast_type: daily
+                    forecast_slots: 10
+                    grid_options:
+                      columns: 14
+                      rows: 2
+                  - type: custom:marees-france-card
+                    device_id: ecca56d38df7198a9a90d28f80f29387
+                    show_header: true
+                    title: null
+                    card_type: full
+    icon: mdi:weather-sunny-alert
+  - type: masonry
+    path: regen
+    title: Regen
+    cards:
+      - type: custom:weather-radar-card
+        show_marker: true
+        static_map: true
+        show_zoom: true
+        show_playback: true
+        show_range: true
+        show_recenter: true
+        extra_labels: true
+        show_scale: true
+        card_title: Marmande
+        data_source: RainViewer-TWC
+        map_style: Satellite
+        zoom_level: 8
+        center_latitude: 44.8
+        center_longitude: -0.1
+        frame_count: 30
+        frame_delay: 500
+        restart_delay: 5000
+        marker_latitude: 44.8
+        marker_longitude: -0.1
+      - type: custom:weather-radar-card
+        show_marker: true
+        static_map: true
+        show_zoom: true
+        show_playback: true
+        show_range: true
+        show_recenter: true
+        extra_labels: true
+        show_scale: true
+        card_title: Wettswil
+        data_source: RainViewer-TWC
+        map_style: Satellite
+        zoom_level: 10
+        center_latitude: 47.3
+        center_longitude: 8.5
+        frame_count: 30
+        frame_delay: 500
+        restart_delay: 5000
+        marker_latitude: 47.3382787
+        marker_longitude: 8.4729694
+    icon: mdi:weather-pouring

@@ -1,0 +1,29 @@
+# Decluttering Templates
+decluttering_templates:
+  !include ../decluttering_templates/decluttering_templates.yaml
+
+
+title: Main welcome 12
+views:
+  - title: welcome 12 A
+    cards:
+      - type: custom:decluttering-card
+        template: global_header_main12
+
+
+      - type: markdown
+        title: Dashboard
+        content: >
+          Welcome to your **dashboard**.
+
+      - type: markdown
+        title: Dashboard
+        content: >
+          Welcome to your **dashboard**.
+
+  - title: welcome 12 B
+    cards:
+      - type: markdown
+        title: Dashboard
+        content: >
+          Welcome to your **dashboard**. 11

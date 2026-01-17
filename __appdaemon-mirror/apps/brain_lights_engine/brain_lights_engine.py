@@ -73,6 +73,9 @@ class BrainLightsEngine(hass.Hass):
         self.transition_off_multiplier = float(engine_cfg.get("transition_off_multiplier", 1.0))
         self.reset_timeout_on_motion = bool(engine_cfg.get("reset_timeout_on_motion", True))
 
+        # what can the lights?
+        self.light_capabilities = {}
+
         # Runtime state
         # active_contexts: key="room:zone" -> dict(context_id, ctx, since, prio)
         self.active_contexts = {}
@@ -99,6 +102,12 @@ class BrainLightsEngine(hass.Hass):
 
         # Periodic circadian reapply for active lights
         self.run_every(self._apply_circadian_to_active_lights, self.datetime() + timedelta(seconds=2), 60)
+
+        # init capabilities
+        self._init_light_capabilities()
+
+        # init last light data
+        self._last_light_data = {}
 
         # every minute status log
         self.run_every(self._log_active_contexts, self.datetime(), 60)
@@ -509,6 +518,7 @@ class BrainLightsEngine(hass.Hass):
             "room": room_name,
             "zone": zone_name,
             "since": now,
+            "model": ctx.get("model", "sliding"),
             "expires_at": now + timedelta(minutes=timeout_min),
             "ctx": ctx,
             "prio": prio,
@@ -663,15 +673,38 @@ class BrainLightsEngine(hass.Hass):
     # TIMER HANDLING (Step 19-20)
     # -------------------------------------------------------------------------
     def refresh_timer(self, key):
-        if key not in self.active_contexts:
+        active = self.active_contexts.get(key)
+        if not active:
             return
-        
-        ctx = self.active_contexts[key].get("ctx")
-        if not ctx:
+
+        timeout_min = active.get("ctx", {}).get("timeout_min")
+        model = active.get("model", "sliding")
+
+        # 🚫 Kein Timeout → nichts zu tun
+        if not timeout_min:
+            self.dbg(
+                4,
+                f"[TIMER] ctx={active['context_id']} has no timeout → skipping refresh"
+            )
             return
-        
-        self.dbg(3, f"Refreshing timer for {key}")
-        self.start_timer(key, ctx)
+
+        now = datetime.now()
+
+        if model == "sliding":
+            active["expires_at"] = now + timedelta(minutes=timeout_min)
+            self.dbg(
+                3,
+                f"[TIMER] sliding refresh for {key} → expires_at={active['expires_at']}"
+            )
+
+        elif model == "hard":
+            self.dbg(
+                4,
+                f"[TIMER] hard model – expires_at unchanged ({active.get('expires_at')})"
+            )
+
+        self.start_timer(key, active.get("ctx"))
+
 
     """
     def cancel_existing_timer(self, key):
@@ -787,49 +820,83 @@ class BrainLightsEngine(hass.Hass):
                         data["brightness"] = item.get("brightness")
 
 
-
                 elif mode == "circadian":
-                    # Circadian color handling
-                    color = item.get("color", "kelvin")
-                    value = self.circadian_values.get(color)
+                    # -------------------------------------------------
+                    # Circadian color handling (capability-aware)
+                    # -------------------------------------------------
+                    caps = self.light_capabilities.get(entity, {})
+                    preferred = caps.get("preferred_color_mode")
 
-                    if value is None:
-                        self.dbg(2, f"Circadian value '{color}' not available, skipping {entity}")
+                    # Optional manual override from YAML (advanced use only)
+                    override = item.get("color")  # "kelvin", "mired", "rgb" or None
+
+                    # -------------------------------------------------
+                    # Decide which color model to use
+                    # -------------------------------------------------
+                    if override == "rgb":
+                        use_mode = "rgb"
+                    elif override in ("kelvin", "mired"):
+                        use_mode = "color_temp"
+                    else:
+                        # automatic decision based on capabilities
+                        use_mode = preferred
+
+                    if use_mode is None:
+                        self.dbg(3, f"[COLOR] {entity} has no usable circadian color mode")
                         return
 
-                    if color == "kelvin":
-                        data["kelvin"] = int(value)
+                    # -------------------------------------------------
+                    # Apply color according to chosen mode
+                    # -------------------------------------------------
+                    if use_mode == "color_temp":
+                        # Clamp to device limits if available
+                        # mired = self._mired
+                        mired = self.circadian_values.get("mired")
+                        kelvin = self.circadian_values.get("kelvin")
 
-                    elif color == "mired":
-                        # HA expects mired as color_temp
-                        data["color_temp"] = int(value)
+                        min_m = caps.get("min_mireds")
+                        max_m = caps.get("max_mireds")
 
-                    elif color == "rgb":
-                        # Expect tuple/list (r,g,b)
-                        if isinstance(value, (list, tuple)) and len(value) == 3:
-                            data["rgb_color"] = [int(value[0]), int(value[1]), int(value[2])]
-                        else:
-                            self.dbg(
-                                2,
-                                f"Invalid RGB value '{value}' for {entity}, skipping"
-                            )
+                        if min_m is not None:
+                            mired = max(mired, min_m)
+                        if max_m is not None:
+                            mired = min(mired, max_m)
+
+                        data["color_temp"] = int(mired)
+
+                        self.dbg(
+                            4,
+                            f"[COLOR] {entity} using color_temp "
+                            f"(mired={mired}, kelvin={kelvin})"
+                        )
+
+                    elif use_mode == "rgb":
+                        rgb = self._rgb
+
+                        if not (isinstance(rgb, (list, tuple)) and len(rgb) == 3):
+                            self.dbg(2, f"[COLOR] Invalid RGB value {rgb} for {entity}")
                             return
 
+                        data["rgb_color"] = [int(rgb[0]), int(rgb[1]), int(rgb[2])]
 
+                        self.dbg(
+                            4,
+                            f"[COLOR] {entity} using rgb_color {data['rgb_color']}"
+                        )
 
-                    # Optional circadian brightness handling
-                    # Apply only if explicitly requested in YAML
-                    if item.get("brightness") == "circadian":
-                        b_val = self.circadian_values.get("brightness")
-                        if b_val is not None:
-                            data["brightness"] = int(b_val)
-                            self.dbg(4, f"Applied circadian brightness to {entity}: {int(b_val)}")
-
-                    if item.get("brightness_pct") == "circadian":
-                        b_pct = self.circadian_values.get("brightness_pct")
-                        if b_pct is not None:
-                            data["brightness_pct"] = int(b_pct)
-                            self.dbg(4, f"Applied circadian brightness_pct to {entity}: {int(b_pct)}")
+#                   # Optional circadian brightness handling
+#                    # Apply only if explicitly requested in YAML
+#                    if item.get("brightness") == "circadian":
+#                        b_val = self.circadian_values.get("brightness")
+#                        if b_val is not None:
+#                            data["brightness"] = int(b_val)
+#                            self.dbg(4, f"Applied circadian brightness to {entity}: {int(b_val)}")
+#
+#                    if item.get("brightness_pct") == "circadian":
+#                        b_pct = self.circadian_values.get("brightness_pct")
+#                        if b_pct is not None:
+#                            data["brightness_pct"] = int(b_pct)
+#                            self.dbg(4, f"Applied circadian brightness_pct to {entity}: {int(b_pct)}")
 
                 elif mode == "rgb":
                     rgb = item.get("color")
@@ -843,49 +910,135 @@ class BrainLightsEngine(hass.Hass):
             # -------------------------------------------------
             # Context minimum brightness (percent based)
             # -------------------------------------------------
-            min_pct = None
+            # -------------------------------------------------
+            # Circadian brightness handling (automatic)
+            # -------------------------------------------------
+            # Optional YAML override
+            b_override_pct = item.get("brightness_pct")
+            b_override_abs = item.get("brightness")
+
+            # Decide base brightness from circadian engine
+            # circ_bri = self._brightness
+            # circ_bri_pct = self._brightness_pct
+            circ_bri = self.circadian_values.get("brightness")
+            circ_bri_pct = self.circadian_values.get("brightness_pct")
+            
+
+            # -------------------------------------------------
+            # Apply override if requested
+            # -------------------------------------------------
+            if b_override_pct == "circadian":
+                data["brightness_pct"] = int(circ_bri_pct)
+
+            elif b_override_abs == "circadian":
+                data["brightness"] = int(circ_bri)
+
+            elif isinstance(b_override_pct, (int, float)):
+                data["brightness_pct"] = int(b_override_pct)
+
+            elif isinstance(b_override_abs, (int, float)):
+                data["brightness"] = int(b_override_abs)
+
+            else:
+                # -------------------------------------------------
+                # Fully automatic decision
+                # Prefer pct for human-friendly transitions
+                # -------------------------------------------------
+                data["brightness_pct"] = int(circ_bri_pct)
+
+            # -------------------------------------------------
+            # Context minimum brightness enforcement
+            # -------------------------------------------------
             if ctx:
                 min_pct = ctx.get("minimum_brightness")
-
-            if min_pct is not None:
                 try:
                     min_pct = float(min_pct)
                 except Exception:
                     min_pct = None
 
-            if min_pct is not None:
+                if min_pct is not None:
 
-                # pct-mode active
-                if "brightness_pct" in data:
-                    data["brightness_pct"] = max(
-                        float(data["brightness_pct"]),
-                        min_pct
-                    )
+                    if "brightness_pct" in data:
+                        data["brightness_pct"] = max(
+                            int(data["brightness_pct"]),
+                            int(min_pct)
+                        )
 
-                # brightness (0-255) mode active
-                elif "brightness" in data:
-                    min_255 = self._pct_to_255(min_pct)
-                    data["brightness"] = max(
-                        int(data["brightness"]),
-                        min_255
-                    )
+                    elif "brightness" in data:
+                        min_255 = max(1, int(min_pct / 100 * 255))
+                        data["brightness"] = max(
+                            int(data["brightness"]),
+                            min_255
+                        )
 
                     self.dbg(
                         4,
-                        f"[CTX] minimum brightness applied AFTER mode: "
-                        f"ctx={ctx.get('id') if ctx else None} "
-                        f"{min_pct:.1f}% → data={data}"
+                        f"[BRI] minimum brightness applied "
+                        f"ctx={ctx.get('id')} min={min_pct}% → data={data}"
                     )
-                # If no brightness key exists yet, inject minimum as pct (works for most lights)
-                else:
-                    data["brightness_pct"] = min_pct
 
+            # -------------------------------------------------
+            # Safety: never send 0 (HA edge case)
+            # -------------------------------------------------
+            if "brightness" in data:
+                data["brightness"] = max(1, int(data["brightness"]))
+
+            if "brightness_pct" in data:
+                data["brightness_pct"] = max(1, int(data["brightness_pct"]))
+
+
+
+#            min_pct = None
+#            if ctx:
+#                min_pct = ctx.get("minimum_brightness")
+#
+#            if min_pct is not None:
+#                try:
+#                    min_pct = float(min_pct)
+#                except Exception:
+#                    min_pct = None
+#
+#            if min_pct is not None:
+#
+#                # pct-mode active
+#                if "brightness_pct" in data:
+#                    data["brightness_pct"] = max(
+#                        float(data["brightness_pct"]),
+#                        min_pct
+#                    )
+#
+#                # brightness (0-255) mode active
+#                elif "brightness" in data:
+#                    min_255 = self._pct_to_255(min_pct)
+#                    data["brightness"] = max(
+#                        int(data["brightness"]),
+#                        min_255
+#                    )
+#
+#                    self.dbg(
+#                        4,
+#                        f"[CTX] minimum brightness applied AFTER mode: "
+#                        f"ctx={ctx.get('id') if ctx else None} "
+#                        f"{min_pct:.1f}% → data={data}"
+#                    )
+#                # If no brightness key exists yet, inject minimum as pct (works for most lights)
+#                else:
+#                    data["brightness_pct"] = min_pct
+#
 
             if not entity:
                 return
 
-            self.call_service("light/turn_on", entity_id=entity, **data)
-            self.dbg(3, f"light.turn_on: {entity} data={data}")
+            ## last light data
+            norm = self._normalize_light_data(data)
+            last = self._last_light_data.get(entity)
+
+            if norm != last:
+                self.call_service("light/turn_on", entity_id=entity, **data)
+                self._last_light_data[entity] = norm
+                self.dbg(3, f"[APPLY] light.turn_on {entity} data={norm}")
+            else:
+                self.dbg(4, f"[SKIP] no change for {entity}")
 
         except Exception as e:
             self.dbg(2, f"light.turn_on failed: {item} -> {e}")
@@ -906,10 +1059,15 @@ class BrainLightsEngine(hass.Hass):
             if transition and transition > 0:
                 data["transition"] = transition * self.transition_off_multiplier
 
+            # invalidate last known on-state
+            if entity in self._last_light_data:
+                del self._last_light_data[entity]
+
             self.call_service("light/turn_off", entity_id=entity, **data)
             self.dbg(3, f"light.turn_off: {entity} data={data}")
         except Exception as e:
             self.dbg(2, f"light.turn_off failed: {item} -> {e}")
+
 
     def call_switch_on(self, sw_entity):
         if not sw_entity:
@@ -1106,6 +1264,7 @@ class BrainLightsEngine(hass.Hass):
                 for ctx in zone["contexts"]:
                     self.log(
                         f"    [CTX] {ctx['id']} | prio={ctx.get('priority')} | "
+                        f"model={ctx.get('model', 'sliding')} | "
                         f"timeout={ctx.get('timeout_min')}min | "
                         f"lux<{ctx.get('lux', {}).get('below')} | "
                         f"times={ctx.get('active_times')}",
@@ -1154,17 +1313,27 @@ class BrainLightsEngine(hass.Hass):
             expires_at = active.get("expires_at")
             remaining = int((expires_at - now).total_seconds() // 60)
 
-            # Calculate remaining time in minutes
-            # If no timeout or no start time exists, mark as infinite
-            timeout_min = ctx.get("timeout_min", 0)
-            if not since or timeout_min <= 0:
-                remaining_min = "inf"
-            else:
-                elapsed = (now - since).total_seconds()
-                remaining = max(0, timeout_min * 60 - elapsed)
+#            # Calculate remaining time in minutes
+#            # If no timeout or no start time exists, mark as infinite
+#            timeout_min = ctx.get("timeout_min", 0)
+#            if not since or timeout_min <= 0:
+#                remaining_min = "inf"
+#            else:
+#                elapsed = (now - since).total_seconds()
+#                remaining = max(0, timeout_min * 60 - elapsed)
+#
+#                # Round up to full minutes
+#                remaining_min = int((remaining + 59) // 60)
 
-                # Round up to full minutes
-                remaining_min = int((remaining + 59) // 60)
+            expires_at = active.get("expires_at")
+
+            if expires_at:
+                remaining_sec = (expires_at - now).total_seconds()
+                remaining_min = max(0, int((remaining_sec + 59) // 60))
+            else:
+                remaining_min = "inf"
+            model = active.get("model", "?")
+
 
             # Collect lights that were switched on by this context
             lights = []
@@ -1183,14 +1352,20 @@ class BrainLightsEngine(hass.Hass):
 
             since_str = since.strftime("%H:%M:%S") if since else "-"
 
-            # Final status log line
+#            # Final status log line
+#            self.dbg(
+#                3,
+#                f"[ACTIVE] ctx='{ctx_id}' key={key} "
+#                f"since={since_str} elapsed={elapsed_min}min "
+#                f"remaining={remaining_min}min lights=[{lights_str}]"
+#            )
+#
             self.dbg(
                 3,
-                f"[ACTIVE] ctx='{ctx_id}' key={key} "
+                f"[ACTIVE] ctx='{ctx_id}' key={key} model={model} "
                 f"since={since_str} elapsed={elapsed_min}min "
                 f"remaining={remaining_min}min lights=[{lights_str}]"
             )
-
 
             
     def _apply_circadian_to_active_lights(self, kwargs=None):
@@ -1245,3 +1420,134 @@ class BrainLightsEngine(hass.Hass):
     def _255_to_pct(self, value):
         value = max(0, min(255, value))
         return int(round(value / 255 * 100))
+
+
+    def _init_light_capabilities(self):
+        """
+        Initialize and cache static light capabilities.
+
+        This is called once during initialize().
+        We only store STATIC properties that:
+        - do not change at runtime
+        - are device-specific
+        - are required for correct circadian decisions
+
+        Dynamic state (brightness, color_mode, rgb_color, etc.)
+        is intentionally NOT cached here.
+        """
+
+        # Holds per-light capability information
+        self.light_capabilities = {}
+
+        # Get all light entities with full state
+        lights = self.get_state("light")
+
+        if not isinstance(lights, dict):
+            self.dbg(2, "[CAP] No light entities found")
+            return
+
+        for entity_id, state in lights.items():
+            attrs = state.get("attributes", {})
+
+            # Supported color modes reported by Home Assistant
+            # Examples:
+            #   ['color_temp']
+            #   ['color_temp', 'xy']
+            #   ['hs']
+            modes = attrs.get("supported_color_modes", []) or []
+
+            # -------------------------------------------------
+            # Capability detection
+            # -------------------------------------------------
+
+            # Color temperature support (HA uses MIRED internally)
+            supports_color_temp = "color_temp" in modes
+
+            # Any kind of color support (RGB, HS, XY)
+            # We treat these all as "RGB-capable" from an API perspective
+            supports_rgb = any(m in modes for m in ("rgb", "hs", "xy"))
+
+            # -------------------------------------------------
+            # Preferred color mode for circadian lighting
+            #
+            # Priority:
+            #   1. color_temp  (biologically correct, hardware-native)
+            #   2. rgb         (fallback for color-only devices)
+            # -------------------------------------------------
+            if supports_color_temp:
+                preferred = "color_temp"
+            elif supports_rgb:
+                preferred = "rgb"
+            else:
+                preferred = None
+
+            # -------------------------------------------------
+            # Static device limits (may be missing on some devices)
+            # These are IMPORTANT for clamping and avoiding HA warnings
+            # -------------------------------------------------
+            min_kelvin = attrs.get("min_color_temp_kelvin")
+            max_kelvin = attrs.get("max_color_temp_kelvin")
+
+            min_mireds = attrs.get("min_mireds")
+            max_mireds = attrs.get("max_mireds")
+
+            # -------------------------------------------------
+            # Store capabilities
+            # -------------------------------------------------
+            self.light_capabilities[entity_id] = {
+                # raw info
+                "supported_color_modes": modes,
+
+                # logical capabilities
+                "supports_color_temp": supports_color_temp,
+                "supports_rgb": supports_rgb,
+
+                # circadian decision
+                "preferred_color_mode": preferred,
+
+                # static ranges (may be None)
+                "min_kelvin": min_kelvin,
+                "max_kelvin": max_kelvin,
+                "min_mireds": min_mireds,
+                "max_mireds": max_mireds,
+            }
+
+            # -------------------------------------------------
+            # Debug output (high level only)
+            # -------------------------------------------------
+            self.dbg(
+                5,
+                f"[CAP] {entity_id}: "
+                f"modes={modes} "
+                f"preferred={preferred} "
+                f"kelvin_range={min_kelvin}-{max_kelvin} "
+                f"mired_range={min_mireds}-{max_mireds}"
+            )
+
+
+
+    def _normalize_light_data(self, data):
+        """
+        Normalize full light service data for comparison.
+
+        - compares ALL fields (including transition)
+        - normalizes numeric types
+        - normalizes rgb_color list/tuple
+        - no semantic filtering
+        """
+        norm = {}
+
+        for k, v in data.items():
+            # normalize rgb
+            if k == "rgb_color" and isinstance(v, (list, tuple)):
+                norm[k] = tuple(int(x) for x in v)
+
+            # normalize numeric values
+            elif isinstance(v, (int, float)):
+                norm[k] = int(v)
+
+            # keep everything else as-is
+            else:
+                norm[k] = v
+
+        return norm

@@ -1,0 +1,21 @@
+decluttering_templates: !include ../decluttering_templates/decluttering_templates.yaml
+
+
+views:
+  - title: welcome 13
+    cards:
+      - type: custom:decluttering-card
+        template: global_status_header2
+        variables:
+          - title: "🏠 Zuhause"
+          - subtitle: "_Systemstatus_"
+          - entities:
+              - sensor.presence_state
+              - sensor.internet_status
+              - binary_sensor.alarm_armed
+
+      - type: grid
+        cards:
+          - type: light
+            entity: light.w1
+            

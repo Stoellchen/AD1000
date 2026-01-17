@@ -1,0 +1,586 @@
+views:
+  - type: sections
+    max_columns: 4
+    title: Lichter
+    path: lichter
+    icon: mdi:string-lights
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Wohnzimmer
+            heading_style: subtitle
+            icon: mdi:sofa
+          - type: tile
+            entity: light.w1
+            show_entity_picture: false
+            hide_state: true
+            vertical: true
+            features_position: bottom
+            grid_options:
+              columns: 3
+              rows: 2
+          - type: tile
+            grid_options:
+              columns: 3
+              rows: 2
+            entity: light.w2
+            show_entity_picture: false
+            hide_state: true
+            vertical: true
+            features_position: bottom
+          - type: tile
+            grid_options:
+              columns: 3
+              rows: 2
+            entity: light.w3
+            show_entity_picture: false
+            hide_state: true
+            vertical: true
+            features_position: bottom
+          - type: tile
+            grid_options:
+              columns: 3
+              rows: 2
+            entity: light.w4
+            show_entity_picture: false
+            hide_state: true
+            vertical: true
+            features_position: bottom
+          - type: tile
+            entity: light.wand
+          - type: tile
+            entity: switch.sb_licherkette
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: switch.sb_tromso
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: switch.sb_fake_tv
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: switch.lichterkette
+            name: Licherkette
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: switch.sb_usb
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: light.sideboard_kerze_rechts
+          - type: tile
+            entity: scene.licht_wohnzimmer_decke_190_alle_aus
+          - type: tile
+            entity: light.sideboard_kerze_links
+          - type: tile
+            entity: scene.licht_wohnzimmer_decke_197_hell_25_warmweiss
+          - type: tile
+            entity: scene.licht_wohnzimmer_decke_198_hell_50_warmweiss
+          - type: tile
+            entity: scene.licht_wohnzimmer_decke_191_hell_100_kaltweiss
+          - type: tile
+            entity: scene.licht_wohnzimmer_decke_199_hell_warmweiss
+      - type: grid
+        cards:
+          - type: heading
+            heading: Esszimmer
+            heading_style: subtitle
+            icon: mdi:table-furniture
+          - type: tile
+            grid_options:
+              columns: 3
+              rows: 2
+            entity: light.e1
+            show_entity_picture: false
+            hide_state: true
+            vertical: true
+            features_position: bottom
+          - type: tile
+            grid_options:
+              columns: 3
+              rows: 2
+            entity: light.e2
+            show_entity_picture: false
+            hide_state: true
+            vertical: true
+            features_position: bottom
+          - type: tile
+            grid_options:
+              columns: 3
+              rows: 2
+            entity: light.e3
+            show_entity_picture: false
+            hide_state: true
+            vertical: true
+            features_position: bottom
+          - type: tile
+            grid_options:
+              columns: 3
+              rows: 2
+            entity: light.e4
+            show_entity_picture: false
+            hide_state: true
+            vertical: true
+            features_position: bottom
+          - type: tile
+            entity: scene.licht_esszimmer_decke_180_alle_aus
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: scene.licht_esszimmer_decke_187_hell_25_warmweiss
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: scene.licht_esszimmer_decke_188_hell_50_warmweiss
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: scene.licht_esszimmer_decke_189_hell_warmweiss
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: scene.licht_esszimmer_decke_181_hell_100_kaltweiss
+            vertical: false
+            features_position: bottom
+      - type: grid
+        cards:
+          - type: heading
+            heading: Schlafzimmer
+            heading_style: subtitle
+            icon: mdi:bed-double
+          - type: tile
+            entity: light.sstrip1
+          - type: tile
+            entity: light.sstrip3
+          - type: tile
+            entity: light.sstrip2
+          - type: tile
+            entity: light.s1
+          - type: tile
+            entity: light.s2
+          - type: tile
+            entity: scene.schlafzimmer_170_alle_aus
+          - type: tile
+            entity: scene.schlafzimmer_177_hell_25_warmweiss
+          - type: tile
+            entity: scene.schlafzimmer_178_hell_50_warmweiss
+          - type: tile
+            entity: scene.schlafzimmer_171_hell_100_kaltweiss
+          - type: tile
+            entity: scene.schlafzimmer_179_hell_warmweiss
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: entities
+                title: Timer – Übersteuerung
+                entities:
+                  - entity: input_number.autotimer_helper
+                    name: Überschreiben
+              - type: custom:auto-entities
+                card:
+                  type: vertical-stack
+                card_param: cards
+                filter:
+                  include:
+                    - group: group.autotimer_target
+                      options:
+                        type: custom:mushroom-template-card
+                        entity: this.entity_id
+                        layout: horizontal
+                        icon: >
+                          {% set s = states(entity) %} {% set domain =
+                          entity.split('.')[0] %}
+
+                          {% if domain == 'switch' %}
+                            {{ 'mdi:power-plug-outline' if s == 'on' else 'mdi:power-plug-off-outline' }}
+
+                          {% elif domain == 'light' %}
+                            {{ 'mdi:lightbulb' if s == 'on' else 'mdi:lightbulb-off' }}
+
+                          {% elif domain == 'media_player' %}
+                            {{ 'mdi:play-circle' if s in ['playing','on'] else 'mdi:television-off' }}
+
+                          {% elif domain == 'fan' %}
+                            {{ 'mdi:fan' if s == 'on' else 'mdi:fan-off' }}
+
+                          {% else %}
+                            {{ 'mdi:cog' if s == 'on' else 'mdi:cog-outline' }}
+                          {% endif %}
+                        primary: |
+                          {{ state_attr(entity,'friendly_name') }}
+                        secondary: >
+
+                          {% set d = state_attr('pyscript.autotimer_status',
+                          entity) %}
+
+                          {% if d and d.active %}
+                            {% set sec = d.remaining_sec | int %}
+                            {% set h = sec // 3600 %}
+                            {% set m = (sec % 3600) // 60 %}
+                            {% set s = sec % 60 %}
+
+                            ⏱
+                            {% if h > 0 %}
+                              {{ '%d:%02d:%02d' | format(h, m, s) }}
+                            {% else %}
+                              {{ '%02d:%02d' | format(m, s) }}
+                            {% endif %}
+                            of
+                            {% if d.default_sec >= 3600 %}
+                              ({{ (d.default_sec // 3600) }} h {{ ((d.default_sec % 3600) // 60) }} min)
+                            {% else %}
+                              ({{ (d.default_sec // 60) }} min)
+                            {% endif %}
+
+                          {% elif d %}
+                            {% if d.default_sec >= 3600 %}
+                              ({{ (d.default_sec // 3600) }} h {{ ((d.default_sec % 3600) // 60) }} min)
+                            {% else %}
+                              ({{ (d.default_sec // 60) }} min)
+                            {% endif %}
+                          {% else %}
+                            —
+                          {% endif %}
+                           · {{ area_name(entity) }}
+                           
+                        icon_color: >
+
+                          {% set d = state_attr('pyscript.autotimer_status',
+                          entity) %} {% if not d or not d.active or
+                          d.default_sec == 0 %}
+                            grey
+                          {% else %}
+                            {% set pct = (d.remaining_sec / d.default_sec * 100) | round(0) %}
+
+                            {% if pct > 90 %}
+                              green
+                            {% elif pct > 80 %}
+                              light-green
+                            {% elif pct > 70 %}
+                              green
+                            {% elif pct > 60 %}
+                              yellow
+                            {% elif pct > 50 %}
+                              yellow
+                            {% elif pct > 40 %}
+                              amber
+                            {% elif pct > 30 %}
+                              orange
+                            {% elif pct > 20 %}
+                              deep-orange
+                            {% elif pct > 10 %}
+                              red
+                            {% else %}
+                              red
+                            {% endif %}
+                          {% endif %}
+                        tap_action:
+                          action: call-service
+                          service: pyscript.autotimer_start
+                          data:
+                            entity_id: this.entity_id
+                        hold_action:
+                          action: call-service
+                          service: pyscript.autotimer_stop
+                          data:
+                            entity_id: this.entity_id
+                        double_tap_action:
+                          action: call-service
+                          service: pyscript.autotimer_start
+                          data:
+                            entity_id: this.entity_id
+  - title: Medien
+    type: sections
+    max_columns: 4
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Lautsprecher
+            heading_style: title
+          - type: media-control
+            entity: media_player.wohn_lautsprecher
+          - type: media-control
+            entity: media_player.schlafzimmer
+          - type: media-control
+            entity: media_player.bad
+          - type: media-control
+            entity: media_player.dusche
+          - type: media-control
+            entity: media_player.info_1
+          - type: media-control
+            entity: media_player.info_2
+      - type: grid
+        cards:
+          - type: heading
+            heading: TV & Displays
+            heading_style: title
+          - type: media-control
+            entity: media_player.appletv
+          - type: media-control
+            entity: media_player.sony
+          - type: media-control
+            entity: media_player.info_3
+      - type: grid
+        cards:
+          - type: heading
+            heading: Neuer Abschnitt
+    icon: mdi:multimedia
+    cards: []
+  - type: sections
+    max_columns: 4
+    title: Power Timers
+    path: power-timers
+    sections:
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: entities
+                title: AutoTimer – Zeitübersteuerung
+                entities:
+                  - input_number.autotimer_helper
+              - type: custom:auto-entities
+                card:
+                  type: vertical-stack
+                card_param: cards
+                filter:
+                  include:
+                    - group: group.autotimer_target
+                      options:
+                        type: custom:mushroom-template-card
+                        entity: this.entity_id
+                        layout: horizontal
+                        icon: >
+                          {% set s = states(entity) %} {% set domain =
+                          entity.split('.')[0] %}
+
+                          {% if domain == 'switch' %}
+                            {{ 'mdi:power-plug-outline' if s == 'on' else 'mdi:power-plug-off-outline' }}
+
+                          {% elif domain == 'light' %}
+                            {{ 'mdi:lightbulb' if s == 'on' else 'mdi:lightbulb-off' }}
+
+                          {% elif domain == 'media_player' %}
+                            {{ 'mdi:play-circle' if s in ['playing','on'] else 'mdi:television-off' }}
+
+                          {% elif domain == 'fan' %}
+                            {{ 'mdi:fan' if s == 'on' else 'mdi:fan-off' }}
+
+                          {% else %}
+                            {{ 'mdi:cog' if s == 'on' else 'mdi:cog-outline' }}
+                          {% endif %}
+                        primary: |
+                          {{ state_attr(entity,'friendly_name') }}
+                        secondary: >
+
+                          {% set d = state_attr('pyscript.autotimer_status',
+                          entity) %}
+
+                          {% if d and d.active %}
+                            {% set sec = d.remaining_sec | int %}
+                            {% set h = sec // 3600 %}
+                            {% set m = (sec % 3600) // 60 %}
+                            {% set s = sec % 60 %}
+
+                            ⏱
+                            {% if h > 0 %}
+                              {{ '%d:%02d:%02d' | format(h, m, s) }}
+                            {% else %}
+                              {{ '%02d:%02d' | format(m, s) }}
+                            {% endif %}
+                            of
+                            {% if d.default_sec >= 3600 %}
+                              ({{ (d.default_sec // 3600) }} h {{ ((d.default_sec % 3600) // 60) }} min)
+                            {% else %}
+                              ({{ (d.default_sec // 60) }} min)
+                            {% endif %}
+
+                          {% elif d %}
+                            {% if d.default_sec >= 3600 %}
+                              ({{ (d.default_sec // 3600) }} h {{ ((d.default_sec % 3600) // 60) }} min)
+                            {% else %}
+                              ({{ (d.default_sec // 60) }} min)
+                            {% endif %}
+                          {% else %}
+                            —
+                          {% endif %}
+                           · {{ area_name(entity) }}
+                           
+                        icon_color: >
+
+                          {% set d = state_attr('pyscript.autotimer_status',
+                          entity) %} {% if not d or not d.active or
+                          d.default_sec == 0 %}
+                            grey
+                          {% else %}
+                            {% set pct = (d.remaining_sec / d.default_sec * 100) | round(0) %}
+
+                            {% if pct > 90 %}
+                              green
+                            {% elif pct > 80 %}
+                              light-green
+                            {% elif pct > 70 %}
+                              green
+                            {% elif pct > 60 %}
+                              yellow
+                            {% elif pct > 50 %}
+                              yellow
+                            {% elif pct > 40 %}
+                              amber
+                            {% elif pct > 30 %}
+                              orange
+                            {% elif pct > 20 %}
+                              deep-orange
+                            {% elif pct > 10 %}
+                              red
+                            {% else %}
+                              red
+                            {% endif %}
+                          {% endif %}
+                        tap_action:
+                          action: call-service
+                          service: pyscript.autotimer_start
+                          data:
+                            entity_id: this.entity_id
+                        hold_action:
+                          action: call-service
+                          service: pyscript.autotimer_stop
+                          data:
+                            entity_id: this.entity_id
+                        double_tap_action:
+                          action: call-service
+                          service: pyscript.autotimer_start
+                          data:
+                            entity_id: this.entity_id
+      - type: grid
+        cards:
+          - type: heading
+            heading: backups
+            heading_style: title
+          - type: vertical-stack
+            cards:
+              - type: entities
+                title: AutoTimer – Zeitübersteuerung
+                entities:
+                  - input_number.autotimer_helper
+              - type: custom:auto-entities
+                card:
+                  type: vertical-stack
+                card_param: cards
+                filter:
+                  include:
+                    - group: group.autotimer_target
+                      options:
+                        type: custom:mushroom-template-card
+                        entity: this.entity_id
+                        layout: horizontal
+                        icon: >
+                          {% set s = states(entity) %} {% set domain =
+                          entity.split('.')[0] %}
+
+                          {% if domain == 'switch' %}
+                            {{ 'mdi:power-plug-outline' if s == 'on' else 'mdi:power-plug-off-outline' }}
+
+                          {% elif domain == 'light' %}
+                            {{ 'mdi:lightbulb' if s == 'on' else 'mdi:lightbulb-off' }}
+
+                          {% elif domain == 'media_player' %}
+                            {{ 'mdi:play-circle' if s in ['playing','on'] else 'mdi:television-off' }}
+
+                          {% elif domain == 'fan' %}
+                            {{ 'mdi:fan' if s == 'on' else 'mdi:fan-off' }}
+
+                          {% else %}
+                            {{ 'mdi:cog' if s == 'on' else 'mdi:cog-outline' }}
+                          {% endif %}
+                        primary: |
+                          {{ state_attr(entity,'friendly_name') }}
+                        secondary: >
+
+                          {% set d = state_attr('pyscript.autotimer_status',
+                          entity) %}
+
+                          {% if d and d.active %}
+                            {% set sec = d.remaining_sec | int %}
+                            {% set h = sec // 3600 %}
+                            {% set m = (sec % 3600) // 60 %}
+                            {% set s = sec % 60 %}
+
+                            ⏱
+                            {% if h > 0 %}
+                              {{ '%d:%02d:%02d' | format(h, m, s) }}
+                            {% else %}
+                              {{ '%02d:%02d' | format(m, s) }}
+                            {% endif %}
+                            of
+                            {% if d.default_sec >= 3600 %}
+                              ({{ (d.default_sec // 3600) }} h {{ ((d.default_sec % 3600) // 60) }} min)
+                            {% else %}
+                              ({{ (d.default_sec // 60) }} min)
+                            {% endif %}
+
+                          {% elif d %}
+                            {% if d.default_sec >= 3600 %}
+                              ({{ (d.default_sec // 3600) }} h {{ ((d.default_sec % 3600) // 60) }} min)
+                            {% else %}
+                              ({{ (d.default_sec // 60) }} min)
+                            {% endif %}
+                          {% else %}
+                            —
+                          {% endif %}
+                           · {{ area_name(entity) }}
+                           
+                        icon_color: >
+
+                          {% set d = state_attr('pyscript.autotimer_status',
+                          entity) %} {% if not d or not d.active or
+                          d.default_sec == 0 %}
+                            grey
+                          {% else %}
+                            {% set pct = (d.remaining_sec / d.default_sec * 100) | round(0) %}
+
+                            {% if pct > 90 %}
+                              green
+                            {% elif pct > 80 %}
+                              light-green
+                            {% elif pct > 70 %}
+                              green
+                            {% elif pct > 60 %}
+                              yellow
+                            {% elif pct > 50 %}
+                              yellow
+                            {% elif pct > 40 %}
+                              amber
+                            {% elif pct > 30 %}
+                              orange
+                            {% elif pct > 20 %}
+                              deep-orange
+                            {% elif pct > 10 %}
+                              red
+                            {% else %}
+                              red
+                            {% endif %}
+                          {% endif %}
+                        tap_action:
+                          action: call-service
+                          service: pyscript.autotimer_start
+                          data:
+                            entity_id: this.entity_id
+                        hold_action:
+                          action: call-service
+                          service: pyscript.autotimer_stop
+                          data:
+                            entity_id: this.entity_id
+                        double_tap_action:
+                          action: call-service
+                          service: pyscript.autotimer_start
+                          data:
+                            entity_id: this.entity_id
+    icon: mdi:av-timer
+    cards: []

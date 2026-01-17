@@ -1,0 +1,101 @@
+# 
+#   Automation Info stuff
+#
+
+automation:
+  - id: speak_welcome_home_stoellchen
+    alias: "SPEAK AI Begrüsse Stoellchen zu Hause  (ai_ha_welcome_home)"
+    description: "Begrüssung Stoellchen mit AI-Text auf Info 3 (Chromecast)"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.person_first
+        from: "off"
+        to: "on"
+    action:
+      - delay:
+          hours: 0
+          minutes: 7
+          seconds: 5 
+          milliseconds: 0
+
+      - condition: state
+        entity_id: binary_sensor.person_first
+        state: "on"
+      - condition: template
+        value_template: >
+          {{ state_attr('binary_sensor.person_first', 'presence_zone') == 'home' }}
+
+      - service: script.notify_dispatch
+        data:
+          prio: L
+          only: display
+          video: "http://ad1000.main.arpa:8123/local/_service/_notification_hal9000_lense.mp4"
+#          picture: "http://ad1000.main.arpa:8123/local/_service/_notification_hal9000_lense.png"
+          title: "Systemmeldung von HAL, "
+          message: >
+              "Bordcomputer der Odyssee:"
+      - service: google_generative_ai_conversation.generate_content
+        data:
+          prompt: >
+            {% set time_now = now().strftime('%H:%M') %}
+            Bitte begrüsse Stöllchen in seinem zu Hause. Es ist aktuell {{ time_now }} Uhr in der Schweiz. Du bist HAL 9000 an Bord der Raumstation. Frage Stöllchen, ob du etwas für ihn tun kannst – auf humorvolle Weise und mit Bezug zur Raumstation. Nur ein Satz bitte.
+        response_variable: response
+      - service: script.notify_dispatch
+        data:
+          prio: L
+          only: display
+#          video: "http://ad1000.main.arpa:8123/local/_service/_notification_hal9000_lense.mp4"
+          picture: "http://ad1000.main.arpa:8123/local/_service/_notification_hal9000_lense.png"
+          title: "Systemmeldung von HAL, Bordcomputer der Odyssee:"
+          message: >
+              "{{ response.text }}"
+
+
+  - id: speak_welcome_home_manu
+    alias: "SPEAK AI Begrüsse Manu zu Hause  (ai_ha_welcome_home)"
+    description: "Begrüssung Manu mit AI-Text auf Info 3 (Chromecast)"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.person_second
+        from: "off"
+        to: "on"
+    action:
+      - delay:
+          hours: 0
+          minutes: 8
+          seconds: 5 
+          milliseconds: 0
+      - condition: state
+        entity_id: binary_sensor.person_second
+        state: "on"
+      - condition: template
+        value_template: >
+          {{ state_attr('binary_sensor.person_second', 'presence_zone') == 'home' }}
+
+      - service: script.notify_dispatch
+        data:
+          prio: L
+          only: display
+          video: "http://ad1000.main.arpa:8123/local/_service/_notification_caretaker.mp4"
+#          picture: "http://ad1000.main.arpa:8123/local/_service/_notification_caretaker.png"
+          title: "Mitteilung von Cole"
+          message: >
+              "deinem Caretaker:"
+      - service: google_generative_ai_conversation.generate_content
+        data:
+          prompt: >
+            {% set time_now = now().strftime('%H:%M') %}
+            Begrüsse Manu ruhig und freundlich. Es ist {{ time_now }} Uhr in der Schweiz. Du bist der Caretaker des Hauses und des Landes, sprichst gelassen und bodenständig wie jemand, der den Rhythmus einer Farm kennt, und fragst, ob du heute etwas vorbereiten oder abnehmen sollst. Nur ein Satz.
+        response_variable: response
+      - service: script.notify_dispatch
+        data:
+          prio: L
+          only: display
+#          video: "http://ad1000.main.arpa:8123/local/_service/_notification_hal9000_lense.mp4"
+          picture: "http://ad1000.main.arpa:8123/local/_service/_notification_hal9000_lense.png"
+          title: "Mitteilung von Cole, deinem Caretaker:"
+          message: >
+              "{{ response.text }}"
+

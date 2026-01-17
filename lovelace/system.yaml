@@ -1,0 +1,4023 @@
+views:
+  - type: sections
+    max_columns: 3
+    title: Übersicht
+    path: overview
+    icon: mdi:traffic-light-outline
+    sections:
+      - type: grid
+        cards:
+          - type: horizontal-stack
+            cards:
+              - type: custom:button-card
+                icon: mdi:cpu-64-bit
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-system/system
+                name: |
+                  [[[
+                    const v = parseFloat(states['sensor.system_monitor_prozessornutzung']?.state);
+                    if (isNaN(v)) return 'keine Daten';
+                    return 'ad1000 CPU:  ' + v.toFixed(1) + ' %';
+                  ]]]
+                state_display: |
+                  [[[
+                    const v = parseFloat(states['sensor.system_monitor_prozessornutzung']?.state);
+                    if (isNaN(v)) return 'keine Daten';
+                    return v.toFixed(1) + ' %';
+                  ]]]
+                styles:
+                  card:
+                    - background-color: |
+                        [[[
+                          const v = parseFloat(states['sensor.system_monitor_prozessornutzung']?.state);
+                          if (isNaN(v)) return 'rgba(80,80,80,0.6)';
+
+                          // 0 % (grün) → 50 % (rot)
+                          const t = Math.min(Math.max(v / 50, 0), 1);
+
+                          const r = Math.round(0 + t * 180);
+                          const g = Math.round(180 + t * (0 - 180));
+                          const b = Math.round(80 + t * (0 - 80));
+
+                          return `rgba(${r},${g},${b},0.85)`;
+                        ]]]
+                  name:
+                    - color: white
+                  state:
+                    - color: white
+              - type: custom:button-card
+                icon: mdi:memory
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-system/system
+                name: |
+                  [[[
+                    const v = parseFloat(states['sensor.system_monitor_arbeitsspeicherauslastung']?.state);
+                    if (isNaN(v)) return 'ad1000: keine Daten';
+                    return 'ad1000 RAM: ' + v.toFixed(1) + ' %';
+                  ]]]
+                state_display: |
+                  [[[
+                    const v = parseFloat(states['sensor.system_monitor_arbeitsspeicherauslastung']?.state);
+                    if (isNaN(v)) return 'keine Daten';
+                    return v.toFixed(1) + ' %';
+                  ]]]
+                styles:
+                  card:
+                    - background-color: |
+                        [[[
+                          const v = parseFloat(states['sensor.system_monitor_prozessornutzung']?.state);
+                          if (isNaN(v)) return 'rgba(80,80,80,0.6)';
+
+                          // 0 % (grün) → 100 % (rot)
+                          const t = Math.min(Math.max(v / 50, 0), 1);
+
+                          const r = Math.round(0 + t * 180);
+                          const g = Math.round(180 + t * (0 - 180));
+                          const b = Math.round(80 + t * (0 - 80));
+
+                          return `rgba(${r},${g},${b},0.85)`;
+                        ]]]
+                  name:
+                    - color: white
+                  state:
+                    - color: white
+      - type: grid
+        cards:
+          - type: horizontal-stack
+            cards:
+              - type: custom:button-card
+                entity: sensor.influx_last_seen_min
+                name: Influx
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-system/influx-detail
+                icon: mdi:traffic-light
+                show_state: false
+                show_name: true
+                styles:
+                  card:
+                    - border-radius: 12px
+                    - padding: 16px
+                    - font-size: 16px
+                    - color: white
+                  icon:
+                    - width: 48px
+                  name:
+                    - font-weight: bold
+                    - font-size: 18px
+                state:
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'green';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#2ecc71'
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'orange';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#f39c12'
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'red';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#e74c3c'
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'offline';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#7f8c8d'
+              - show_name: true
+                show_icon: true
+                type: button
+                icon: mdi:link
+                tap_action:
+                  action: url
+                  url_path: http://vminfluxdb001.main.arpa:8086
+                color: red
+                name: Server
+            grid_options:
+              columns: 12
+              rows: 2
+      - type: grid
+        cards:
+          - type: horizontal-stack
+            cards:
+              - type: custom:button-card
+                entity: sensor.emqx_mqtt_status
+                name: MQTT
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-system/mqtt-detail
+                icon: mdi:traffic-light
+                show_state: false
+                show_name: true
+                styles:
+                  card:
+                    - border-radius: 12px
+                    - padding: 16px
+                    - font-size: 16px
+                    - color: white
+                  icon:
+                    - width: 48px
+                  name:
+                    - font-weight: bold
+                    - font-size: 18px
+                state:
+                  - value: green
+                    styles:
+                      card:
+                        - background-color: '#2ecc71'
+                  - value: yellow
+                    styles:
+                      card:
+                        - background-color: '#f1c40f'
+                  - value: red
+                    styles:
+                      card:
+                        - background-color: '#e74c3c'
+                  - value: offline
+                    styles:
+                      card:
+                        - background-color: '#7f8c8d'
+              - show_name: true
+                show_icon: true
+                type: button
+                icon: mdi:link
+                tap_action:
+                  action: url
+                  url_path: http://emqx001.main.arpa:18083
+                color: red
+                name: Server
+      - type: grid
+        cards:
+          - type: custom:button-card
+            icon: mdi:network-outline
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-system/pings
+            name: |
+              [[[
+                const sensors = Object.values(states).filter(e =>
+                  e.entity_id.startsWith('sensor.') &&
+                  e.entity_id.endsWith('_durchschnittliche_umlaufzeit') &&
+                  !['unknown','unavailable'].includes(e.state)
+                );
+
+                if (sensors.length === 0) return 'Umlaufzeit (keine Daten)';
+
+                const avg =
+                  sensors.reduce((sum, e) => sum + parseFloat(e.state), 0) / sensors.length;
+
+                return `Umlaufzeit (${sensors.length} Geräte · Ø ${avg.toFixed(2)} ms)`;
+              ]]]
+            state_display: |
+              [[[
+                const sensors = Object.values(states).filter(e =>
+                  e.entity_id.startsWith('sensor.') &&
+                  e.entity_id.endsWith('_durchschnittliche_umlaufzeit') &&
+                  !['unknown','unavailable'].includes(e.state)
+                );
+
+                if (sensors.length === 0) return 'keine Daten';
+
+                const avg =
+                  sensors.reduce((sum, e) => sum + parseFloat(e.state), 0) / sensors.length;
+
+                return avg.toFixed(2) + ' ms';
+              ]]]
+            styles:
+              card:
+                - background-color: |
+                    [[[
+                      const sensors = Object.values(states).filter(e =>
+                        e.entity_id.startsWith('sensor.') &&
+                        e.entity_id.endsWith('_durchschnittliche_umlaufzeit') &&
+                        !['unknown','unavailable'].includes(e.state)
+                      );
+
+                      if (sensors.length === 0)
+                        return 'rgba(80,80,80,0.6)';
+
+                      const avg =
+                        sensors.reduce((sum, e) => sum + parseFloat(e.state), 0) / sensors.length;
+
+                      // Verlauf 0 ms (grün) → 20 ms (rot)
+                      const t = Math.min(Math.max(avg / 10, 0), 1);
+
+                      const r = Math.round(0 + t * (180 - 0));
+                      const g = Math.round(180 + t * (0 - 180));
+                      const b = Math.round(80 + t * (0 - 80));
+
+                      return `rgba(${r},${g},${b},0.85)`;
+                    ]]]
+              name:
+                - color: white
+              state:
+                - color: white
+      - type: grid
+        cards:
+          - type: horizontal-stack
+            cards:
+              - type: custom:button-card
+                icon: mdi:battery
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-system/sensoren
+                name: |
+                  [[[
+                    const sensors = Object.values(states).filter(e =>
+                      e.entity_id.startsWith('sensor.') &&
+                      e.entity_id.endsWith('_battery') &&
+                      !['unknown','unavailable'].includes(e.state)
+                    );
+
+                    if (sensors.length === 0) return 'Batterien <br>(keine Daten)';
+
+                    const values = sensors.map(e => parseFloat(e.state));
+                    const min = Math.min(...values);
+
+                    return `Sensoren: Batteriestatus <br>(${sensors.length} Geräte · min ${min.toFixed(0)} %)`;
+                  ]]]
+                state_display: |
+                  [[[
+                    const sensors = Object.values(states).filter(e =>
+                      e.entity_id.startsWith('sensor.') &&
+                      e.entity_id.endsWith('_battery') &&
+                      !['unknown','unavailable'].includes(e.state)
+                    );
+
+                    if (sensors.length === 0) return 'keine Daten';
+
+                    const values = sensors.map(e => parseFloat(e.state));
+                    const min = Math.min(...values);
+
+                    return `${min.toFixed(0)} %`;
+                  ]]]
+                styles:
+                  card:
+                    - background-color: |
+                        [[[
+                          const sensors = Object.values(states).filter(e =>
+                            e.entity_id.startsWith('sensor.') &&
+                            e.entity_id.endsWith('_battery') &&
+                            !['unknown','unavailable'].includes(e.state)
+                          );
+
+                          if (sensors.length === 0) return 'rgba(80,80,80,0.6)';
+
+                          const values = sensors.map(e => parseFloat(e.state));
+                          const min = Math.min(...values);
+
+                          return min < 30
+                            ? 'rgba(180,0,0,0.85)'   // rot
+                            : 'rgba(0,160,80,0.85)'; // grün
+                        ]]]
+                  name:
+                    - color: white
+                  state:
+                    - color: white
+              - type: custom:button-card
+                icon: mdi:home-lightning-bolt
+                tap_action:
+                  action: navigate
+                  navigation_path: /dashboard-system/lights-switches
+                name: |
+                  [[[
+                    const entities = Object.values(states).filter(e =>
+                      (e.entity_id.startsWith('light.') || e.entity_id.startsWith('switch.'))
+                    );
+
+                    if (entities.length === 0)
+                      return 'Lichter & Switches <br>(keine Daten)';
+
+                    return `Lichter & Switches <br>(${entities.length} Geräte)`;
+                  ]]]
+                state_display: |
+                  [[[
+                    const entities = Object.values(states).filter(e =>
+                      (e.entity_id.startsWith('light.') || e.entity_id.startsWith('switch.'))
+                    );
+
+                    if (entities.length === 0)
+                      return 'keine Daten';
+
+                    const bad = entities.filter(e =>
+                      !['on','off'].includes(e.state)
+                    );
+
+                    return bad.length === 0
+                      ? 'alle OK'
+                      : `${bad.length} Problem(e)`;
+                  ]]]
+                styles:
+                  card:
+                    - background-color: |
+                        [[[
+                          const entities = Object.values(states).filter(e =>
+                            (e.entity_id.startsWith('light.') || e.entity_id.startsWith('switch.'))
+                          );
+
+                          if (entities.length === 0)
+                            return 'rgba(80,80,80,0.6)';
+
+                          const bad = entities.some(e =>
+                            !['on','off'].includes(e.state)
+                          );
+
+                          return bad
+                            ? 'rgba(180,0,0,0.85)'   // rot
+                            : 'rgba(0,160,80,0.85)'; // grün
+                        ]]]
+                  name:
+                    - color: white
+                  state:
+                    - color: white
+          - type: heading
+            icon: mdi:fridge
+            heading_style: subtitle
+            heading: Eles Plug 2 ist nicht verbunden
+    cards: []
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# {{ user }} unser Healthcheck ✨'
+    dense_section_placement: true
+  - type: sections
+    max_columns: 4
+    title: System
+    path: system
+    sections:
+      - type: grid
+        cards:
+          - type: gauge
+            entity: sensor.system_monitor_prozessornutzung
+            grid_options:
+              columns: 6
+              rows: auto
+            unit: '%'
+            name: CPU
+          - type: gauge
+            entity: sensor.system_monitor_arbeitsspeicherauslastung
+            grid_options:
+              columns: 6
+              rows: auto
+            unit: '%'
+            name: RAM
+          - chart_type: line
+            period: 5minute
+            type: statistics-graph
+            entities:
+              - sensor.system_monitor_prozessornutzung
+              - sensor.system_monitor_arbeitsspeicherauslastung
+              - sensor.system_monitor_swap_auslastung
+            stat_types:
+              - max
+              - min
+              - mean
+            logarithmic_scale: true
+            days_to_show: 12
+      - type: grid
+        cards:
+          - show_name: true
+            show_icon: true
+            type: button
+            icon: mdi:lighthouse-on
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-system
+            name: System Übersicht
+            show_state: true
+            grid_options:
+              rows: 2
+    icon: mdi:cpu-64-bit
+    cards: []
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# {{ user }}, Healthcheck für ad1000 ✨'
+  - type: sections
+    max_columns: 2
+    icon: mdi:axis-arrow-info
+    path: mqtt-detail
+    title: MQTT Detail
+    dense_section_placement: true
+    sections:
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: custom:button-card
+                entity: sensor.emqx_mqtt_status
+                name: MQTT
+                icon: mdi:traffic-light
+                show_state: false
+                show_name: true
+                styles:
+                  card:
+                    - border-radius: 12px
+                    - padding: 16px
+                    - font-size: 16px
+                    - color: white
+                  icon:
+                    - width: 48px
+                  name:
+                    - font-weight: bold
+                    - font-size: 18px
+                state:
+                  - value: green
+                    styles:
+                      card:
+                        - background-color: '#2ecc71'
+                  - value: yellow
+                    styles:
+                      card:
+                        - background-color: '#f1c40f'
+                  - value: red
+                    styles:
+                      card:
+                        - background-color: '#e74c3c'
+                  - value: offline
+                    styles:
+                      card:
+                        - background-color: '#7f8c8d'
+              - type: entities
+                entities:
+                  - entity: binary_sensor.emqx_mqtt_alive
+                    name: Alive
+                    secondary_info: last-updated
+                  - entity: sensor.emqx_mqtt_roundtrip_ms
+                    name: Roundtrip (ms)
+                    secondary_info: last-updated
+          - type: custom:apexcharts-card
+            graph_span: 10m
+            update_interval: 10s
+            header:
+              show: false
+            series:
+              - entity: sensor.emqx_mqtt_roundtrip_ms
+                name: Roundtrip
+                type: line
+                stroke_width: 2
+                color: '#3498db'
+            yaxis:
+              - show: true
+                min: 0
+            apex_config:
+              grid:
+                show: true
+              annotations:
+                yaxis:
+                  - 'y': 0
+                    y2: 10
+                    fillColor: '#00ff00'
+                    opacity: 0.15
+                    label:
+                      text: < 10 ms (Hyper)
+                      BackgroundColor: '#ff0000'
+                  - 'y': 50
+                    y2: 10
+                    fillColor: '#2ecc71'
+                    opacity: 0.15
+                    label:
+                      text: < 50 ms (Top)
+                  - 'y': 6000
+                    y2: 50
+                    fillColor: '#f39c12'
+                    opacity: 0.12
+                    label:
+                      text: 50–6000 ms (OK)
+                  - 'y': 100000
+                    y2: 6000
+                    fillColor: '#e74c3c'
+                    opacity: 0.12
+                    label:
+                      text: '> 6000 ms (Problem)'
+                  - 'y': 10
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 10 ms
+                  - 'y': 50
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 50 ms
+                  - 'y': 6000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 6 s
+                  - 'y': 100000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 10s
+          - type: custom:apexcharts-card
+            graph_span: 60m
+            update_interval: 30s
+            header:
+              show: false
+            series:
+              - entity: sensor.emqx_mqtt_roundtrip_ms
+                name: Roundtrip
+                type: line
+                stroke_width: 2
+                color: '#3498db'
+            yaxis:
+              - show: true
+                min: 0
+            apex_config:
+              grid:
+                show: true
+              annotations:
+                yaxis:
+                  - 'y': 0
+                    y2: 10
+                    fillColor: '#00ff00'
+                    opacity: 0.15
+                    label:
+                      text: < 10 ms (Hyper)
+                      BackgroundColor: '#ff0000'
+                  - 'y': 50
+                    y2: 10
+                    fillColor: '#2ecc71'
+                    opacity: 0.15
+                    label:
+                      text: < 50 ms (Top)
+                  - 'y': 6000
+                    y2: 50
+                    fillColor: '#f39c12'
+                    opacity: 0.12
+                    label:
+                      text: 50–6000 ms (OK)
+                  - 'y': 100000
+                    y2: 6000
+                    fillColor: '#e74c3c'
+                    opacity: 0.12
+                    label:
+                      text: '> 6000 ms (Problem)'
+                  - 'y': 10
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 10 ms
+                  - 'y': 50
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 50 ms
+                  - 'y': 6000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 6 s
+                  - 'y': 100000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 10s
+          - type: custom:apexcharts-card
+            graph_span: 24h
+            update_interval: 60s
+            header:
+              show: false
+            series:
+              - entity: sensor.emqx_mqtt_roundtrip_ms
+                name: Roundtrip
+                type: line
+                stroke_width: 2
+                color: '#3498db'
+            yaxis:
+              - show: true
+                min: 0
+            apex_config:
+              grid:
+                show: true
+              annotations:
+                yaxis:
+                  - 'y': 0
+                    y2: 10
+                    fillColor: '#00ff00'
+                    opacity: 0.15
+                    label:
+                      text: < 10 ms (Hyper)
+                      BackgroundColor: '#ff0000'
+                  - 'y': 50
+                    y2: 10
+                    fillColor: '#2ecc71'
+                    opacity: 0.15
+                    label:
+                      text: < 50 ms (Top)
+                  - 'y': 6000
+                    y2: 50
+                    fillColor: '#f39c12'
+                    opacity: 0.12
+                    label:
+                      text: 50–6000 ms (OK)
+                  - 'y': 100000
+                    y2: 6000
+                    fillColor: '#e74c3c'
+                    opacity: 0.12
+                    label:
+                      text: '> 6000 ms (Problem)'
+                  - 'y': 10
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 10 ms
+                  - 'y': 50
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 50 ms
+                  - 'y': 6000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 6 s
+                  - 'y': 100000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 10s
+          - type: custom:apexcharts-card
+            graph_span: 72d
+            update_interval: 1h
+            header:
+              show: false
+            series:
+              - entity: sensor.emqx_mqtt_roundtrip_ms
+                name: Roundtrip
+                type: line
+                stroke_width: 2
+                color: '#3498db'
+            yaxis:
+              - show: true
+                min: 0
+            apex_config:
+              grid:
+                show: true
+              annotations:
+                yaxis:
+                  - 'y': 0
+                    y2: 10
+                    fillColor: '#00ff00'
+                    opacity: 0.15
+                    label:
+                      text: < 10 ms (Hyper)
+                      BackgroundColor: '#ff0000'
+                  - 'y': 50
+                    y2: 10
+                    fillColor: '#2ecc71'
+                    opacity: 0.15
+                    label:
+                      text: < 50 ms (Top)
+                  - 'y': 6000
+                    y2: 50
+                    fillColor: '#f39c12'
+                    opacity: 0.12
+                    label:
+                      text: 50–6000 ms (OK)
+                  - 'y': 100000
+                    y2: 6000
+                    fillColor: '#e74c3c'
+                    opacity: 0.12
+                    label:
+                      text: '> 6000 ms (Problem)'
+                  - 'y': 10
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 10 ms
+                  - 'y': 50
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 50 ms
+                  - 'y': 6000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 6 s
+                  - 'y': 100000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 10s
+      - type: grid
+        cards:
+          - show_name: true
+            show_icon: true
+            type: button
+            icon: mdi:lighthouse-on
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-system
+            name: System Übersicht
+            show_state: true
+            grid_options:
+              rows: 2
+          - show_name: true
+            show_icon: true
+            type: button
+            icon: mdi:link
+            tap_action:
+              action: url
+              url_path: http://emqx001.main.arpa:18083
+            show_state: true
+            grid_options:
+              rows: 2
+            name: Server
+            color: red
+          - chart_type: line
+            period: 5minute
+            type: statistics-graph
+            entities:
+              - sensor.zigbee2mqtt001_main_arpa_maximale_umlaufzeit
+              - sensor.emqx001_main_arpa_durchschnittliche_umlaufzeit
+              - sensor.slzbmr4001_main_arpa_durchschnittliche_umlaufzeit
+            stat_types:
+              - max
+              - min
+              - mean
+            logarithmic_scale: false
+            days_to_show: 12
+      - type: grid
+        cards:
+          - type: heading
+            heading: Neuer Abschnitt
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# {{ user }}, Healthcheck für MQTT ✨'
+    cards: []
+  - title: Influx Detail
+    type: sections
+    max_columns: 2
+    icon: mdi:axis-arrow-info
+    sections:
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: custom:button-card
+                entity: sensor.influx_last_seen_min
+                name: Influx
+                icon: mdi:traffic-light
+                show_state: false
+                show_name: true
+                styles:
+                  card:
+                    - border-radius: 12px
+                    - padding: 16px
+                    - font-size: 16px
+                    - color: white
+                  icon:
+                    - width: 48px
+                  name:
+                    - font-weight: bold
+                    - font-size: 18px
+                state:
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'green';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#2ecc71'
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'orange';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#f39c12'
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'red';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#e74c3c'
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'offline';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#7f8c8d'
+              - type: entities
+                entities:
+                  - entity: sensor.influx_last_seen_min
+                    name: Roundtrip (ms)
+                    secondary_info: last-updated
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: entity
+                entity: binary_sensor.influx_alive
+                name: Influx
+              - type: entity
+                entity: sensor.influx_last_seen_min
+                name: Last Seen
+              - type: entity
+                entity: sensor.ha_heartbeat
+                name: HA → Influx
+              - type: entity
+                entity: sensor.emqx_mqtt_test_echo
+                name: HA → Influx
+          - type: custom:apexcharts-card
+            graph_span: 10m
+            update_interval: 10s
+            header:
+              show: false
+            series:
+              - entity: sensor.influx_last_seen_min
+                name: Last Seen
+                type: line
+                stroke_width: 2
+                color: '#3498db'
+            yaxis:
+              - show: true
+                min: 1
+            apex_config:
+              grid:
+                show: true
+              annotations:
+                yaxis:
+                  - 'y': 0
+                    y2: 1
+                    fillColor: '#00ff00'
+                    opacity: 0.15
+                    label:
+                      text: < 0.5 min (Hyper)
+                      BackgroundColor: '#ff0000'
+                  - 'y': 2
+                    y2: 1
+                    fillColor: '#2ecc71'
+                    opacity: 0.15
+                    label:
+                      text: < 2 min (Top)
+                  - 'y': 100
+                    y2: 2
+                    fillColor: '#e74c3c'
+                    opacity: 0.12
+                    label:
+                      text: '> 2 min (Problem)'
+          - type: custom:apexcharts-card
+            graph_span: 60m
+            update_interval: 30s
+            header:
+              show: false
+            series:
+              - entity: sensor.influx_last_seen_min
+                name: Last Seen
+                type: line
+                stroke_width: 2
+                color: '#3498db'
+            yaxis:
+              - show: true
+                min: 1
+            apex_config:
+              grid:
+                show: true
+              annotations:
+                yaxis:
+                  - 'y': 0
+                    y2: 1
+                    fillColor: '#00ff00'
+                    opacity: 0.15
+                    label:
+                      text: < 0.5 min (Hyper)
+                      BackgroundColor: '#ff0000'
+                  - 'y': 2
+                    y2: 1
+                    fillColor: '#2ecc71'
+                    opacity: 0.15
+                    label:
+                      text: < 2 min (Top)
+                  - 'y': 100
+                    y2: 2
+                    fillColor: '#e74c3c'
+                    opacity: 0.12
+                    label:
+                      text: '> 2 min (Problem)'
+          - type: custom:apexcharts-card
+            graph_span: 24h
+            update_interval: 60s
+            header:
+              show: false
+            series:
+              - entity: sensor.influx_last_seen_min
+                name: Last Seen
+                type: line
+                stroke_width: 2
+                color: '#3498db'
+            yaxis:
+              - show: true
+                min: 1
+            apex_config:
+              grid:
+                show: true
+              annotations:
+                yaxis:
+                  - 'y': 0
+                    y2: 1
+                    fillColor: '#00ff00'
+                    opacity: 0.15
+                    label:
+                      text: < 0.5 min (Hyper)
+                      BackgroundColor: '#ff0000'
+                  - 'y': 2
+                    y2: 1
+                    fillColor: '#2ecc71'
+                    opacity: 0.15
+                    label:
+                      text: < 2 min (Top)
+                  - 'y': 100
+                    y2: 2
+                    fillColor: '#e74c3c'
+                    opacity: 0.12
+                    label:
+                      text: '> 2 min (Problem)'
+          - type: custom:apexcharts-card
+            graph_span: 7d
+            update_interval: 1h
+            header:
+              show: false
+            series:
+              - entity: sensor.influx_last_seen_min
+                name: Last Seen
+                type: line
+                stroke_width: 2
+                color: '#3498db'
+            yaxis:
+              - show: true
+                min: 1
+            apex_config:
+              grid:
+                show: true
+              annotations:
+                yaxis:
+                  - 'y': 0
+                    y2: 1
+                    fillColor: '#00ff00'
+                    opacity: 0.15
+                    label:
+                      text: < 0.5 min (Hyper)
+                      BackgroundColor: '#ff0000'
+                  - 'y': 2
+                    y2: 1
+                    fillColor: '#2ecc71'
+                    opacity: 0.15
+                    label:
+                      text: < 2 min (Top)
+                  - 'y': 100
+                    y2: 2
+                    fillColor: '#e74c3c'
+                    opacity: 0.12
+                    label:
+                      text: '> 2 min (Problem)'
+      - type: grid
+        cards:
+          - show_name: true
+            show_icon: true
+            type: button
+            icon: mdi:lighthouse-on
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-system
+            name: System Übersicht
+            show_state: true
+            grid_options:
+              rows: 2
+          - show_name: true
+            show_icon: true
+            type: button
+            icon: mdi:link
+            tap_action:
+              action: url
+              url_path: http://indfluxdb001.main.arpa:8083
+            show_state: true
+            grid_options:
+              rows: 2
+            name: Server
+            color: red
+          - chart_type: line
+            period: 5minute
+            type: statistics-graph
+            entities:
+              - sensor.vminfluxdb001_main_arpa_durchschnittliche_umlaufzeit
+            stat_types:
+              - mean
+              - min
+              - max
+            logarithmic_scale: false
+            days_to_show: 12
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# {{ user }},  Healthcheck für Influx ✨'
+    cards: []
+    path: influx-detail
+    dense_section_placement: true
+  - type: sections
+    max_columns: 4
+    title: Sensoren
+    path: sensoren
+    icon: mdi:motion-sensor
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: ms1 - Wonzimmer Links
+            heading_style: title
+            icon: mdi:motion-sensor
+          - type: tile
+            entity: sensor.ms1_battery
+          - type: tile
+            entity: binary_sensor.ms1_occupancy
+          - type: tile
+            entity: sensor.ms1_illuminance
+          - type: tile
+            entity: sensor.ms1_linkquality
+          - type: tile
+            entity: sensor.ms1_power_outage_count
+          - type: tile
+            entity: sensor.ms1_voltage
+          - type: tile
+            entity: sensor.ms1_device_temperature
+      - type: grid
+        cards:
+          - type: heading
+            heading: ms2 - Esszimmer
+            heading_style: title
+            icon: mdi:motion-sensor
+          - type: tile
+            entity: sensor.ms2_battery
+          - type: tile
+            entity: binary_sensor.ms2_occupancy
+          - type: tile
+            entity: sensor.ms2_illuminance
+          - type: tile
+            entity: sensor.0x00158d00044dbc9a_linkquality
+          - type: tile
+            entity: sensor.0x00158d00044dbc9a_power_outage_count
+          - type: tile
+            entity: sensor.ms2_voltage
+          - type: tile
+            entity: sensor.ms2_device_temperature
+      - type: grid
+        cards:
+          - type: heading
+            heading: ms3 - Wonzimmer Rechts
+            heading_style: title
+            icon: mdi:motion-sensor
+          - type: tile
+            entity: sensor.ms3_battery
+          - type: tile
+            entity: binary_sensor.ms3_occupancy
+          - type: tile
+            entity: sensor.ms3_illuminance
+          - type: tile
+            entity: sensor.0x00158d000449a49d_linkquality
+          - type: tile
+            entity: sensor.0x00158d000449a49d_power_outage_count
+          - type: tile
+            entity: sensor.ms3_voltage
+          - type: tile
+            entity: sensor.ms3_device_temperature
+      - type: grid
+        cards:
+          - type: heading
+            heading: ms4 - Werkbank
+            heading_style: title
+            icon: mdi:motion-sensor
+          - type: tile
+            entity: sensor.ms4_battery
+          - type: tile
+            entity: binary_sensor.ms4_occupancy
+          - type: tile
+            entity: sensor.ms4_illuminance
+          - type: tile
+            entity: sensor.0x00158d000447ea24_linkquality
+          - type: tile
+            entity: sensor.0x00158d000447ea24_power_outage_count
+          - type: tile
+            entity: sensor.ms4_voltage
+          - type: tile
+            entity: sensor.ms4_device_temperature
+      - type: grid
+        cards:
+          - type: heading
+            heading: ms5 - Schlafzimmer Fenster
+            heading_style: subtitle
+            icon: mdi:motion-sensor
+          - type: tile
+            entity: sensor.ms5_battery
+          - type: tile
+            entity: binary_sensor.ms5_occupancy
+          - type: tile
+            entity: sensor.ms5_illuminance
+          - type: tile
+            entity: sensor.ms5_linkquality
+          - type: tile
+            entity: sensor.ms5_power_outage_count
+          - type: tile
+            entity: sensor.ms5_voltage
+          - type: tile
+            entity: sensor.ms5_device_temperature
+      - type: grid
+        cards:
+          - type: heading
+            heading: ms6 - Lager
+            heading_style: subtitle
+            icon: mdi:motion-sensor
+          - type: tile
+            entity: sensor.ms6_battery
+          - type: tile
+            entity: binary_sensor.ms6_occupancy
+          - type: tile
+            entity: sensor.ms6_illuminance
+          - type: tile
+            entity: sensor.ms6_linkquality
+          - type: tile
+            entity: sensor.0x00158d00044dbd00_power_outage_count
+          - type: tile
+            entity: sensor.ms6_voltage
+          - type: tile
+            entity: sensor.ms6_device_temperature
+      - type: grid
+        cards:
+          - type: heading
+            heading: ms7 - nicht plaziert
+            heading_style: subtitle
+            icon: mdi:motion-sensor
+          - type: tile
+            entity: sensor.ms7_battery
+          - type: tile
+            entity: binary_sensor.ms7_occupancy
+          - type: tile
+            entity: sensor.ms7_illuminance
+          - type: tile
+            entity: sensor.ms7_linkquality
+          - type: tile
+            entity: sensor.ms7_power_outage_count
+          - type: tile
+            entity: sensor.ms7_voltage
+          - type: tile
+            entity: sensor.ms7_device_temperature
+      - type: grid
+        cards:
+          - type: heading
+            heading: ms8 - Schlafzimmer Tür
+            heading_style: subtitle
+            icon: mdi:motion-sensor
+          - type: tile
+            entity: sensor.ms8_battery
+          - type: tile
+            entity: binary_sensor.ms8_occupancy
+          - type: tile
+            entity: sensor.ms8_illuminance
+          - type: tile
+            entity: sensor.ms8_linkquality
+          - type: tile
+            entity: sensor.ms8_power_outage_count
+          - type: tile
+            entity: sensor.ms8_voltage
+          - type: tile
+            entity: sensor.ms8_device_temperature
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# {{ user }} unsere Sensoren ✨'
+  - type: sections
+    max_columns: 2
+    title: Pings
+    path: pings
+    sections:
+      - type: grid
+        cards:
+          - chart_type: line
+            period: 5minute
+            type: statistics-graph
+            entities:
+              - sensor.zigbee2mqtt001_main_arpa_durchschnittliche_umlaufzeit
+              - sensor.slzbmr4001_main_arpa_durchschnittliche_umlaufzeit
+              - sensor.vminfluxdb001_main_arpa_durchschnittliche_umlaufzeit
+              - sensor.emqx001_main_arpa_durchschnittliche_umlaufzeit
+              - sensor.postgresql001_main_arpa_durchschnittliche_umlaufzeit
+            stat_types:
+              - mean
+              - min
+              - max
+            logarithmic_scale: true
+            days_to_show: 12
+          - type: tile
+            grid_options:
+              columns: full
+            entity: sensor.zigbee2mqtt001_main_arpa_durchschnittliche_umlaufzeit
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: sensor.vminfluxdb001_main_arpa_maximale_umlaufzeit
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            grid_options:
+              columns: full
+            entity: sensor.emqx001_main_arpa_durchschnittliche_umlaufzeit
+            vertical: false
+            features_position: bottom
+          - type: tile
+            grid_options:
+              columns: full
+            entity: sensor.slzbmr4001_main_arpa_durchschnittliche_umlaufzeit
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: sensor.postgresql001_main_arpa_durchschnittliche_umlaufzeit
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - show_name: true
+            show_icon: true
+            type: button
+            icon: mdi:lighthouse-on
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-system
+            name: System Übersicht
+            show_state: true
+            grid_options:
+              columns: full
+              rows: 2
+    dense_section_placement: true
+    cards: []
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# {{ user }},  Healthcheck für Pings ✨'
+    icon: mdi:speedometer
+  - type: sections
+    max_columns: 3
+    title: Lichter, Switches und mehr
+    sections:
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            card:
+              type: grid
+              columns: 4
+              square: false
+            card_param: cards
+            filter:
+              include:
+                - domain: light
+                  options:
+                    type: custom:button-card
+                    icon: mdi:lightbulb
+                    show_state: false
+                    tap_action:
+                      action: fire-dom-event
+                      browser_mod:
+                        command: popup
+                        title: Lichtstatus – Info
+                        card:
+                          type: markdown
+                          content: |
+                            🔎 **Statusübersicht – nur Anzeige**
+
+                            🟢 **Grün** → Licht *eingeschaltet*  
+                            🟩 **Dunkelgrün** → Licht *ausgeschaltet*  
+                            🔴 **Rot** → Licht *nicht erreichbar*
+
+                            ⚠️ Diese Ansicht dient **nur zur Überwachung**.  
+                            👉 Steuerung erfolgt im Licht-Dashboard.
+                    name: |
+                      [[[
+                        return entity.attributes.friendly_name || entity.entity_id;
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: |
+                            [[[
+                              if (entity.state === 'unavailable')
+                                return 'rgba(180,0,0,0.85)';
+                              if (entity.state === 'on')
+                                return 'rgba(0,160,80,0.99)';
+                              return 'rgba(0,100,50,0.55)';
+                            ]]]
+                      name:
+                        - color: white
+                      icon:
+                        - color: white
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            card:
+              type: grid
+              columns: 4
+              square: false
+            card_param: cards
+            filter:
+              include:
+                - options:
+                    type: custom:button-card
+                    icon: mdi:power-plug
+                    show_state: false
+                    tap_action:
+                      action: fire-dom-event
+                      browser_mod:
+                        command: popup
+                        title: Switch. – Info
+                        card:
+                          type: markdown
+                          content: |
+                            🔎 **Statusübersicht – nur Anzeige**
+
+                            🟢 **Grün** → Switch *eingeschaltet*  
+                            🟩 **Dunkelgrün** → Switch *ausgeschaltet*  
+                            🔴 **Rot** → Switch *nicht erreichbar*
+
+                            ⚠️ Diese Ansicht dient **nur zur Überwachung**.  
+                            👉 Steuerung erfolgt im Dashboard.
+                    name: |
+                      [[[
+                        return entity.attributes.friendly_name || entity.entity_id;
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: |
+                            [[[
+                              if (entity.state === 'unavailable')
+                                return 'rgba(180,0,0,0.85)';
+                              if (entity.state === 'on')
+                                return 'rgba(0,160,80,0.99)';
+                              return 'rgba(0,100,50,0.55)';
+                            ]]]
+                      name:
+                        - color: white
+                      icon:
+                        - color: white
+                  domain: switch
+              exclude:
+                - options: {}
+                  entity_id: switch.eles_smart_plug_2_steckdose_1
+      - type: grid
+        cards:
+          - show_name: true
+            show_icon: true
+            type: button
+            icon: mdi:lighthouse-on
+            tap_action:
+              action: navigate
+              navigation_path: /dashboard-system
+            name: System Übersicht
+            show_state: true
+            grid_options:
+              columns: full
+              rows: 2
+    cards: []
+    icon: mdi:power-settings
+    path: lights-switches
+  - type: sections
+    max_columns: 4
+    title: Notify
+    path: notify
+    icon: mdi:information-box-outline
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Zimmer Steuerung. -  Normal / Ruhig / Still
+            heading_style: title
+            icon: mdi:speaker-message
+          - type: entities
+            entities:
+              - entity: input_select.room_mode_wohnzimmer
+              - entity: input_select.room_mode_kueche
+              - entity: input_select.room_mode_eingangbereich
+              - entity: input_select.room_mode_schlafzimmer_1
+              - entity: input_select.room_mode_schlafzimmer_2
+              - entity: input_select.room_mode_schlafzimmer_3
+              - entity: input_select.room_mode_schlafzimmer_4
+              - entity: input_select.room_mode_schwimmbad
+              - entity: input_select.room_mode_terasse
+              - entity: input_select.room_mode_buero
+              - entity: input_select.room_mode_keller
+              - entity: input_select.room_mode_werkstatt
+                name: Modus
+            show_header_toggle: true
+            state_color: true
+      - type: grid
+        cards:
+          - type: heading
+            heading: Ein-/Ausschalten einzelner Prioritätmeldungen
+            heading_style: title
+          - type: tile
+            entity: input_boolean.notify_tts_dnd
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            entity: input_boolean.notify_tts_prio_alert
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            entity: input_boolean.notify_tts_prio_high
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            entity: input_boolean.notify_tts_prio_medium
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            entity: input_boolean.notify_tts_prio_low
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            card:
+              type: entities
+              title: On heisst kein Trigger!!
+            filter:
+              include:
+                - options: {}
+                  entity_id: input_boolean.motion_eval_enabled_*
+                  sort:
+                    method: friendly_name
+                    ignore_case: true
+              exclude: []
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            card:
+              type: entities
+              title: On heisst kein timer!!
+            filter:
+              include:
+                - options: {}
+                  entity_id: input_boolean.manual_timer_enabled_*
+                  sort:
+                    method: friendly_name
+                    ignore_case: true
+              exclude: []
+  - type: sections
+    max_columns: 4
+    title: circadian
+    path: circadian
+    icon: mdi:sun-angle
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: Circadian Curve
+            icon: mdi:graph
+          - type: custom:apexcharts-card
+            graph_span: 36h
+            experimental:
+              color_threshold: true
+            header:
+              show: true
+              title: Homebase
+              show_states: false
+              colorize_states: true
+              floating: false
+            now:
+              show: true
+              color: '#101010'
+              label: now
+            series:
+              - entity: sensor.circadian_location
+                name: Homebase
+                stroke_width: 5
+                color_threshold:
+                  - value: -100
+                    color: black
+                    opacity: 1
+                  - value: -40
+                    color: black
+                    opacity: 1
+                  - value: -18
+                    color: darkblue
+                    opacity: 1
+                  - value: -12
+                    color: blue
+                    opacity: 1
+                  - value: -6
+                    color: orange
+                  - value: -4
+                    color: gold
+                  - value: -0.833
+                    color: yellow
+                  - value: -0.3
+                    color: darkyellow
+                  - value: 10
+                    color: yellow
+                  - value: 12
+                    color: lightyellow
+                  - value: 100
+                    color: white
+              - entity: sensor.circadian_location
+                name: Homebase
+                attribute: brightness
+                stroke_width: 1
+                unit: brightness
+                transform: return x / 3 - 35;
+                color_threshold:
+                  - value: 0
+                    color: darkorange
+                    opacity: 1
+                  - value: 60
+                    color: white
+              - entity: sensor.circadian_location
+                name: Homebase
+                attribute: kelvin
+                stroke_width: 1
+                unit: kelvin
+                transform: return  (x - 2000) / 4500 * 100;;
+                invert: false
+                color_threshold:
+                  - value: 100
+                    color: '#ffffff'
+                  - value: 90
+                    color: '#f4f7ff'
+                  - value: 80
+                    color: '#e9f0ff'
+                  - value: 70
+                    color: '#fff4e5'
+                  - value: 60
+                    color: '#ffe6bf'
+                  - value: 50
+                    color: '#ffd9a0'
+                  - value: 40
+                    color: '#ffc680'
+                  - value: 30
+                    color: '#ffb366'
+                  - value: 20
+                    color: '#ff9a4d'
+                  - value: 10
+                    color: '#ff8533'
+              - entity: sensor.circadian_location
+                name: Homebase
+                attribute: mired
+                stroke_width: 1
+                unit: mired
+                transform: return (500 - x) / 346 * 100;
+                invert: false
+                color_threshold:
+                  - value: 100
+                    color: '#ffffff'
+                  - value: 90
+                    color: '#f4f7ff'
+                  - value: 80
+                    color: '#e9f0ff'
+                  - value: 70
+                    color: '#fff4e5'
+                  - value: 60
+                    color: '#ffe6bf'
+                  - value: 50
+                    color: '#ffd9a0'
+                  - value: 40
+                    color: '#ffc680'
+                  - value: 30
+                    color: '#ffb366'
+                  - value: 20
+                    color: '#ff9a4d'
+                  - value: 10
+                    color: '#ff8533'
+            apex_config:
+              dataLabels:
+                enabled: true
+                dropShadow:
+                  enabled: true
+          - type: custom:apexcharts-card
+            graph_span: 36h
+            experimental:
+              color_threshold: true
+            header:
+              show: true
+              title: Dällikon
+              show_states: false
+              colorize_states: true
+              floating: false
+            now:
+              show: true
+              color: '#101010'
+              label: now
+            series:
+              - entity: sensor.circadian_daellikon
+                name: Dällikon
+                stroke_width: 5
+                color_threshold:
+                  - value: -100
+                    color: black
+                    opacity: 1
+                  - value: -40
+                    color: black
+                    opacity: 1
+                  - value: -18
+                    color: darkblue
+                    opacity: 1
+                  - value: -12
+                    color: blue
+                    opacity: 1
+                  - value: -6
+                    color: orange
+                  - value: -4
+                    color: gold
+                  - value: -0.833
+                    color: yellow
+                  - value: -0.3
+                    color: darkyellow
+                  - value: 10
+                    color: yellow
+                  - value: 12
+                    color: lightyellow
+                  - value: 100
+                    color: white
+              - entity: sensor.circadian_daellikon
+                name: Dällikon
+                attribute: brightness
+                stroke_width: 1
+                unit: brightness
+                transform: return x / 3 - 35;
+                color_threshold:
+                  - value: 0
+                    color: darkorange
+                    opacity: 1
+                  - value: 60
+                    color: white
+              - entity: sensor.circadian_daellikon
+                name: Daellikon
+                attribute: kelvin
+                stroke_width: 1
+                unit: kelvin
+                transform: return  (x - 2000) / 4500 * 100;;
+                invert: false
+                color_threshold:
+                  - value: 100
+                    color: '#ffffff'
+                  - value: 90
+                    color: '#f4f7ff'
+                  - value: 80
+                    color: '#e9f0ff'
+                  - value: 70
+                    color: '#fff4e5'
+                  - value: 60
+                    color: '#ffe6bf'
+                  - value: 50
+                    color: '#ffd9a0'
+                  - value: 40
+                    color: '#ffc680'
+                  - value: 30
+                    color: '#ffb366'
+                  - value: 20
+                    color: '#ff9a4d'
+                  - value: 10
+                    color: '#ff8533'
+              - entity: sensor.circadian_daellikon
+                name: Homebase
+                attribute: mired
+                stroke_width: 1
+                unit: mired
+                transform: return (500 - x) / 346 * 100;
+                invert: false
+                color_threshold:
+                  - value: 100
+                    color: '#ffffff'
+                  - value: 90
+                    color: '#f4f7ff'
+                  - value: 80
+                    color: '#e9f0ff'
+                  - value: 70
+                    color: '#fff4e5'
+                  - value: 60
+                    color: '#ffe6bf'
+                  - value: 50
+                    color: '#ffd9a0'
+                  - value: 40
+                    color: '#ffc680'
+                  - value: 30
+                    color: '#ffb366'
+                  - value: 20
+                    color: '#ff9a4d'
+                  - value: 10
+                    color: '#ff8533'
+            apex_config:
+              dataLabels:
+                enabled: true
+                dropShadow:
+                  enabled: true
+          - type: custom:apexcharts-card
+            graph_span: 36h
+            experimental:
+              color_threshold: true
+            header:
+              show: true
+              title: Bordeaux
+              show_states: false
+              colorize_states: true
+              floating: false
+            now:
+              show: true
+              color: '#101010'
+              label: now
+            series:
+              - entity: sensor.circadian_bordeaux
+                name: Bordeaux
+                stroke_width: 5
+                color_threshold:
+                  - value: -100
+                    color: black
+                    opacity: 1
+                  - value: -40
+                    color: black
+                    opacity: 1
+                  - value: -18
+                    color: darkblue
+                    opacity: 1
+                  - value: -12
+                    color: blue
+                    opacity: 1
+                  - value: -6
+                    color: orange
+                  - value: -4
+                    color: gold
+                  - value: -0.833
+                    color: yellow
+                  - value: -0.3
+                    color: darkyellow
+                  - value: 10
+                    color: yellow
+                  - value: 12
+                    color: lightyellow
+                  - value: 100
+                    color: white
+              - entity: sensor.circadian_bordeaux
+                name: Bordeaux
+                attribute: brightness
+                stroke_width: 1
+                unit: brightness
+                transform: return x / 3 - 35;
+                color_threshold:
+                  - value: 0
+                    color: darkorange
+                    opacity: 1
+                  - value: 60
+                    color: white
+              - entity: sensor.circadian_bordeaux
+                name: Bordeaux
+                attribute: kelvin
+                stroke_width: 1
+                unit: kelvin
+                transform: return  (x - 2000) / 4500 * 100;;
+                invert: false
+                color_threshold:
+                  - value: 100
+                    color: '#ffffff'
+                  - value: 90
+                    color: '#f4f7ff'
+                  - value: 80
+                    color: '#e9f0ff'
+                  - value: 70
+                    color: '#fff4e5'
+                  - value: 60
+                    color: '#ffe6bf'
+                  - value: 50
+                    color: '#ffd9a0'
+                  - value: 40
+                    color: '#ffc680'
+                  - value: 30
+                    color: '#ffb366'
+                  - value: 20
+                    color: '#ff9a4d'
+                  - value: 10
+                    color: '#ff8533'
+              - entity: sensor.circadian_bordeaux
+                name: Bordeaux
+                attribute: mired
+                stroke_width: 1
+                unit: mired
+                transform: return (500 - x) / 346 * 100;
+                invert: false
+                color_threshold:
+                  - value: 100
+                    color: '#ffffff'
+                  - value: 90
+                    color: '#f4f7ff'
+                  - value: 80
+                    color: '#e9f0ff'
+                  - value: 70
+                    color: '#fff4e5'
+                  - value: 60
+                    color: '#ffe6bf'
+                  - value: 50
+                    color: '#ffd9a0'
+                  - value: 40
+                    color: '#ffc680'
+                  - value: 30
+                    color: '#ffb366'
+                  - value: 20
+                    color: '#ff9a4d'
+                  - value: 10
+                    color: '#ff8533'
+            apex_config:
+              dataLabels:
+                enabled: true
+                dropShadow:
+                  enabled: true
+          - type: custom:apexcharts-card
+            graph_span: 36h
+            experimental:
+              color_threshold: true
+            header:
+              show: true
+              title: Stockholm
+              show_states: false
+              colorize_states: true
+              floating: false
+            now:
+              show: true
+              color: '#101010'
+              label: now
+            series:
+              - entity: sensor.circadian_stockholm
+                name: Stockholm
+                stroke_width: 5
+                color_threshold:
+                  - value: -100
+                    color: black
+                    opacity: 1
+                  - value: -40
+                    color: black
+                    opacity: 1
+                  - value: -18
+                    color: darkblue
+                    opacity: 1
+                  - value: -12
+                    color: blue
+                    opacity: 1
+                  - value: -6
+                    color: orange
+                  - value: -4
+                    color: gold
+                  - value: -0.833
+                    color: yellow
+                  - value: -0.3
+                    color: darkyellow
+                  - value: 10
+                    color: yellow
+                  - value: 12
+                    color: lightyellow
+                  - value: 100
+                    color: white
+              - entity: sensor.circadian_stockholm
+                name: Stockholm
+                attribute: brightness
+                stroke_width: 1
+                unit: brightness
+                transform: return x / 3 - 35;
+                color_threshold:
+                  - value: 0
+                    color: darkorange
+                    opacity: 1
+                  - value: 60
+                    color: white
+              - entity: sensor.circadian_stockholm
+                name: Stockholm
+                attribute: kelvin
+                stroke_width: 1
+                unit: kelvin
+                transform: return  (x - 2000) / 4500 * 100;;
+                invert: false
+                color_threshold:
+                  - value: 100
+                    color: '#ffffff'
+                  - value: 90
+                    color: '#f4f7ff'
+                  - value: 80
+                    color: '#e9f0ff'
+                  - value: 70
+                    color: '#fff4e5'
+                  - value: 60
+                    color: '#ffe6bf'
+                  - value: 50
+                    color: '#ffd9a0'
+                  - value: 40
+                    color: '#ffc680'
+                  - value: 30
+                    color: '#ffb366'
+                  - value: 20
+                    color: '#ff9a4d'
+                  - value: 10
+                    color: '#ff8533'
+            apex_config:
+              dataLabels:
+                enabled: true
+                dropShadow:
+                  enabled: true
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: My Circadian Calculation Base
+            icon: mdi:calculator-variant-outline
+          - type: picture-elements
+            elements:
+              - entity: sensor.circadian_location
+                attribute: friendly_name
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 20px
+                  left: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Elevation
+                style:
+                  top: 5%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: elevation
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Azimut
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: azimut
+                style:
+                  top: 10%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Equition
+                style:
+                  top: 23%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: equation_of_time
+                style:
+                  top: 19%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Declination
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: declination
+                style:
+                  top: 28%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Brightness
+                style:
+                  top: 50%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: brightness
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Mired
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: mired
+                style:
+                  top: 50%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Kelvin
+                style:
+                  top: 62%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: kelvin
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: length of Day
+                style:
+                  top: 68%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: length_of_day_hours
+                style:
+                  top: 62%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Astro length of Day
+                style:
+                  top: 74%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: astro_length_of_day_hours
+                style:
+                  top: 68%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Nauti length of Day
+                style:
+                  top: 80%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: nauti_length_of_day_hours
+                style:
+                  top: 74%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Dawn length of Day
+                style:
+                  top: 86%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: dawn_length_of_day_hours
+                style:
+                  top: 80%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Astro
+                style:
+                  top: 18%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: astr_rise
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_location
+                attribute: astr_set
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Nauti
+                style:
+                  top: 24%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: naut_rise
+                style:
+                  top: 20%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_location
+                attribute: naut_set
+                style:
+                  top: 20%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Blue
+                style:
+                  top: 30%
+                  color: blue
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: blue_rise_s
+                style:
+                  top: 26%
+                  color: blue
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_location
+                attribute: blue_rise_e
+                style:
+                  top: 26%
+                  color: blue
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sun rise/set
+                style:
+                  top: 36%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: sun_rise
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_location
+                attribute: sun_set
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sunrise end
+                style:
+                  top: 42%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: sun_rise_end
+                style:
+                  top: 38%
+                  color: black
+                  font-size: 10px
+                  left: 27%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Gold rise/end
+                style:
+                  top: 48%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: gold_rise_s
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_location
+                attribute: gold_rise_e
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sun Noon
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  font-weight: bold
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: sun_noon
+                style:
+                  top: 52%
+                  color: black
+                  font-size: 10px
+                  font-weight: bold
+                  left: 27%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Gold set/end
+                style:
+                  top: 65%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: gold_set_s
+                style:
+                  top: 60%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_location
+                attribute: gold_set_e
+                style:
+                  top: 60%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sunset start/end
+                style:
+                  top: 72%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: sun_set_start
+                style:
+                  top: 66%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_location
+                attribute: sun_set
+                style:
+                  top: 66%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Blue set start/end
+                style:
+                  top: 79%
+                  color: blue
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_location
+                attribute: blue_set_s
+                style:
+                  top: 74%
+                  color: blue
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_location
+                attribute: blue_set_e
+                style:
+                  top: 74%
+                  color: blue
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_location
+                attribute: special_text
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 20px
+                  left: 50%
+                  transform: initial
+                type: state-label
+            image: /local/__empty.png
+          - type: picture-elements
+            elements:
+              - entity: sensor.circadian_daellikon
+                attribute: friendly_name
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 20px
+                  left: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Elevation
+                style:
+                  top: 5%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: elevation
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Azimut
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: azimut
+                style:
+                  top: 10%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Equition
+                style:
+                  top: 23%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: equation_of_time
+                style:
+                  top: 19%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Declination
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: declination
+                style:
+                  top: 28%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Brightness
+                style:
+                  top: 50%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: brightness
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Mired
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: mired
+                style:
+                  top: 50%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Kelvin
+                style:
+                  top: 62%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: kelvin
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: length of Day
+                style:
+                  top: 68%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: length_of_day_hours
+                style:
+                  top: 62%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Astro length of Day
+                style:
+                  top: 74%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: astro_length_of_day_hours
+                style:
+                  top: 68%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Nauti length of Day
+                style:
+                  top: 80%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: nauti_length_of_day_hours
+                style:
+                  top: 74%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Dawn length of Day
+                style:
+                  top: 86%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: dawn_length_of_day_hours
+                style:
+                  top: 80%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Astro
+                style:
+                  top: 18%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: astr_rise
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_daellikon
+                attribute: astr_set
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Nauti
+                style:
+                  top: 24%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: naut_rise
+                style:
+                  top: 20%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_daellikon
+                attribute: naut_set
+                style:
+                  top: 20%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Blue
+                style:
+                  top: 30%
+                  color: blue
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: blue_rise_s
+                style:
+                  top: 26%
+                  color: blue
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_daellikon
+                attribute: blue_rise_e
+                style:
+                  top: 26%
+                  color: blue
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sun rise/set
+                style:
+                  top: 36%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: sun_rise
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_daellikon
+                attribute: sun_set
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sunrise end
+                style:
+                  top: 42%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: sun_rise_end
+                style:
+                  top: 38%
+                  color: black
+                  font-size: 10px
+                  left: 27%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Gold rise/end
+                style:
+                  top: 48%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: gold_rise_s
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_daellikon
+                attribute: gold_rise_e
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sun Noon
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  font-weight: bold
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: sun_noon
+                style:
+                  top: 52%
+                  color: black
+                  font-size: 10px
+                  font-weight: bold
+                  left: 27%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Gold set/end
+                style:
+                  top: 65%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: gold_set_s
+                style:
+                  top: 60%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_daellikon
+                attribute: gold_set_e
+                style:
+                  top: 60%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sunset start/end
+                style:
+                  top: 72%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: sun_set_start
+                style:
+                  top: 66%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_daellikon
+                attribute: sun_set
+                style:
+                  top: 66%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Blue set start/end
+                style:
+                  top: 79%
+                  color: blue
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_daellikon
+                attribute: blue_set_s
+                style:
+                  top: 74%
+                  color: blue
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_daellikon
+                attribute: blue_set_e
+                style:
+                  top: 74%
+                  color: blue
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_daellikon
+                attribute: special_text
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 20px
+                  left: 50%
+                  transform: initial
+                type: state-label
+            image: /local/__empty.png
+          - type: picture-elements
+            elements:
+              - entity: sensor.circadian_bordeaux
+                attribute: friendly_name
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 20px
+                  left: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Elevation
+                style:
+                  top: 5%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: elevation
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Azimut
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: azimut
+                style:
+                  top: 10%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Equition
+                style:
+                  top: 23%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: equation_of_time
+                style:
+                  top: 19%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Declination
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: declination
+                style:
+                  top: 28%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Brightness
+                style:
+                  top: 50%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: brightness
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Mired
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: mired
+                style:
+                  top: 50%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Kelvin
+                style:
+                  top: 62%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: kelvin
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: length of Day
+                style:
+                  top: 68%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: length_of_day_hours
+                style:
+                  top: 62%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Astro length of Day
+                style:
+                  top: 74%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: astro_length_of_day_hours
+                style:
+                  top: 68%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Nauti length of Day
+                style:
+                  top: 80%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: nauti_length_of_day_hours
+                style:
+                  top: 74%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Dawn length of Day
+                style:
+                  top: 86%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: dawn_length_of_day_hours
+                style:
+                  top: 80%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Astro
+                style:
+                  top: 18%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: astr_rise
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_bordeaux
+                attribute: astr_set
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Nauti
+                style:
+                  top: 24%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: naut_rise
+                style:
+                  top: 20%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_bordeaux
+                attribute: naut_set
+                style:
+                  top: 20%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Blue
+                style:
+                  top: 30%
+                  color: blue
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: blue_rise_s
+                style:
+                  top: 26%
+                  color: blue
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_bordeaux
+                attribute: blue_rise_e
+                style:
+                  top: 26%
+                  color: blue
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sun rise/set
+                style:
+                  top: 36%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: sun_rise
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_bordeaux
+                attribute: sun_set
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sunrise end
+                style:
+                  top: 42%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: sun_rise_end
+                style:
+                  top: 38%
+                  color: black
+                  font-size: 10px
+                  left: 27%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Gold rise/end
+                style:
+                  top: 48%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: gold_rise_s
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_bordeaux
+                attribute: gold_rise_e
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sun Noon
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  font-weight: bold
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: sun_noon
+                style:
+                  top: 52%
+                  color: black
+                  font-size: 10px
+                  font-weight: bold
+                  left: 27%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Gold set/end
+                style:
+                  top: 65%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: gold_set_s
+                style:
+                  top: 60%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_bordeaux
+                attribute: gold_set_e
+                style:
+                  top: 60%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sunset start/end
+                style:
+                  top: 72%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: sun_set_start
+                style:
+                  top: 66%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_bordeaux
+                attribute: sun_set
+                style:
+                  top: 66%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Blue set start/end
+                style:
+                  top: 79%
+                  color: blue
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_bordeaux
+                attribute: blue_set_s
+                style:
+                  top: 74%
+                  color: blue
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_bordeaux
+                attribute: blue_set_e
+                style:
+                  top: 74%
+                  color: blue
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_bordeaux
+                attribute: special_text
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 20px
+                  left: 50%
+                  transform: initial
+                type: state-label
+            image: /local/__empty.png
+          - type: picture-elements
+            elements:
+              - entity: sensor.circadian_stockholm
+                attribute: friendly_name
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 20px
+                  left: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Elevation
+                style:
+                  top: 5%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: elevation
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Azimut
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: azimut
+                style:
+                  top: 10%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Equition
+                style:
+                  top: 23%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: equation_of_time
+                style:
+                  top: 19%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Declination
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 15px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: declination
+                style:
+                  top: 28%
+                  color: black
+                  font-size: 15px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Brightness
+                style:
+                  top: 50%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: brightness
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Mired
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: mired
+                style:
+                  top: 50%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Kelvin
+                style:
+                  top: 62%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: kelvin
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: length of Day
+                style:
+                  top: 68%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: length_of_day_hours
+                style:
+                  top: 62%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Astro length of Day
+                style:
+                  top: 74%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: astro_length_of_day_hours
+                style:
+                  top: 68%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Nauti length of Day
+                style:
+                  top: 80%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: nauti_length_of_day_hours
+                style:
+                  top: 74%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Dawn length of Day
+                style:
+                  top: 86%
+                  color: black
+                  font-size: 10px
+                  left: 68%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: dawn_length_of_day_hours
+                style:
+                  top: 80%
+                  color: black
+                  font-size: 10px
+                  right: 1%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Astro
+                style:
+                  top: 18%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: astr_rise
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_stockholm
+                attribute: astr_set
+                style:
+                  top: 14%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Nauti
+                style:
+                  top: 24%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: naut_rise
+                style:
+                  top: 20%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_stockholm
+                attribute: naut_set
+                style:
+                  top: 20%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Blue
+                style:
+                  top: 30%
+                  color: blue
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: blue_rise_s
+                style:
+                  top: 26%
+                  color: blue
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_stockholm
+                attribute: blue_rise_e
+                style:
+                  top: 26%
+                  color: blue
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sun rise/set
+                style:
+                  top: 36%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: sun_rise
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_stockholm
+                attribute: sun_set
+                style:
+                  top: 32%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sunrise end
+                style:
+                  top: 42%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: sun_rise_end
+                style:
+                  top: 38%
+                  color: black
+                  font-size: 10px
+                  left: 27%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Gold rise/end
+                style:
+                  top: 48%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: gold_rise_s
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_stockholm
+                attribute: gold_rise_e
+                style:
+                  top: 44%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sun Noon
+                style:
+                  top: 56%
+                  color: black
+                  font-size: 10px
+                  font-weight: bold
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: sun_noon
+                style:
+                  top: 52%
+                  color: black
+                  font-size: 10px
+                  font-weight: bold
+                  left: 27%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Gold set/end
+                style:
+                  top: 65%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: gold_set_s
+                style:
+                  top: 60%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_stockholm
+                attribute: gold_set_e
+                style:
+                  top: 60%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Sunset start/end
+                style:
+                  top: 72%
+                  color: black
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: sun_set_start
+                style:
+                  top: 66%
+                  color: black
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_stockholm
+                attribute: sun_set
+                style:
+                  top: 66%
+                  color: black
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - type: custom:text-element
+                text: Blue set start/end
+                style:
+                  top: 79%
+                  color: blue
+                  font-size: 10px
+                  font-weight: normal
+                  left: 1%
+                  transform: initial
+              - entity: sensor.circadian_stockholm
+                attribute: blue_set_s
+                style:
+                  top: 74%
+                  color: blue
+                  font-size: 10px
+                  left: 22%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_stockholm
+                attribute: blue_set_e
+                style:
+                  top: 74%
+                  color: blue
+                  font-size: 10px
+                  left: 32%
+                  transform: initial
+                type: state-label
+              - entity: sensor.circadian_stockholm
+                attribute: special_text
+                style:
+                  top: 1%
+                  color: black
+                  font-size: 20px
+                  left: 50%
+                  transform: initial
+                type: state-label
+            image: /local/__empty.png
+  - type: sections
+    max_columns: 3
+    title: Energy
+    path: energy
+    icon: mdi:sine-wave
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Energy
+            heading_style: subtitle
+            icon: mdi:flash
+          - type: custom:auto-entities
+            card:
+              type: grid
+              columns: 2
+            card_param: cards
+            filter:
+              include:
+                - options:
+                    type: gauge
+                    min: 0
+                    max: 100
+                    severity:
+                      red: 1000
+                      yellow: 200
+                      green: 1
+                    entities:
+                      - this.entity_id
+                  entity_id: sensor.*_power
+                  sort:
+                    method: last_changed
+              exclude:
+                - options: {}
+                  entity_id: switch.eles_smart_plug_2_steckdose_1
+      - type: grid
+        cards:
+          - type: heading
+            heading: Current
+            heading_style: subtitle
+            icon: mdi:generator-mobile
+          - type: custom:auto-entities
+            card:
+              type: grid
+              columns: 2
+            card_param: cards
+            filter:
+              include:
+                - options:
+                    type: gauge
+                    min: 0
+                    max: 1.5
+                    severity:
+                      red: 5
+                      yellow: 0.5
+                      green: 0.01
+                    entities:
+                      - this.entity_id
+                  entity_id: sensor.*_current
+                  sort:
+                    method: last_changed
+              exclude:
+                - options: {}
+                  entity_id: switch.eles_smart_plug_2_steckdose_1
+      - type: grid
+        cards:
+          - type: heading
+            heading: Current
+            heading_style: subtitle
+          - type: custom:auto-entities
+            card:
+              type: grid
+              columns: 2
+            card_param: cards
+            filter:
+              include:
+                - options:
+                    type: statistics-graph
+                    period: 5minute
+                    stat_types:
+                      - max
+                    logarithmic_scale: true
+                    days_to_show: 12
+                    entities:
+                      - this.entity_id
+                  entity_id: sensor.*_current
+                  sort:
+                    method: last_changed
+              exclude:
+                - options: {}
+                  entity_id: switch.eles_smart_plug_2_steckdose_1
+      - type: grid
+        cards:
+          - type: heading
+            heading: Power
+            heading_style: subtitle
+            icon: mdi:flash
+          - type: custom:auto-entities
+            card:
+              type: entities
+            filter:
+              include:
+                - options: {}
+                  entity_id: sensor.*_power
+              exclude:
+                - options: {}
+                  entity_id: switch.eles_smart_plug_2_steckdose_1
+    cards: []
+  - type: sections
+    max_columns: 4
+    title: github update
+    path: github-update
+    icon: mdi:github
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: Gitub Update repository
+            icon: mdi:github
+          - type: vertical-stack
+            cards:
+              - type: entities
+                entities:
+                  - entity: input_text.git_commit_message
+                    name: Commit Message
+              - type: button
+                name: Git Update starten
+                icon: mdi:github
+                tap_action:
+                  action: call-service
+                  confirmation:
+                    text: Git Commit & Push wirklich ausführen?
+                  service: script.git_update_ad1000
+              - type: entity
+                entity: script.git_update_ad1000
+                attribute: last_triggered
+                name: Letzter Commit
+  - type: sections
+    max_columns: 4
+    title: BLE
+    path: ble
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: BLE - Lichter auslösen
+            heading_style: subtitle
+            icon: mdi:led-on
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: tile
+                    entity: input_boolean.identify_all_devices
+                    vertical: false
+                    features_position: bottom
+                    grid_options:
+                      columns: full
+                  - type: tile
+                    entity: input_boolean.identity_alive_home_status
+                    vertical: false
+                    features_position: bottom
+                    grid_options:
+                      columns: full
+              - type: button
+                show_name: true
+                show_icon: true
+                name: BLE Lights flashing
+                icon: mdi:lightbulb
+                tap_action:
+                  action: call-service
+                  service: script.trigger_identify_script_all_esphome_synchron

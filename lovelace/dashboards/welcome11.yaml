@@ -1,0 +1,32 @@
+# Decluttering Templates
+decluttering_templates:
+  !include ../decluttering_templates/decluttering_templates.yaml
+
+
+title: Main welcome 11
+views:
+  - title: welcome 11 A
+    cards:
+      - type: custom:decluttering-card
+        template: global_header_main
+        variables:
+          - title: "🏠 Zuhause"
+          - subtitle: "_Übersicht & Status_"
+
+
+      - type: markdown
+        title: Dashboard
+        content: >
+          Welcome to your **dashboard**.
+
+      - type: markdown
+        title: Dashboard
+        content: >
+          Welcome to your **dashboard**.
+
+  - title: welcome 11 B
+    cards:
+      - type: markdown
+        title: Dashboard
+        content: >
+          Welcome to your **dashboard**. 11

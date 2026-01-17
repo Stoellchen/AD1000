@@ -1,0 +1,9 @@
+# resources:
+#   - url: /local/decluttering-card.js
+#     type: module
+
+
+# Decluttering Templates
+# decluttering_templates:
+#  !include lovelace/decluttering_templates/decluttering_templates.yaml
+

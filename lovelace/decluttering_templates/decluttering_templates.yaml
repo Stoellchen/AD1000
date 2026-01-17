@@ -1,0 +1,353 @@
+##################################################################################################################
+##
+##  LOVELACE - Decluttinerg_templates
+##  https://github.com/custom-cards/decluttering-card
+##
+################################################################################################################
+
+
+global_header_badges_main:
+  card:
+    type: horizontal-stack
+    cards:
+      - type: markdown
+        content: |
+          ### [[title]]
+          [[subtitle]]
+        card_mod:
+          style: |
+            ha-card {
+              box-shadow: none;
+              background: none;
+              padding: 4px 6px;
+            }
+      - type: horizontal-stack
+        cards: [[badges]]
+
+# --------------------------------------------------
+global_header_main:
+  card:
+    type: custom:decluttering-card
+    template: global_header_badges_main
+    variables:
+      - title: '[[title]]'
+      - subtitle: '[[subtitle]]'
+      - cards:
+          - type: custom:analog-clock
+            locale: de-CH
+            diameter: 200
+            hide_SecondHand: false
+            color_HourHand: green
+            color_MinuteHand: green
+            color_SecondHand: red
+            color_DigitalTime: green
+            color_FaceDigits: lightgreen
+            color_text: darkgreen
+            style_hourhand: 2
+            style_minutehand: 2
+            style_secondhand: 4
+            color_Ticks: green
+            show_timezone: true
+            color_background: "#040404"
+            themes:
+              - time: 23:00-08:00
+                color_background: black
+                style_secondhand: 3
+
+
+
+# --------------------------------------------------
+global_header_main_11:
+  card:
+    type: custom:decluttering-card
+    template: global_header_badges_main
+    variables:
+      - title: '[[title]]'
+      - subtitle: '[[subtitle]]'
+      - badges:
+          - type: custom:mushroom-template-card
+            entity: alarm_control_panel.home_alarm
+            icon: mdi:shield-home
+            icon_color: >
+              {{ 'red' if states(entity) != 'disarmed' else 'green' }}
+            tap_action:
+              action: more-info
+            layout: vertical
+
+          - type: custom:mushroom-template-card
+            entity: binary_sensor.occupied_home_1
+            icon: mdi:account
+            icon_color: >
+              {{ 'green' if is_state(entity, "on" ) else 'red' }}
+            tap_action:
+              action: more-info
+            layout: vertical
+
+          - type: custom:mushroom-template-card
+            entity: person.thomas
+            icon: mdi:account
+            icon_color: >
+              {{ 'green' if is_state(entity,'home') else 'red' }}
+            tap_action:
+              action: more-info
+            layout: vertical
+
+          - type: custom:mushroom-template-card
+            entity: person.manu
+            icon: mdi:account
+            icon_color: >
+              {{ 'green' if is_state(entity,'home') else 'red' }}
+            tap_action:
+              action: more-info
+            layout: vertical
+
+
+
+
+global_status_header_main_old:
+  card:
+    type: vertical-stack
+    cards:
+      # --------------------------------------------------
+      # Titel / Untertitel
+      # --------------------------------------------------
+      - type: markdown
+        content: |
+          ## [[title]]
+          [[subtitle]]
+        card_mod:
+          style: |
+            ha-card {
+              box-shadow: none;
+              background: none;
+              padding: 6px 4px 2px 4px;
+            }
+
+      # --------------------------------------------------
+      # Statuszeile (Entities)
+      # --------------------------------------------------
+      - type: entities
+        show_header_toggle: false
+        entities: [[status_entities]]
+        card_mod:
+          style: |
+            ha-card {
+              box-shadow: none;
+              background: none;
+              padding: 0 4px 6px 4px;
+            }
+
+
+
+
+global_status_header:
+  card:
+    type: vertical-stack
+    cards:
+
+      - type: markdown
+        content: |
+          ## [[title]]
+          [[subtitle]]
+        card_mod:
+          style: |
+            ha-card {
+              box-shadow: none;
+              background: none;
+              padding: 4px 0 0 0;
+            }
+
+      - type: entities
+        entities: [[entities]]
+        card_mod:
+          style: |
+            ha-card {
+              box-shadow: none;
+              background: none;
+              padding: 0;
+            }
+
+global_view_header2:
+  card:
+    type: vertical-stack
+    cards:
+      - type: custom:button-card
+        icon: mdi:cpu-64-bit
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-system/system
+        name: |
+          [[[
+            const v = parseFloat(states['sensor.system_monitor_prozessornutzung']?.state);
+            if (isNaN(v)) return 'keine Daten';
+            return 'ad1000 CPU:  ' + v.toFixed(1) + ' %';
+          ]]]
+        state_display: |
+          [[[
+            const v = parseFloat(states['sensor.system_monitor_prozessornutzung']?.state);
+            if (isNaN(v)) return 'keine Daten';
+            return v.toFixed(1) + ' %';
+          ]]]
+        styles:
+          card:
+            - background-color: |
+                [[[
+                  const v = parseFloat(states['sensor.system_monitor_prozessornutzung']?.state);
+                  if (isNaN(v)) return 'rgba(80,80,80,0.6)';
+
+                  // 0 % (grün) → 50 % (rot)
+                  const t = Math.min(Math.max(v / 50, 0), 1);
+
+                  const r = Math.round(0 + t * 180);
+                  const g = Math.round(180 + t * (0 - 180));
+                  const b = Math.round(80 + t * (0 - 80));
+
+                  return `rgba(${r},${g},${b},0.85)`;
+                ]]]
+          name:
+            - color: white
+          state:
+            - color: white
+
+
+
+################################################################################################################  
+##  
+##  autotimer_overview
+##  
+##  type: custom:decluttering-card
+##  template: autotimer_overview
+##  variables:
+##    - title: AutoTimer – Zeitübersteuerung
+##    - helper_entity: input_number.autotimer_helper
+##    - target_group: group.autotimer_target
+##    - status_entity: pyscript.autotimer_status
+autotimer_overview:
+  card:
+    type: vertical-stack
+    cards:
+      # --------------------------------------------------
+      # Header / Helper
+      # --------------------------------------------------
+      - type: entities
+        title: '[[title]]'
+        entities:
+          - '[[helper_entity]]'
+
+      # --------------------------------------------------
+      # AutoTimer Targets (dynamic)
+      # --------------------------------------------------
+      - type: custom:auto-entities
+        card:
+          type: vertical-stack
+        card_param: cards
+        filter:
+          include:
+            - group: '[[target_group]]'
+              options:
+                type: custom:mushroom-template-card
+                entity: this.entity_id
+                layout: horizontal
+
+                icon: >
+                  {% set s = states(entity) %}
+                  {% set domain = entity.split('.')[0] %}
+                  {% if domain == 'switch' %}
+                    {{ 'mdi:power-plug-outline' if s == 'on' else 'mdi:power-plug-off-outline' }}
+                  {% elif domain == 'light' %}
+                    {{ 'mdi:lightbulb' if s == 'on' else 'mdi:lightbulb-off' }}
+                  {% elif domain == 'media_player' %}
+                    {{ 'mdi:play-circle' if s in ['playing','on'] else 'mdi:television-off' }}
+                  {% elif domain == 'fan' %}
+                    {{ 'mdi:fan' if s == 'on' else 'mdi:fan-off' }}
+                  {% else %}
+                    {{ 'mdi:cog' if s == 'on' else 'mdi:cog-outline' }}
+                  {% endif %}
+
+                primary: >
+                  {{ state_attr(entity,'friendly_name') }}
+
+                secondary: >
+                  {% set d = state_attr('[[status_entity]]', entity) %}
+                  {% if d and d.active %}
+                    {% set sec = d.remaining_sec | int %}
+                    {% set h = sec // 3600 %}
+                    {% set m = (sec % 3600) // 60 %}
+                    {% set s = sec % 60 %}
+                    ⏱
+                    {% if h > 0 %}
+                      {{ '%d:%02d:%02d' | format(h, m, s) }}
+                    {% else %}
+                      {{ '%02d:%02d' | format(m, s) }}
+                    {% endif %}
+                    of
+                    {% if d.default_sec >= 3600 %}
+                      ({{ (d.default_sec // 3600) }} h {{ ((d.default_sec % 3600) // 60) }} min)
+                    {% else %}
+                      ({{ (d.default_sec // 60) }} min)
+                    {% endif %}
+                  {% elif d %}
+                    {% if d.default_sec >= 3600 %}
+                      ({{ (d.default_sec // 3600) }} h {{ ((d.default_sec % 3600) // 60) }} min)
+                    {% else %}
+                      ({{ (d.default_sec // 60) }} min)
+                    {% endif %}
+                  {% else %}
+                    —
+                  {% endif %}
+                  · {{ area_name(entity) }}
+
+                icon_color: >
+                  {% set d = state_attr('[[status_entity]]', entity) %}
+                  {% if not d or not d.active or d.default_sec == 0 %}
+                    grey
+                  {% else %}
+                    {% set pct = (d.remaining_sec / d.default_sec * 100) | round(0) %}
+                    {% if pct > 90 %} green
+                    {% elif pct > 80 %} light-green
+                    {% elif pct > 70 %} green
+                    {% elif pct > 60 %} yellow
+                    {% elif pct > 50 %} yellow
+                    {% elif pct > 40 %} amber
+                    {% elif pct > 30 %} orange
+                    {% elif pct > 20 %} deep-orange
+                    {% else %} red
+                    {% endif %}
+                  {% endif %}
+
+                tap_action:
+                  action: call-service
+                  service: pyscript.autotimer_start
+                  data:
+                    entity_id: this.entity_id
+
+                hold_action:
+                  action: call-service
+                  service: pyscript.autotimer_stop
+                  data:
+                    entity_id: this.entity_id
+
+                double_tap_action:
+                  action: call-service
+                  service: pyscript.autotimer_start
+                  data:
+                    entity_id: this.entity_id
+
+
+
+global_header_main_12:
+  card:
+    - type: markdown
+      title: Dashboard
+      content: >
+        Welcome to your **dashboard**. 12 - 1
+
+    - type: markdown
+      title: Dashboard
+      content: >
+        Welcome to your **dashboard**. 12 - 2
+
+    - type: markdown
+      title: Dashboard
+      content: >
+        Welcome to your **dashboard**. 12 - 3

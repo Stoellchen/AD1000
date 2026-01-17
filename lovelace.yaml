@@ -1,0 +1,43 @@
+mode: storage
+
+resources:
+  - url: /local/decluttering-card.js
+    type: module
+
+# Add yaml dashboards
+dashboards:
+  lovelace-yaml1:
+    mode: yaml
+    title: Welcome_11
+    icon: mdi:script
+    show_in_sidebar: true
+    filename: lovelace/dashboards/welcome11.yaml
+
+  lovelace-yaml2:
+    mode: yaml
+    title: Welcome_12
+    icon: mdi:script
+    show_in_sidebar: true
+    filename: lovelace/dashboards/welcome12.yaml
+
+  lovelace-yaml3:
+    mode: yaml
+    title: Welcome_13
+    icon: mdi:script
+    show_in_sidebar: true
+    filename: lovelace/dashboards/welcome13.yaml
+
+  lovelace-yaml4:
+    mode: yaml
+    title: Welcome_14
+    icon: mdi:script
+    show_in_sidebar: true
+    filename: lovelace/dashboards/welcome14.yaml
+
+  lovelace-yaml5:
+    mode: yaml
+    title: Alarm22
+    icon: mdi:script
+    show_in_sidebar: true
+    filename: lovelace/dashboards/alarm.yaml
+

@@ -1,0 +1,381 @@
+views:
+  - title: Home
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Neuer Abschnitt
+          - type: tile
+            entity: sensor.circadian_location
+      - type: grid
+        cards:
+          - type: heading
+            heading: Neuer Abschnitt
+          - type: custom:apexcharts-card
+            graph_span: 12h
+            experimental:
+              color_threshold: true
+            header:
+              show: true
+              title: Homebase kelvin
+              show_states: false
+              colorize_states: true
+              floating: false
+            now:
+              show: true
+              color: '#101010'
+              label: now
+            series:
+              - entity: sensor.circadian_location
+                name: Homebase
+                attribute: kelvin
+                stroke_width: 1
+                unit: kelvin
+                transform: return x;
+                invert: false
+                color_threshold:
+                  - value: 100
+                    color: '#ffffff'
+                  - value: 90
+                    color: '#f4f7ff'
+                  - value: 80
+                    color: '#e9f0ff'
+                  - value: 70
+                    color: '#fff4e5'
+                  - value: 60
+                    color: '#ffe6bf'
+                  - value: 50
+                    color: '#ffd9a0'
+                  - value: 40
+                    color: '#ffc680'
+                  - value: 30
+                    color: '#ffb366'
+                  - value: 20
+                    color: '#ff9a4d'
+                  - value: 10
+                    color: '#ff8533'
+            apex_config:
+              dataLabels:
+                enabled: true
+                dropShadow:
+                  enabled: true
+          - type: custom:apexcharts-card
+            graph_span: 12h
+            experimental:
+              color_threshold: true
+            header:
+              show: true
+              title: Homebase test
+              show_states: false
+              colorize_states: true
+              floating: false
+            now:
+              show: true
+              color: '#101010'
+              label: now
+            series:
+              - entity: sensor.circadian_location
+                name: Homebase mired
+                attribute: mired
+                stroke_width: 1
+                unit: mired
+                transform: return x;
+                invert: false
+                color_threshold:
+                  - value: 100
+                    color: '#ffffff'
+                  - value: 90
+                    color: '#f4f7ff'
+                  - value: 80
+                    color: '#e9f0ff'
+                  - value: 70
+                    color: '#fff4e5'
+                  - value: 60
+                    color: '#ffe6bf'
+                  - value: 50
+                    color: '#ffd9a0'
+                  - value: 40
+                    color: '#ffc680'
+                  - value: 30
+                    color: '#ffb366'
+                  - value: 20
+                    color: '#ff9a4d'
+                  - value: 10
+                    color: '#ff8533'
+            apex_config:
+              dataLabels:
+                enabled: true
+                dropShadow:
+                  enabled: true
+      - type: grid
+        cards:
+          - type: heading
+            heading: Neuer Abschnitt
+          - type: vertical-stack
+            cards:
+              - type: conditional
+                conditions:
+                  - condition: numeric_state
+                    entity: sensor.flightradar24_current_in_area
+                    above: 0
+                card:
+                  type: entities
+                  entities:
+                    - entity: sensor.flightradar24_current_in_area
+                      name: Bordeaux
+              - type: conditional
+                conditions:
+                  - condition: numeric_state
+                    entity: sensor.flightradar24_current_in_area
+                    above: 0
+                card:
+                  type: markdown
+                  content: >-
+                    {% set data =
+                    state_attr('sensor.flightradar24_current_in_area',
+                    'flights') %} {% for flight in data %}
+                      <ha-icon icon="mdi:airplane"></ha-icon>{{ flight.flight_number }}({{ flight.aircraft_registration }}) - {{ flight.airline_short }} - {{ flight.aircraft_model }}
+                      {{ flight.airport_origin_city }}{%if flight.airport_origin_city %}<img src="https://flagsapi.com/{{ flight.airport_origin_country_code }}/shiny/16.png" title='{{ flight.airport_origin_country_name }}'/>{% endif %} -> {{ flight.airport_destination_city }}{%
+                      if flight.airport_destination_country_code %}<img src="https://flagsapi.com/{{ flight.airport_destination_country_code }}/shiny/16.png" title='{{ flight.airport_destination_country_name }}'/>{% endif %}
+                      {%if flight.time_scheduled_departure %}Departure - {{ flight.time_scheduled_departure | timestamp_custom('%H:%M') }}; {% endif %}{%if flight.time_scheduled_arrival%}Arrival - {{ flight.time_scheduled_arrival | timestamp_custom('%H:%M') }}{% endif %}
+                      Altitude - {{ flight.altitude }} ft{%if flight.altitude > 0 %} ({{(flight.altitude * 0.3048)| round(0)}} m){% endif%}; Gr. speed - {{ flight.ground_speed }} kts{%if flight.ground_speed > 0 %} ({{(flight.ground_speed * 1.852)| round(0)}} km/h){% endif%}
+                      {% endfor %}
+              - type: conditional
+                conditions:
+                  - condition: numeric_state
+                    entity: sensor.flightradar24_current_in_area
+                    above: 0
+                card:
+                  type: iframe
+                  url: >-
+                    https://www.flightradar24.com/simple?lat=43.55&lon=6.46&z=10&label1=reg&size=large
+                  aspect_ratio: 150%
+              - type: conditional
+                conditions:
+                  - condition: numeric_state
+                    entity: sensor.flightradar24_current_in_area
+                    above: 0
+                card:
+                  type: entities
+                  entities:
+                    - entity: sensor.flightradar24_current_in_area
+                      name: In area Dällikon
+              - type: conditional
+                conditions:
+                  - condition: numeric_state
+                    entity: sensor.flightradar24_current_in_area
+                    above: 0
+                card:
+                  type: markdown
+                  content: >-
+                    {% set data =
+                    state_attr('sensor.flightradar24_current_in_area',
+                    'flights') %} {% for flight in data %}
+                      <ha-icon icon="mdi:airplane"></ha-icon>{{ flight.flight_number }}({{ flight.aircraft_registration }}) - {{ flight.airline_short }} - {{ flight.aircraft_model }}
+                      {{ flight.airport_origin_city }}{%if flight.airport_origin_city %}<img src="https://flagsapi.com/{{ flight.airport_origin_country_code }}/shiny/16.png" title='{{ flight.airport_origin_country_name }}'/>{% endif %} -> {{ flight.airport_destination_city }}{%
+                      if flight.airport_destination_country_code %}<img src="https://flagsapi.com/{{ flight.airport_destination_country_code }}/shiny/16.png" title='{{ flight.airport_destination_country_name }}'/>{% endif %}
+                      {%if flight.time_scheduled_departure %}Departure - {{ flight.time_scheduled_departure | timestamp_custom('%H:%M') }}; {% endif %}{%if flight.time_scheduled_arrival%}Arrival - {{ flight.time_scheduled_arrival | timestamp_custom('%H:%M') }}{% endif %}
+                      Altitude - {{ flight.altitude }} ft{%if flight.altitude > 0 %} ({{(flight.altitude * 0.3048)| round(0)}} m){% endif%}; Gr. speed - {{ flight.ground_speed }} kts{%if flight.ground_speed > 0 %} ({{(flight.ground_speed * 1.852)| round(0)}} km/h){% endif%}
+                      {% endfor %}
+              - type: conditional
+                conditions:
+                  - condition: numeric_state
+                    entity: sensor.flightradar24_current_in_area
+                    above: 0
+                card:
+                  type: iframe
+                  url: >-
+                    https://www.flightradar24.com/simple?lat=44.55&lon=-0.31&z=14&label1=reg&size=large
+                  aspect_ratio: 150%
+            view_layout:
+              position: sidebar
+      - type: grid
+        cards:
+          - type: heading
+            heading: Neuer Abschnitt
+          - type: custom:meteoalarm-card
+            entities:
+              entity: binary_sensor.meteoalarm
+            integration: meteofrance
+            card_mod:
+              style: |
+                ha-card {
+                  --inactive-background-color: blue;
+                }
+          - type: custom:meteoalarm-card
+            entities:
+              entity: sensor.47_weather_alert
+            integration: meteofrance
+          - type: custom:auto-entities
+            card:
+              type: grid
+              columns: 1
+              square: false
+            card_param: cards
+            filter:
+              include:
+                - domain: sensor
+                  entity_id: sensor.*_weather_alert
+                  options:
+                    type: custom:meteoalarm-card
+                    integration: meteofrance
+                    entities:
+                      - entity: this.entity_id
+              exclude:
+                - state: Vert
+            card_empty:
+              type: markdown
+              content: |
+                ✅ **Alle {{
+                  states.sensor
+                  | selectattr('entity_id','match','sensor\\..*_weather_alert')
+                  | list | count
+                }} Regionen sind ohne Alerts**
+      - type: grid
+        cards:
+          - type: heading
+            heading: Neuer Abschnitt
+          - type: custom:auto-entities
+            card:
+              type: grid
+              columns: 1
+              square: false
+            card_param: cards
+            filter:
+              include:
+                - domain: sensor
+                  entity_id: sensor.*_weather_alert
+                  options:
+                    type: custom:meteoalarm-card
+                    integration: meteofrance
+                    entities:
+                      - entity: this.entity_id
+              exclude:
+                - state: Vert
+            else:
+              type: heading
+              heading: Keine Warnungen - alles im grünen
+              heading_style: title
+              icon: mdi:weather-cloudy-alert
+  - type: panel
+    path: testeeee
+    title: testeeee
+    cards:
+      - type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          grid-template-columns: 80% 1fr
+          grid-template-areas: |
+            "left right"
+        cards:
+          - type: conditional
+            conditions:
+              - condition: numeric_state
+                entity: sensor.flightradar24_current_in_area
+                below: 1
+            card:
+              type: heading
+              heading: No flights at the moment - sorry
+              heading_style: title
+              icon: mdi:airplane-check
+          - type: conditional
+            conditions:
+              - condition: numeric_state
+                entity: sensor.flightradar24_current_in_area
+                above: 0
+            card:
+              type: iframe
+              url: >-
+                https://www.flightradar24.com/simple?lat=44.82&lon=-0.714&z=11&label1=reg&size=large
+              aspect_ratio: 50%
+          - type: vertical-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: conditional
+                    conditions:
+                      - condition: numeric_state
+                        entity: sensor.flightradar24_current_in_area
+                        below: 1
+                    card:
+                      type: heading
+                      heading: No flights at the moment - sorry
+                      heading_style: title
+                      icon: mdi:airplane-check
+                  - type: conditional
+                    conditions:
+                      - condition: numeric_state
+                        entity: sensor.flightradar24_current_in_area
+                        above: 0
+                    card:
+                      type: entities
+                      entities:
+                        - entity: sensor.flightradar24_current_in_area
+                          name: Bordeaux
+                  - type: conditional
+                    conditions:
+                      - condition: numeric_state
+                        entity: sensor.flightradar24_current_in_area
+                        above: 0
+                    card:
+                      type: markdown
+                      content: >-
+                        {% set data =
+                        state_attr('sensor.flightradar24_current_in_area',
+                        'flights') %} {% for flight in data %}
+                          <ha-icon icon="mdi:airplane"></ha-icon>{{ flight.flight_number }}({{ flight.aircraft_registration }}) - {{ flight.airline_short }} - {{ flight.aircraft_model }}
+                          {{ flight.airport_origin_city }}{%if flight.airport_origin_city %}<img src="https://flagsapi.com/{{ flight.airport_origin_country_code }}/shiny/16.png" title='{{ flight.airport_origin_country_name }}'/>{% endif %} -> {{ flight.airport_destination_city }}{%
+                          if flight.airport_destination_country_code %}<img src="https://flagsapi.com/{{ flight.airport_destination_country_code }}/shiny/16.png" title='{{ flight.airport_destination_country_name }}'/>{% endif %}
+                          {%if flight.time_scheduled_departure %}Departure - {{ flight.time_scheduled_departure | timestamp_custom('%H:%M') }}; {% endif %}{%if flight.time_scheduled_arrival%}Arrival - {{ flight.time_scheduled_arrival | timestamp_custom('%H:%M') }}{% endif %}
+                          Altitude - {{ flight.altitude }} ft{%if flight.altitude > 0 %} ({{(flight.altitude * 0.3048)| round(0)}} m){% endif%}; Gr. speed - {{ flight.ground_speed }} kts{%if flight.ground_speed > 0 %} ({{(flight.ground_speed * 1.852)| round(0)}} km/h){% endif%}
+                          {% endfor %}
+    background:
+      opacity: 40
+      alignment: top left
+      size: auto
+      repeat: repeat
+      attachment: fixed
+  - type: sections
+    max_columns: 4
+    title: test3
+    path: test3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Neuer Abschnitt
+          - type: custom:auto-entities
+            view_layout:
+              grid-area: header
+            card:
+              type: grid
+              columns: 1
+              square: false
+            card_param: cards
+            filter:
+              include:
+                - domain: sensor
+                  entity_id: sensor.*_weather_alert
+                  options:
+                    type: custom:meteoalarm-card
+                    integration: meteofrance
+                    title: '{{ state_attr(this.entity_id, ''friendly_name'') }}'
+                    entities:
+                      - entity: this.entity_id
+              exclude:
+                - state: Vert
+            else:
+              type: heading
+              heading: Keine Warnungen – alles im Grünen
+              heading_style: title
+              icon: mdi:weather-cloudy-alert
+  - type: custom:masonry-layout
+    path: ''
+    cards:
+      - type: custom:decluttering-card
+        template: autotimer_overview
+        variables:
+          - title: AutoTimer – Zeitübersteuerung
+          - helper_entity: input_number.autotimer_helper
+          - target_group: group.autotimer_target
+          - status_entity: pyscript.autotimer_status

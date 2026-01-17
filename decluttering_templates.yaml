@@ -1,0 +1,28 @@
+decluttering_templates:
+  global_status_header:
+    card:
+      type: horizontal-stack
+      cards:
+        - type: markdown
+          content: |
+            ## [[title]]
+            [[subtitle]]
+          card_mod:
+            style: |
+              ha-card {
+                box-shadow: none;
+                background: none;
+                padding: 4px 0 0 0;
+              }
+
+        - type: entities
+          entities: [[entities]]
+          card_mod:
+            style: |
+              ha-card {
+                box-shadow: none;
+                background: none;
+                padding: 0;
+              }
+
+

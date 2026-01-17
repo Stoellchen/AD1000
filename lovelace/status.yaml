@@ -1,0 +1,1334 @@
+views:
+  - type: custom:grid-layout
+    path: weather-alerts
+    title: weather
+    cards:
+      - type: custom:auto-entities
+        card:
+          type: grid
+          columns: 1
+          square: false
+        card_param: cards
+        filter:
+          include:
+            - domain: sensor
+              entity_id: sensor.*_weather_alert
+              options:
+                type: custom:meteoalarm-card
+                integration: meteofrance
+                entities:
+                  - entity: this.entity_id
+          exclude:
+            - state: Vert
+        else:
+          type: heading
+          heading: Keine Warnungen - alles im grünen
+          heading_style: title
+          icon: mdi:weather-cloudy-alert
+      - type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          grid-template-columns: 50% 50%
+          grid-template-areas: |
+            "left right"
+        cards:
+          - type: weather-forecast
+            show_current: true
+            show_forecast: true
+            entity: weather.bordeaux
+            forecast_type: daily
+            forecast_slots: 18
+            grid_options:
+              columns: 18
+              rows: 2
+          - type: weather-forecast
+            show_current: true
+            show_forecast: true
+            entity: weather.marmande
+            forecast_type: daily
+            forecast_slots: 18
+            grid_options:
+              columns: 18
+              rows: 2
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: weather-forecast
+                    show_current: true
+                    show_forecast: true
+                    entity: weather.la_rochelle
+                    forecast_type: daily
+                    forecast_slots: 10
+                    grid_options:
+                      columns: 14
+                      rows: 2
+                  - type: custom:marees-france-card
+                    device_id: 02b3a74e90c4cd675392a7bc84a2d002
+                    show_header: true
+                    title: null
+                    card_type: full
+              - type: vertical-stack
+                cards:
+                  - type: weather-forecast
+                    show_current: true
+                    show_forecast: true
+                    entity: weather.royan
+                    forecast_type: daily
+                    forecast_slots: 10
+                    grid_options:
+                      columns: 14
+                      rows: 2
+                  - type: custom:marees-france-card
+                    device_id: 98b61a38fabae6d88938afcd5138a801
+                    show_header: true
+                    title: null
+                    card_type: full
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: weather-forecast
+                    show_current: true
+                    show_forecast: true
+                    entity: weather.arcachon
+                    forecast_type: daily
+                    forecast_slots: 10
+                    grid_options:
+                      columns: 14
+                      rows: 2
+                  - type: custom:marees-france-card
+                    device_id: bbb978af3b07fe90c10be0f672e4355e
+                    show_header: true
+                    title: null
+                    card_type: full
+              - type: vertical-stack
+                cards:
+                  - type: weather-forecast
+                    show_current: true
+                    show_forecast: true
+                    entity: weather.mimizan
+                    forecast_type: daily
+                    forecast_slots: 10
+                    grid_options:
+                      columns: 14
+                      rows: 2
+                  - type: custom:marees-france-card
+                    device_id: ecca56d38df7198a9a90d28f80f29387
+                    show_header: true
+                    title: null
+                    card_type: full
+    icon: mdi:weather-hail
+  - type: sections
+    max_columns: 3
+    title: Rafale
+    path: rafale
+    icon: mdi:car
+    sections:
+      - type: grid
+        cards:
+          - type: entities
+            entities:
+              - entity: device_tracker.rafale_standort
+              - entity: sensor.rafale_kraftstoffreichweite
+                secondary_info: last-updated
+              - entity: sensor.rafale_kraftstoffmenge
+                name: Tank
+                secondary_info: last-updated
+              - entity: sensor.rafale_kilometerstand
+                secondary_info: last-updated
+            title: Renault Rafale
+            state_color: true
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: |
+                  <ha-icon icon="mdi:gas-station"></ha-icon> Marmande
+              - type: horizontal-stack
+                cards:
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super95_47200_price', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super95_47200_price', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super95_47200_price', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super95_47200_price') }} €/l
+                      </center>
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super95_47200_5km', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super95_47200_5km', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super95_47200_5km', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super95_47200_price') }} €/l <i>(5km)</i>
+                      </center>
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super95_47200_10km', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super95_47200_10km', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super95_47200_5km', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super95_47200_price') }} €/l <i>(10km)</i>
+                      </center>
+              - type: horizontal-stack
+                cards:
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super98_47200_price', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super98_47200_price', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super98_47200_price', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super98_47200_price') }} €/l
+                      </center>
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super98_47200_5km', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super98_47200_5km', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super98_47200_5km', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super98_47200_price') }} €/l <i>(5km)</i>
+                      </center>
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super98_47200_10km', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super98_47200_10km', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super98_47200_5km', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super98_47200_price') }} €/l <i>(10km)</i>
+                      </center>
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: |
+                  <ha-icon icon="mdi:gas-station"></ha-icon> Eymet
+              - type: horizontal-stack
+                cards:
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super95_24500_price', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super95_24500_price', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super95_24500_price', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super95_24500_price') }} €/l
+                      </center>
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super95_24500_5km', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super95_24500_5km', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super95_24500_5km', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super95_24500_price') }} €/l <i>(5km)</i>
+                      </center>
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super95_24500_10km', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super95_24500_10km', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super95_24500_5km', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super95_24500_price') }} €/l <i>(10km)</i>
+                      </center>
+              - type: horizontal-stack
+                cards:
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super98_24500_price', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super98_24500_price', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super98_24500_price', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super98_24500_price') }} €/l
+                      </center>
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super98_24500_5km', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super98_24500_5km', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super98_24500_5km', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super98_24500_price') }} €/l <i>(5km)</i>
+                      </center>
+                  - type: markdown
+                    content: |
+                      <center>
+                        <img
+                          src="{{ state_attr('sensor.carbu_com_super98_24500_10km', 'entity_picture') }}"
+                          width="45"/>
+                      </center> <center>
+                        <a href="{{ state_attr('sensor.carbu_com_super98_24500_10km', 'url') }}"
+                           target="_blank">
+                          {{ state_attr('sensor.carbu_com_super98_24500_5km', 'supplier') }}
+                        </a>
+                      </center>
+                      <center>
+                        {{ states('sensor.carbu_com_super98_24500_price') }} €/l <i>(10km)</i>
+                      </center>
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: gauge
+                entity: sensor.rafale_kraftstoffmenge
+                max: 55
+                unit: L
+                name: Tank
+                needle: true
+                severity:
+                  green: 25
+                  yellow: 12
+                  red: 0
+          - type: custom:apexcharts-card
+            graph_span: 35d
+            experimental:
+              color_threshold: true
+            header:
+              show: true
+              title: Rafale
+              show_states: false
+              colorize_states: true
+              floating: true
+            now:
+              show: true
+              color: '#101010'
+              label: jetzt grad
+            series:
+              - entity: sensor.rafale_kraftstoffmenge
+                name: Rafale
+                stroke_width: 5
+                unit: L
+                transform: return x;
+                color_threshold:
+                  - value: 40
+                    color: lightgreen
+                    opacity: 1
+                  - value: 30
+                    color: green
+                    opacity: 1
+                  - value: 14
+                    color: orange
+                    opacity: 1
+                  - value: 7
+                    color: red
+                    opacity: 1
+            apex_config:
+              dataLabels:
+                enabled: true
+                dropShadow:
+                  enabled: true
+          - type: custom:apexcharts-card
+            graph_span: 35d
+            experimental:
+              color_threshold: true
+            header:
+              show: true
+              title: Rafale
+              show_states: false
+              colorize_states: true
+              floating: true
+            now:
+              show: true
+              color: '#101010'
+              label: jetzt grad
+            series:
+              - entity: sensor.rafale_kraftstoffreichweite
+                name: Rafale
+                stroke_width: 5
+                unit: Km
+                transform: return x;
+                color_threshold:
+                  - value: 1000
+                    color: lightgreen
+                    opacity: 1
+                  - value: 600
+                    color: green
+                    opacity: 1
+                  - value: 300
+                    color: yellow
+                    opacity: 1
+                  - value: 200
+                    color: orange
+                    opacity: 1
+                  - value: 100
+                    color: red
+                    opacity: 1
+            apex_config:
+              dataLabels:
+                enabled: true
+                dropShadow:
+                  enabled: true
+          - type: custom:apexcharts-card
+            graph_span: 35d
+            experimental:
+              color_threshold: true
+            header:
+              show: true
+              title: Rafale Kilometerstand
+              show_states: false
+              colorize_states: true
+              floating: true
+            now:
+              show: true
+              color: '#000'
+              label: jetzt grad
+            series:
+              - entity: sensor.rafale_kilometerstand
+                name: Rafale
+                stroke_width: 5
+                unit: Km
+                transform: return x;
+                color_threshold:
+                  - value: 100000
+                    color: red
+                    opacity: 1
+                  - value: 80000
+                    color: orange
+                    opacity: 1
+                  - value: 60000
+                    color: yellow
+                    opacity: 1
+                  - value: 21000
+                    color: green
+                    opacity: 1
+                  - value: 20000
+                    color: lightgreen
+                    opacity: 1
+            apex_config:
+              dataLabels:
+                enabled: true
+                dropShadow:
+                  enabled: true
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: map
+                entities:
+                  - entity: device_tracker.rafale_standort
+                theme_mode: auto
+                hours_to_show: 720
+    cards: []
+  - type: sections
+    max_columns: 4
+    title: Alerts
+    path: services
+    icon: mdi:alert-octagon
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Bianca
+            heading_style: subtitle
+            icon: mdi:coffee-maker
+          - elements:
+              - entity: automation.coffee_machine_weekly_set_date
+                state_image:
+                  'off': /local/_service/coffee_machine_weekly.png
+                  'on': /local/_service/coffee_machine_weekly.png
+                style:
+                  left: 85%
+                  top: 50%
+                  width: 25%
+                tap_action:
+                  action: automation.coffee_machine_weekly_set_date
+                type: image
+              - entity: input_datetime.coffee_machine_weekly
+                style:
+                  bottom: 52%
+                  color: black
+                  font-size: 26px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+              - entity: sensor.coffee_machine_weekly
+                attribute: running_of_text
+                style:
+                  bottom: 6%
+                  color: black
+                  font-size: 26px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+              - entity: sensor.coffee_machine_weekly
+                attribute: checked
+                style:
+                  bottom: 40%
+                  color: grey
+                  font-size: 15px
+                  left: '-9%'
+                  transform: initial
+                  rotate: '-90deg'
+                type: state-label
+              - type: custom:text-element
+                text: Pully - Brüheinheit reinigen
+                style:
+                  bottom: 1%
+                  color: black
+                  font-size: 15px
+                  right: 4.5%
+                  transform: initial
+              - type: custom:text-element
+                text: Bianca - Weekly Service
+                style:
+                  top: 10%
+                  color: black
+                  font-size: 15px
+                  font-weight: bold
+                  left: 4.5%
+                  transform: initial
+              - entity: sensor.coffee_machine_weekly
+                attribute: reminder_text
+                style:
+                  top: 55%
+                  color: black
+                  font-size: 15px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+            image: /local/_service/coffee_service_general_empty.png
+            type: picture-elements
+          - elements:
+              - entity: automation.coffee_brita_bottle_set_date
+                state_image:
+                  'off': /local/_service/coffee_brita_bottle.png
+                  'on': /local/_service/coffee_brita_bottle.png
+                style:
+                  left: 85%
+                  top: 50%
+                  width: 25%
+                tap_action:
+                  action: automation.coffee_brita_bottle_set_date
+                type: image
+              - entity: input_datetime.coffee_brita_bottle
+                style:
+                  bottom: 52%
+                  color: black
+                  font-size: 26px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+              - entity: sensor.coffee_brita_bottle
+                attribute: running_of_text
+                style:
+                  bottom: 6%
+                  color: black
+                  font-size: 26px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+              - entity: sensor.coffee_brita_bottle
+                attribute: checked
+                style:
+                  bottom: 40%
+                  color: grey
+                  font-size: 15px
+                  left: '-9%'
+                  transform: initial
+                  rotate: '-90deg'
+                type: state-label
+              - type: custom:text-element
+                text: Monthly Brita Filter change
+                style:
+                  bottom: 1%
+                  color: black
+                  font-size: 15px
+                  right: 4.5%
+                  transform: initial
+              - type: custom:text-element
+                text: Brita Bottle
+                style:
+                  top: 10%
+                  color: black
+                  font-size: 15px
+                  font-weight: bold
+                  left: 4.5%
+                  transform: initial
+              - entity: sensor.coffee_brita_bottle
+                attribute: reminder_text
+                style:
+                  top: 55%
+                  color: black
+                  font-size: 15px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+            image: /local/_service/coffee_service_general_empty.png
+            type: picture-elements
+          - elements:
+              - entity: automation.coffee_brita_machine_set_date
+                state_image:
+                  'off': /local/_service/coffee_brita_machine.png
+                  'on': /local/_service/coffee_brita_machine.png
+                style:
+                  left: 85%
+                  top: 50%
+                  width: 25%
+                tap_action:
+                  action: automation.coffee_brita_machine_set_date
+                type: image
+              - entity: input_datetime.coffee_brita_machine
+                style:
+                  bottom: 52%
+                  color: black
+                  font-size: 26px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+              - entity: sensor.coffee_brita_machine
+                attribute: running_of_text
+                style:
+                  bottom: 6%
+                  color: black
+                  font-size: 26px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+              - entity: sensor.coffee_brita_machine
+                attribute: checked
+                style:
+                  bottom: 40%
+                  color: grey
+                  font-size: 15px
+                  left: '-9%'
+                  transform: initial
+                  rotate: '-90deg'
+                type: state-label
+              - type: custom:text-element
+                text: 3 months filter change of water tank
+                style:
+                  bottom: 1%
+                  color: black
+                  font-size: 15px
+                  right: 4.5%
+                  transform: initial
+              - type: custom:text-element
+                text: Bianca - Brita water tank
+                style:
+                  top: 10%
+                  color: black
+                  font-size: 15px
+                  font-weight: bold
+                  left: 4.5%
+                  transform: initial
+              - entity: sensor.coffee_brita_machine
+                attribute: reminder_text
+                style:
+                  top: 55%
+                  color: black
+                  font-size: 15px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+            image: /local/_service/coffee_service_general_empty.png
+            type: picture-elements
+          - elements:
+              - entity: automation.coffee_machine_yearly_set_date
+                state_image:
+                  'off': /local/_service/coffee_machine_yearly.png
+                  'on': /local/_service/coffee_machine_yearly.png
+                style:
+                  left: 85%
+                  top: 50%
+                  width: 25%
+                tap_action:
+                  action: automation.coffee_machine_yearly_set_date
+                type: image
+              - entity: input_datetime.coffee_machine_yearly
+                style:
+                  bottom: 52%
+                  color: black
+                  font-size: 26px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+              - entity: sensor.coffee_machine_yearly
+                attribute: running_of_text
+                style:
+                  bottom: 6%
+                  color: black
+                  font-size: 26px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+              - entity: sensor.coffee_machine_yearly
+                attribute: checked
+                style:
+                  bottom: 40%
+                  color: grey
+                  font-size: 15px
+                  left: '-9%'
+                  transform: initial
+                  rotate: '-90deg'
+                type: state-label
+              - type: custom:text-element
+                text: Yearly Coffee Machine Service
+                style:
+                  bottom: 1%
+                  color: black
+                  font-size: 15px
+                  right: 4.5%
+                  transform: initial
+              - type: custom:text-element
+                text: Bianca - Messina Service
+                style:
+                  top: 10%
+                  color: black
+                  font-size: 15px
+                  font-weight: bold
+                  left: 4.5%
+                  transform: initial
+              - entity: sensor.coffee_machine_yearly
+                attribute: reminder_text
+                style:
+                  top: 55%
+                  color: black
+                  font-size: 15px
+                  left: 4.5%
+                  transform: initial
+                type: state-label
+            image: /local/_service/coffee_service_general_empty.png
+            type: picture-elements
+    cards: []
+  - type: sections
+    max_columns: 3
+    title: Trash
+    path: trash
+    icon: mdi:calendar-alert
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Termine
+            heading_style: subtitle
+            icon: mdi:calendar-today
+          - event_grouping: false
+            drop_todayevents_from: '04:00:00'
+            next_days: 365
+            pattern:
+              - icon: mdi:cake-variant-outline
+                type: organic
+                pattern: Geburtstag
+                color: yellow
+              - icon: mdi:cross
+                type: organic
+                pattern: Todestag
+                color: grey
+              - icon: mdi:database
+                color: yellow
+                type: others
+            color_mode: icon
+            items_per_row: 0
+            refresh_rate: 1
+            with_label: true
+            full_size: true
+            fill_container: true
+            type: custom:trash-card
+            entities:
+              - calendar.termine
+            layout: vertical
+            filter_events: false
+            use_summary: false
+            hide_time_range: false
+      - type: grid
+        cards:
+          - type: heading
+            heading: Abfall und mehr
+            heading_style: subtitle
+            icon: mdi:trash-can-outline
+          - event_grouping: false
+            drop_todayevents_from: '10:00:00'
+            next_days: 45
+            pattern:
+              - label: Gartenabfall
+                type: organic
+                pattern: Gartenabfall
+                color: green
+                icon: mdi:flower
+              - label: Altpapiersammlung
+                type: paper
+                pattern: Altpapiersammlung
+                color: light-blue
+                icon: mdi:newspaper-variant-multiple-outline
+              - label: Kehrricht
+                type: recycle
+                pattern: Kehrricht
+                color: red
+                icon: mdi:trash-can
+              - label: Kartonsammlung
+                type: waste
+                pattern: Kartonsammlung
+                color: yellow
+                icon: mdi:recycle-variant
+              - label: Electric
+                type: custom
+                color: pink
+                pattern: elektro
+                icon: mdi:electron-framework
+              - icon: mdi:dump-truck
+                color: purple
+                type: others
+            color_mode: icon
+            items_per_row: 2
+            refresh_rate: 1
+            with_label: true
+            full_size: true
+            fill_container: true
+            type: custom:trash-card
+            entities:
+              - calendar.abfalltermine
+            layout: vertical
+            filter_events: false
+            use_summary: false
+            hide_time_range: falses
+      - type: grid
+        cards:
+          - type: heading
+            heading: Geburtstage und anderes
+            heading_style: subtitle
+            icon: mdi:cake-variant
+          - event_grouping: false
+            drop_todayevents_from: '04:00:00'
+            next_days: 365
+            pattern:
+              - icon: mdi:cake-variant-outline
+                type: organic
+                pattern: Geburtstag
+                color: yellow
+              - icon: mdi:cross
+                type: organic
+                pattern: Todestag
+                color: grey
+              - icon: mdi:database
+                color: yellow
+                type: others
+            color_mode: icon
+            items_per_row: 0
+            refresh_rate: 1
+            with_label: true
+            full_size: true
+            fill_container: true
+            type: custom:trash-card
+            entities:
+              - calendar.ereignisse
+            layout: vertical
+            filter_events: false
+            use_summary: false
+            hide_time_range: false
+    cards: []
+  - type: panel
+    path: flights
+    cards:
+      - type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          grid-template-columns: 80% 1fr
+          grid-template-areas: |
+            "left right"
+        cards:
+          - type: conditional
+            conditions:
+              - condition: numeric_state
+                entity: sensor.flightradar24_current_in_area
+                below: 1
+            card:
+              type: heading
+              heading: No flights at the moment - sorry
+              heading_style: title
+              icon: mdi:airplane-check
+          - type: conditional
+            conditions:
+              - condition: numeric_state
+                entity: sensor.flightradar24_current_in_area
+                above: 0
+            card:
+              type: iframe
+              url: >-
+                https://www.flightradar24.com/simple?lat=44.82&lon=-0.714&z=11&label1=reg&size=large
+              aspect_ratio: 50%
+          - type: vertical-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: conditional
+                    conditions:
+                      - condition: numeric_state
+                        entity: sensor.flightradar24_current_in_area
+                        below: 1
+                    card:
+                      type: heading
+                      heading: No flights at the moment - sorry
+                      heading_style: title
+                      icon: mdi:airplane-check
+                  - type: conditional
+                    conditions:
+                      - condition: numeric_state
+                        entity: sensor.flightradar24_current_in_area
+                        above: 0
+                    card:
+                      type: entities
+                      entities:
+                        - entity: sensor.flightradar24_current_in_area
+                          name: Bordeaux
+                  - type: conditional
+                    conditions:
+                      - condition: numeric_state
+                        entity: sensor.flightradar24_current_in_area
+                        above: 0
+                    card:
+                      type: markdown
+                      content: >-
+                        {% set data =
+                        state_attr('sensor.flightradar24_current_in_area',
+                        'flights') %} {% for flight in data %}
+                          <ha-icon icon="mdi:airplane"></ha-icon>{{ flight.flight_number }}({{ flight.aircraft_registration }}) - {{ flight.airline_short }} - {{ flight.aircraft_model }}
+                          {{ flight.airport_origin_city }}{%if flight.airport_origin_city %}<img src="https://flagsapi.com/{{ flight.airport_origin_country_code }}/shiny/16.png" title='{{ flight.airport_origin_country_name }}'/>{% endif %} -> {{ flight.airport_destination_city }}{%
+                          if flight.airport_destination_country_code %}<img src="https://flagsapi.com/{{ flight.airport_destination_country_code }}/shiny/16.png" title='{{ flight.airport_destination_country_name }}'/>{% endif %}
+                          {%if flight.time_scheduled_departure %}Departure - {{ flight.time_scheduled_departure | timestamp_custom('%H:%M') }}; {% endif %}{%if flight.time_scheduled_arrival%}Arrival - {{ flight.time_scheduled_arrival | timestamp_custom('%H:%M') }}{% endif %}
+                          Altitude - {{ flight.altitude }} ft{%if flight.altitude > 0 %} ({{(flight.altitude * 0.3048)| round(0)}} m){% endif%}; Gr. speed - {{ flight.ground_speed }} kts{%if flight.ground_speed > 0 %} ({{(flight.ground_speed * 1.852)| round(0)}} km/h){% endif%}
+                          {% endfor %}
+    icon: mdi:airplane-takeoff
+    title: Flight Radar 24
+  - type: panel
+    title: Karte
+    path: karte
+    cards:
+      - type: map
+        entities:
+          - entity: person.thomas
+          - entity: person.manu
+          - entity: device_tracker.iphone_17
+          - entity: device_tracker.ipad_von_manuela
+          - entity: device_tracker.rafale_standort
+        theme_mode: auto
+        hours_to_show: 720
+        default_zoom: 16
+    icon: mdi:map-marker-radius-outline
+  - type: panel
+    path: Proxmox
+    cards:
+      - type: iframe
+        url: http://grafana001.main.arpa:3000/
+        aspect_ratio: 100%
+        hide_background: false
+    title: PM
+    icon: mdi:server-security
+  - title: System
+    sections:
+      - type: grid
+        cards:
+          - type: vertical-stack
+            title: Influx Health
+            cards:
+              - type: custom:button-card
+                entity: sensor.influx_last_seen_min
+                name: Influx
+                icon: mdi:traffic-light
+                show_state: false
+                show_name: true
+                styles:
+                  card:
+                    - border-radius: 12px
+                    - padding: 16px
+                    - font-size: 16px
+                    - color: white
+                  icon:
+                    - width: 48px
+                  name:
+                    - font-weight: bold
+                    - font-size: 18px
+                state:
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'green';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#2ecc71'
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'orange';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#f39c12'
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'red';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#e74c3c'
+                  - operator: template
+                    value: |
+                      [[[
+                        return entity?.attributes?.status === 'offline';
+                      ]]]
+                    styles:
+                      card:
+                        - background-color: '#7f8c8d'
+              - type: entities
+                entities:
+                  - entity: sensor.influx_last_seen_min
+                    name: Roundtrip (ms)
+                    secondary_info: last-updated
+          - type: custom:apexcharts-card
+            graph_span: 10 min
+            update_interval: 10s
+            header:
+              show: false
+            series:
+              - entity: sensor.influx_last_seen_min
+                name: Last Seen
+                type: line
+                stroke_width: 2
+                color: '#3498db'
+            yaxis:
+              - show: true
+                min: 1
+            apex_config:
+              grid:
+                show: true
+              annotations:
+                yaxis:
+                  - 'y': 0
+                    y2: 1
+                    fillColor: '#00ff00'
+                    opacity: 0.15
+                    label:
+                      text: < 0.5 min (Hyper)
+                      BackgroundColor: '#ff0000'
+                  - 'y': 2
+                    y2: 1
+                    fillColor: '#2ecc71'
+                    opacity: 0.15
+                    label:
+                      text: < 2 min (Top)
+                  - 'y': 100
+                    y2: 2
+                    fillColor: '#e74c3c'
+                    opacity: 0.12
+                    label:
+                      text: '> 2 min (Problem)'
+          - type: tile
+            entity: automation.influx_alive
+            color: green
+            hide_state: true
+            vertical: false
+            features_position: inline
+          - type: tile
+            entity: automation.influx_raw_alert_mail
+            color: green
+            hide_state: true
+            vertical: false
+            features_position: bottom
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: entity
+                entity: binary_sensor.influx_alive
+                name: Influx
+              - type: entity
+                entity: sensor.influx_last_seen_min
+                name: Last Seen
+              - type: entity
+                entity: sensor.ha_heartbeat
+                name: HA → Influx
+              - type: entity
+                entity: sensor.emqx_mqtt_test_echo
+                name: HA → Influx
+      - type: grid
+        cards:
+          - type: vertical-stack
+            title: MQTT Health
+            cards:
+              - type: custom:button-card
+                entity: sensor.emqx_mqtt_status
+                name: MQTT
+                icon: mdi:traffic-light
+                show_state: false
+                show_name: true
+                styles:
+                  card:
+                    - border-radius: 12px
+                    - padding: 16px
+                    - font-size: 16px
+                    - color: white
+                  icon:
+                    - width: 48px
+                  name:
+                    - font-weight: bold
+                    - font-size: 18px
+                state:
+                  - value: green
+                    styles:
+                      card:
+                        - background-color: '#2ecc71'
+                  - value: yellow
+                    styles:
+                      card:
+                        - background-color: '#f1c40f'
+                  - value: red
+                    styles:
+                      card:
+                        - background-color: '#e74c3c'
+                  - value: offline
+                    styles:
+                      card:
+                        - background-color: '#7f8c8d'
+              - type: entities
+                entities:
+                  - entity: binary_sensor.emqx_mqtt_alive
+                    name: Alive
+                    secondary_info: last-updated
+                  - entity: sensor.emqx_mqtt_roundtrip_ms
+                    name: Roundtrip (ms)
+                    secondary_info: last-updated
+          - type: custom:apexcharts-card
+            graph_span: 10m
+            update_interval: 10s
+            header:
+              show: false
+            series:
+              - entity: sensor.emqx_mqtt_roundtrip_ms
+                name: Roundtrip
+                type: line
+                stroke_width: 2
+                color: '#3498db'
+            yaxis:
+              - show: true
+                min: 0
+            apex_config:
+              grid:
+                show: true
+              annotations:
+                yaxis:
+                  - 'y': 0
+                    y2: 10
+                    fillColor: '#00ff00'
+                    opacity: 0.15
+                    label:
+                      text: < 10 ms (Hyper)
+                      BackgroundColor: '#ff0000'
+                  - 'y': 50
+                    y2: 10
+                    fillColor: '#2ecc71'
+                    opacity: 0.15
+                    label:
+                      text: < 50 ms (Top)
+                  - 'y': 6000
+                    y2: 50
+                    fillColor: '#f39c12'
+                    opacity: 0.12
+                    label:
+                      text: 50–6000 ms (OK)
+                  - 'y': 100000
+                    y2: 6000
+                    fillColor: '#e74c3c'
+                    opacity: 0.12
+                    label:
+                      text: '> 6000 ms (Problem)'
+                  - 'y': 10
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 10 ms
+                  - 'y': 50
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 50 ms
+                  - 'y': 6000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 6 s
+                  - 'y': 100000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 10s
+          - type: custom:apexcharts-card
+            graph_span: 90m
+            update_interval: 10s
+            header:
+              show: false
+            series:
+              - entity: sensor.emqx_mqtt_roundtrip_ms
+                name: Roundtrip
+                type: line
+                stroke_width: 2
+                color: '#3498db'
+            yaxis:
+              - show: true
+                min: 0
+            apex_config:
+              grid:
+                show: true
+              annotations:
+                yaxis:
+                  - 'y': 0
+                    y2: 10
+                    fillColor: '#00ff00'
+                    opacity: 0.15
+                    label:
+                      text: < 10 ms (Hyper)
+                      BackgroundColor: '#ff0000'
+                  - 'y': 50
+                    y2: 10
+                    fillColor: '#2ecc71'
+                    opacity: 0.15
+                    label:
+                      text: < 50 ms (Top)
+                  - 'y': 6000
+                    y2: 50
+                    fillColor: '#f39c12'
+                    opacity: 0.12
+                    label:
+                      text: 50–6000 ms (OK)
+                  - 'y': 100000
+                    y2: 6000
+                    fillColor: '#e74c3c'
+                    opacity: 0.12
+                    label:
+                      text: '> 6000 ms (Problem)'
+                  - 'y': 10
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 10 ms
+                  - 'y': 50
+                    borderColor: '#27ae60'
+                    strokeDashArray: 4
+                    label:
+                      text: 50 ms
+                  - 'y': 6000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 6 s
+                  - 'y': 100000
+                    borderColor: '#e67e22'
+                    strokeDashArray: 4
+                    label:
+                      text: 10s
+    badges: []
+    header:
+      card:
+        type: markdown
+        content: '# {{ user }} unser Healthcheck ✨'
+        text_only: true
+      layout: responsive
+      badges_position: top
+      badges_wrap: scroll
+    type: sections
+    max_columns: 4
+    cards: []
+  - type: sections
+    max_columns: 4
+    title: media requests
+    path: media-requests
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Neuer Abschnitt
+          - type: tile
+            entity: sensor.sonarr_demnachst
+          - type: tile
+            entity: sensor.sonarr_gesucht
+          - type: tile
+            entity: sensor.sonarr_sendungen
+          - type: tile
+            entity: sensor.sonarr_speicherplatz
+          - type: tile
+            entity: sensor.sonarr_warteschlange
+      - type: grid
+        cards:
+          - type: heading
+            heading: Neuer Abschnitt
+          - type: tile
+            entity: sensor.radarr_disk_space_movies
+          - type: tile
+            entity: sensor.radarr_filme
+          - type: tile
+            entity: binary_sensor.radarr_gesundheit
+          - type: tile
+            entity: sensor.radarr_startzeit
+          - type: tile
+            entity: sensor.radarr_warteschlange
