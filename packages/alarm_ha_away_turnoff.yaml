@@ -3,12 +3,12 @@
 # turnXXX off and on when away 
 #   
 ################################################################################
-# Der switch um die presense simulation zu aktivieren/deaktivieren
+# Der switch um die presence simulation zu aktivieren/deaktivieren
 # der Sitch wird automatisch von der integration erstellt und kann soll umbenannt werden
-# in der Automation verwendet werden um die presense simulation zu aktivieren/deaktivieren
+# in der Automation verwendet werden um die presence simulation zu aktivieren/deaktivieren
 #   input_boolean:
-#     presense_simulation_activ:                     #  Wird in der Alarm Automation verwendet um die Presense Simulation zu aktivieren/deaktivieren
-#       name: Presense Simulation Aktivieren
+#     presence_simulation_activ:                     #  Wird in der Alarm Automation verwendet um die Presence Simulation zu aktivieren/deaktivieren
+#       name: Presence Simulation Aktivieren
 #       icon: mdi:home-automation
 #   
 

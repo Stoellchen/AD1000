@@ -81,100 +81,18 @@ automation:
     mode: restart
     trigger:
       - platform: state
-        entity_id: person.thomas
-        from: "not_home"
-        to: "home"
-      - platform: state
-        entity_id: person.thomas
-        from: "home"
-        to: "not_home"
-      - platform: state
-        entity_id: person.thomas
-        from: "home"
-        to: "unknown"
-      - platform: state
-        entity_id: person.thomas
-        from: "home"
-        to: "unavailable"
-      - platform: state
-        entity_id: person.thomas
-        from: "unavailable"
-        to: "home"
-      - platform: state
-        entity_id: person.thomas
-        from: "unknown"
-        to: "home"
-
+        entity_id: binary_sensor.person_first
     action:
-      - choose:
-          # Wenn Thomas nach Hause kommt → Schalter AUS
-          - conditions:
-              - condition: state
-                entity_id: person.thomas
-                state: "home"
-            sequence:
-              - service: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.identity_alive_home_status
+      - service: >
+          {% if is_state('binary_sensor.person_first', 'on') %}
+            input_boolean.turn_off
+          {% else %}
+            input_boolean.turn_on
+          {% endif %}
+        target:
+          entity_id: input_boolean.identity_alive_home_status
 
-          # Wenn Thomas weg ist (not_home / unknown / etc.) → Schalter EIN
-          - conditions:
-              - condition: not
-                conditions:
-                  - condition: state
-                    entity_id: person.thomas
-                    state: "home"
-            sequence:
-              - service: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.identity_alive_home_status
                   
-  - id: trigger_identify_script_all_esphome_synchron_comp
-    alias: "Trigger identify script on all ESPHome devices synchrone complementaer (core_esp_m5_identify_helper)"
-    mode: single
-    initial_state: false   # 👈 DAS deaktiviert die Automation beim Start    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    trigger:
-      - platform: time_pattern
-        seconds: "/30"
-    condition:
-      - condition: state
-        entity_id: input_boolean.identify_all_devices
-        state: "off"
-    action:
-      - variables:
-          # Berechne Farbe 2 wie bisher
-          red: "{{ (255 / 23 * now().hour) | round(0, 'floor') | int }}"
-          green: "{{ (255 / 59 * now().minute) | round(0, 'floor') | int }}"
-          blue: "{{ (255 / 59 * now().second) | round(0, 'floor') | int }}"
-          # Komplementärfarbe (255 - x)
-          comp_red: "{{ 255 - red }}"
-          comp_green: "{{ 255 - green }}"
-          comp_blue: "{{ 255 - blue }}"
-          # Reihenfolge der Geräte wie bisher
-          entity_list: >
-            {{ states.switch
-              | selectattr('entity_id', 'search', '_identify_active$')
-              | map(attribute='entity_id')
-              | map('replace', 'switch.', '')
-              | map('replace', '_identify_active', '')
-              | list }}
-          delay_step: 2
-      - repeat:
-          for_each: "{{ entity_list }}"
-          sequence:
-            - variables:
-                index_from_end: "{{ (entity_list | count - 1) - repeat.index + 1  }}"
-                start_delay: "{{ delay_step * index_from_end }}"
-                sequence_json: >-
-                  {{ start_delay }},
-                  1,250,35,0,0,255,
-                  1,250,35,{{ red }},{{ green }},{{ blue }},
-                  1,250,35,{{ comp_red }},{{ comp_green }},{{ comp_blue }}
-            - service_template: "esphome.{{ repeat.item }}_play_color_sequence"
-              data:
-                sequence_json: "{{ sequence_json }}"
-
-
 
   - id: trigger_identify_script_all_esphome_synchron
     alias: "Trigger identify script on all ESPHome devices synchrone automation (core_esp_m5_identify_helper)"
@@ -240,7 +158,6 @@ script:
           on_ms: 500
           off_ms: 250
           delay_step: 2
-
           entity_list: >
             {{ states.switch
               | selectattr('entity_id', 'search', '_identify_active$')
@@ -249,6 +166,7 @@ script:
               | map('replace', '_identify_active', '')
               | list }}
 
+            
       # --------------------------------------------------
       # Über alle ESPHome Devices iterieren
       # --------------------------------------------------
@@ -260,6 +178,7 @@ script:
 
             - service: >
                 esphome.{{ repeat.item }}_check_identify_state
+              continue_on_error: true
               data:
                 r: "{{ red }}"
                 g: "{{ green }}"

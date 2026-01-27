@@ -1,0 +1,327 @@
+# ACHTUNG! Es scheint, dass das internet nicht erreichbar ist für die Home Automation.
+# 
+# Bitte unbedingt kontrollieren!
+# 
+# Vielen Dank und es Grüässli
+
+
+  # ------------------------------------------------
+  # Dynamic countdown status
+  # ------------------------------------------------
+
+input_datetime:
+  core_ha_monitor_internet_health_since:
+    name: Core HA Monitor Internet Health Problem Since
+    has_date: true
+    has_time: true
+
+  core_ha_monitor_internet_health_downtime_since:
+    name: Core HA Monitor Internet Downtime Since
+    has_date: true
+    has_time: true
+
+
+template:
+  - sensor:
+      - name: core_ha_monitor_internet_health
+        icon: >
+          {% set s = this.state %}
+          {% if s == 'ALARM' %} mdi:alert-octagon
+          {% elif s == 'WARN' %} mdi:alert
+          {% else %} mdi:check-circle
+          {% endif %}
+        state: >
+          {% set bins = [
+            'binary_sensor.ping_cloudflare_1111',
+            'binary_sensor.ping_google_8888',
+            'binary_sensor.ping_google_8844'
+          ] %}
+          {% set avgs = [
+            'sensor.ping_cloudflare_1111_durchschnittliche_umlaufzeit',
+            'sensor.ping_google_8888_durchschnittliche_umlaufzeit',
+            'sensor.ping_google_8844_durchschnittliche_umlaufzeit'
+          ] %}
+
+          {% set down = bins | select('is_state', 'off') | list | length %}
+
+          {# worst_avg: max der gültigen avg-ms Werte; wenn keiner gültig -> 9999 #}
+          {% set vals = avgs
+            | map('states')
+            | reject('in', ['unknown','unavailable','none',''])
+            | map('float')
+            | list
+          %}
+          {% set worst_avg = (vals | max) if (vals | length > 0) else 9999 %}
+
+          {% if down >= 2 or worst_avg > 120 %}
+            ALARM
+          {% elif down >= 1 or worst_avg > 70 %}
+            WARN
+          {% else %}
+            OK
+          {% endif %}
+        attributes:
+          down_count: >
+            {% set bins = [
+              'binary_sensor.ping_cloudflare_1111',
+              'binary_sensor.ping_google_8888',
+              'binary_sensor.ping_google_8844'
+            ] %}
+            {{ bins | select('is_state', 'off') | list | length }}
+          down_entities: >
+            {% set bins = [
+              'binary_sensor.ping_cloudflare_1111',
+              'binary_sensor.ping_google_8888',
+              'binary_sensor.ping_google_8844'
+            ] %}
+            {{ bins | select('is_state', 'off') | list }}
+          worst_avg_ms: >
+            {% set avgs = [
+              'sensor.ping_cloudflare_1111_durchschnittliche_umlaufzeit',
+              'sensor.ping_google_8888_durchschnittliche_umlaufzeit',
+              'sensor.ping_google_8844_durchschnittliche_umlaufzeit'
+            ] %}
+            {% set vals = avgs
+              | map('states')
+              | reject('in', ['unknown','unavailable','none',''])
+              | map('float')
+              | list
+            %}
+            {{ (vals | max) if (vals | length > 0) else None }}
+
+
+      - name: core_ha_monitor_internet_downtime
+        icon: mdi:timer-outline
+        state: >
+          {% set since = states('input_datetime.core_ha_monitor_internet_health_downtime_since') %}
+          {% if since in ['unknown','none',''] or since.startswith('1970') %}
+            0
+          {% else %}
+            {{ ((now().timestamp() - strptime(since, '%Y-%m-%d %H:%M:%S').timestamp()) / 60) | round(0) | int }}
+          {% endif %}
+        unit_of_measurement: "min"
+        attributes:
+          hours: >
+            {% set m = this.state | int(0) %}
+            {{ (m / 60) | round(1) }}
+          since: >
+            {{ states('input_datetime.core_ha_monitor_internet_health_downtime_since') }}
+
+
+automation:
+  - id: core_ha_monitor_internet_health_start
+    alias: "CORE Monitor Internet Connection START (core_ha_monitor_internet)"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.core_ha_monitor_internet_health_since
+        to:
+          - "WARN"
+          - "ALARM"
+    condition:
+      - condition: template
+        value_template: >
+          {{ states('input_datetime.core_ha_monitor_internet_health_since') in ['unknown','none',''] }}
+
+    action:
+      - service: input_datetime.set_datetime
+        data:
+          entity_id: input_datetime.core_ha_monitor_internet_health_since
+          timestamp: "{{ now().timestamp() }}"
+
+
+  - id: core_ha_monitor_internet_health_reset
+    alias: "CORE Monitor Internet Connection RESET (core_ha_monitor_internet)"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.core_ha_monitor_internet_health
+        to: "OK"
+        for: "00:02:00"
+
+    action:
+      - service: input_datetime.set_datetime
+        data:
+          entity_id: input_datetime.core_ha_monitor_internet_health_since
+          datetime: "1970-01-01 00:00:00"
+
+  - id: core_ha_monitor_internet_health_flapping
+    alias: "CORE Monitor Internet Connection FLAPPING (core_ha_monitor_internet)"
+    alias: Internet Health – Flapping Alarm
+    mode: single
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    condition:
+      - condition: template
+        value_template: >
+          {% set since = states('input_datetime.core_ha_monitor_internet_health_since') %}
+          {% if since in ['unknown','none',''] %}
+            false
+          {% else %}
+            {{ (now().timestamp() - strptime(since, '%Y-%m-%d %H:%M:%S').timestamp()) > 900 }}
+          {% endif %}
+
+      - condition: state
+        entity_id: sensor.core_ha_monitor_internet_health
+        state:
+          - "WARN"
+          - "ALARM"
+
+    action:
+      - service: script.notify_dispatch
+        data:
+          prio: L
+          only: display
+          video: "http://ad1000.main.arpa:8123/local/_service/_notification_internet_monitor_internet_flapping_720.mp4"
+          title: "Alarm von Thomas"
+          message: >
+              "dem jüngeren Ich:"
+
+  - id: core_ha_monitor_internet
+    alias: "CORE Monitor Internet Connection (core_ha_monitor_internet)"
+    mode: single
+    trigger:
+      # WARN erst nach 3 Minuten
+      - platform: state
+        entity_id: sensor.core_ha_monitor_internet_health
+        to: "WARN"
+        for: "00:05:00"
+      # ALARM erst nach 3 Minuten
+      - platform: state
+        entity_id: sensor.core_ha_monitor_internet_health
+        to: "ALARM"
+        for: "00:10:00"
+      # OK sofort (optional)
+      - platform: state
+        entity_id: sensor.core_ha_monitor_internet_health
+        to: "OK"
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.core_ha_monitor_internet_health
+                state: "ALARM"
+            sequence:
+              - service: script.notify_dispatch
+                data:
+                  prio: L
+                  only: display
+                  video: "http://ad1000.main.arpa:8123/local/_service/_notification_internet_monitor_internet_alarm_720.mp4"
+                  title: "Alarm von Thomas"
+                  message: >
+                      "dem jüngeren Ich:"
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 15
+                  milliseconds: 0
+              - service: script.notify_dispatch
+                data:
+                  prio: L
+                  only: display
+                  title: "ALARM von Thomas"
+                  message: >
+                    Status: ALARM
+                    Down: {{ state_attr('sensor.core_ha_monitor_internet_health','down_count') }}
+                    Down-Entities: {{ state_attr('sensor.core_ha_monitor_internet_health','down_entities') }}
+                    Worst Avg: {{ state_attr('sensor.core_ha_monitor_internet_health','worst_avg_ms') | float(0) | round(0) | int  }} ms
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.core_ha_monitor_internet_health
+                state: "WARN"
+            sequence:
+              - service: script.notify_dispatch
+                data:
+                  prio: L
+                  only: display
+                  video: "http://ad1000.main.arpa:8123/local/_service/_notification_internet_monitor_internet_warnung_720.mp4"
+                  title: "Warnung von Thomas"
+                  message: >
+                      "dem jüngeren Ich:"
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 15
+                  milliseconds: 0
+              - service: script.notify_dispatch
+                data:
+                  prio: L
+                  only: display
+                  title: "ALARM von Thomas"
+                  message: >
+                    Status: WARN
+                    Down: {{ state_attr('sensor.core_ha_monitor_internet_health','down_count') }}
+                    Down-Entities: {{ state_attr('sensor.core_ha_monitor_internet_health','down_entities') }}
+                    Worst Avg: {{ state_attr('sensor.core_ha_monitor_internet_health','worst_avg_ms') | float(0) | round(0) | int  }} ms
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.core_ha_monitor_internet_health
+                state: "OK"
+            sequence:
+              # optional: Recovery Nachricht
+              - service: script.notify_dispatch
+                data:
+                  prio: L
+                  only: display
+                  video: "http://ad1000.main.arpa:8123/local/_service/_notification_internet_monitor_internet_alles_ok_720.mp4"
+                  title: "Info von Thomas"
+                  message: >
+                      "dem jüngeren Ich:"
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 15
+                  milliseconds: 0
+
+              - service: script.notify_dispatch
+                data:
+                  prio: L
+                  only: display
+                  title: "Internet wieder OK"
+                  message: >
+                      "Worst Avg: {{ state_attr('sensor.core_ha_monitor_internet_health','worst_avg_ms') | float(0) | round(0) | int  }} ms"
+
+
+  - id: core_ha_monitor_internet
+    alias: "CORE Monitor Internet Connection Health – Downtime START (core_ha_monitor_internet)"
+    alias: 
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: sensor.core_ha_monitor_internet_health_downtime_since
+        to:
+          - "WARN"
+          - "ALARM"
+
+    condition:
+      - condition: template
+        value_template: >
+          {{ states('input_datetime.core_ha_monitor_internet_health_downtime_since') in ['unknown','none',''] }}
+
+    action:
+      - service: input_datetime.set_datetime
+        data:
+          entity_id: input_datetime.core_ha_monitor_internet_health_downtime_since
+          timestamp: "{{ now().timestamp() }}"
+
+
+  - id: core_ha_monitor_internet_downtime_duration
+    alias: "CORE Monitor Internet Connection Health – Downtime RESET (core_ha_monitor_internet)"
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: sensor.core_ha_monitor_internet_health
+        to: "OK"
+        for: "00:02:00"
+
+    action:
+      - service: input_datetime.set_datetime
+        data:
+          entity_id: input_datetime.core_ha_monitor_internet_health_downtime_since
+          datetime: "1970-01-01 00:00:00"
+

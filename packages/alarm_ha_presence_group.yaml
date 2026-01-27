@@ -1,6 +1,6 @@
 ##########################################################################################
 ##
-##  usto alarm_ha_presense_group  ...
+##  usto alarm_ha_presence_group  ...
 ##
 ##########################################################################################
 
@@ -56,7 +56,7 @@ template:
         icon: mdi:account
         state: >
           {% set s = states('person.thomas') | lower %}
-          {{ s in ['home', 'home thomas','home garden' ] }}
+          {{ s in ['home', 'home thomas','home garden','garten' ] }}
         attributes:
           source_entity: person.thomas
           source_person: thomas
@@ -78,7 +78,7 @@ template:
         icon: mdi:account
         state: >
           {% set s = states('person.manu') | lower %}
-          {{ s in ['home', 'home thomas','home garden' ] }}
+          {{ s in ['home', 'home thomas','home garden','garten' ] }}
         attributes:
           source_entity: person.manu
           source_person: manu

@@ -1,0 +1,150 @@
+###############################################################################
+# Power & Energy Normalization Package
+#
+# Ziel:
+# - Pro Steckdose / Gerät eine saubere Datensicht
+# - Unabhängig von Sensor-Namen oder Hersteller
+# - Nutzung von device_id + Labels
+# - Einheitliche Attribute (Raum, Quelle)
+#
+# Voraussetzungen:
+# - Labels: Power, Voltage, Current, Energy
+# - Sensoren gehören korrekt zu Devices
+###############################################################################
+
+template:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    sensor:
+      - name: "Device Power Normalized"
+        unique_id: device_power_normalized
+        state: >
+          {% set power_sensors =
+            (
+              label_entities('power_consumer')
+              + label_entities('power_feeder')
+              + label_entities('power_diagnostics')
+            )
+            | unique
+            | list
+          %}
+          {{ power_sensors | count }}
+        attributes:
+          devices: >
+            {% set power_sensors =
+              (
+                label_entities('power_consumer')
+                + label_entities('power_feeder')
+                + label_entities('power_diagnostics')
+              )
+              | unique
+            %}
+            {% set voltage_sensors = label_entities('Voltage') %}
+            {% set current_sensors = label_entities('Current') %}
+            {% set ns = namespace( result={} ) %}
+
+            {% for p in power_sensors %}
+              {% set dev = device_id(p) %}
+              {% if dev %}
+                {% set name = device_attr(dev, 'name') %}
+                {% set room = area_name(p) %}
+                {% set power = states(p) | float(0) %}
+
+                {# --- Voltage --- #}
+                {% set vns = namespace(value=None, src=None) %}
+                {% for v in voltage_sensors %}
+                  {% if device_id(v) == dev %}
+                    {% set raw = states(v) | float(0) %}
+                    {% set vns.value = (raw / 10) if raw > 1000 else raw %}
+                    {% set vns.src = v %}
+                  {% endif %}
+                {% endfor %}
+
+                {# --- Current --- #}
+                {% set cns = namespace(value=None, src=None) %}
+                {% for c in current_sensors %}
+                  {% if device_id(c) == dev %}
+                    {% set cns.value = states(c) | float(0) %}
+                    {% set cns.src = c %}
+                  {% endif %}
+                {% endfor %}
+
+                {# --- Voltage state --- #}
+                {% if vns.value is none or vns.value < 50 %}
+                  {% set v_state = 'unknown' %}
+                  {% set v_ok = false %}
+                {% elif vns.value < 210 %}
+                  {% set v_state = 'low' %}
+                  {% set v_ok = false %}
+                {% elif vns.value > 245 %}
+                  {% set v_state = 'high' %}
+                  {% set v_ok = false %}
+                {% else %}
+                  {% set v_state = 'ok' %}
+                  {% set v_ok = true %}
+                {% endif %}
+
+                {# --- Physikalische Plausibilität --- #}
+                {% if vns.value and cns.value %}
+                  {% set expected = vns.value * cns.value %}
+                {% else %}
+                  {% set expected = none %}
+                {% endif %}
+
+                {% if expected is none or expected < 5 %}
+                  {% set phys_state = 'unknown' %}
+                  {% set phys_ok = false %}
+                  {% set delta = none %}
+                {% else %}
+                  {% set delta = ((power - expected) | abs) / expected %}
+                  {% if delta <= 0.3 %}
+                    {% set phys_state = 'ok' %}
+                    {% set phys_ok = true %}
+                  {% else %}
+                    {% set phys_state = 'bad' %}
+                    {% set phys_ok = false %}
+                  {% endif %}
+                {% endif %}
+
+                {% set power_role = 'unknown' %}
+                {% if 'power_consumer' in labels(p) %}
+                  {% set power_role = 'consumer' %}
+                {% elif 'power_feeder' in labels(p) %}
+                  {% set power_role = 'feeder' %}
+                {% elif 'power_diagnostics' in labels(p) %}
+                  {% set power_role = 'diagnostics' %}
+                {% endif %}
+
+                {% set key = name
+                  | lower
+                  | replace(' ', '_')
+                  | replace('-', '_')
+                  | replace('.', '')
+                %}
+
+                {% set ns.result = dict(ns.result, **{
+                  key: {
+                    "device": name,
+                    "room": room,
+                    "power": power,
+                    "voltage": vns.value,
+                    "current": cns.value,
+                    "expected_power": expected,
+                    "power_delta_pct": (delta * 100) | round(1) if delta is not none else none,
+                    "voltage_state": v_state,
+                    "voltage_ok": v_ok,
+                    "power_role": power_role,
+                    "power_physical_state": phys_state,
+                    "power_physical_ok": phys_ok,
+                    "source_power": p,
+                    "source_voltage": vns.src,
+                    "source_current": cns.src
+                  }
+                }) %}
+
+
+              {% endif %}
+            {% endfor %}
+
+            {{ ns.result | tojson }}

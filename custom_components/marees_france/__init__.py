@@ -40,20 +40,25 @@ from .const import (
     ATTR_DATE,
     COEFF_STORAGE_KEY,
     COEFF_STORAGE_VERSION,
+    CONF_HARBOR_MIN_DEPTH,
     CONF_HARBOR_ID,
     CONF_HARBOR_NAME,
     DATE_FORMAT,
     DOMAIN,
     CONF_HARBOR_LAT,
     CONF_HARBOR_LON,
+    HARBORMINDEPTH_STORAGE_KEY,
+    HARBORMINDEPTH_STORAGE_VERSION,
     HARBORSURL,
     HEADERS,
+    INTEGRATION_VERSION,
     PLATFORMS,
     SERVICE_GET_COEFFICIENTS_DATA,
     SERVICE_GET_TIDES_DATA,
     SERVICE_GET_WATER_LEVELS,
     SERVICE_REINITIALIZE_HARBOR_DATA,
     SERVICE_GET_WATER_TEMP,
+    SERVICE_GET_HARBOR_MIN_DEPTH,
     TIDES_STORAGE_KEY,
     TIDES_STORAGE_VERSION,
     WATERLEVELS_STORAGE_KEY,
@@ -68,6 +73,7 @@ from .api_helpers import (
     _async_fetch_and_store_tides,
     _async_fetch_and_store_coefficients,
     _async_fetch_and_store_water_temp,
+    _async_store_harbor_min_depth,
 )
 
 
@@ -214,10 +220,24 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             harbor_name,
         )
 
-    elif config_entry.version > 2:
+    if config_entry.version == 2:
+        _LOGGER.debug(
+            "Migrating config entry %s from version 2 to 3", config_entry.entry_id
+        )
+        new_data = {**config_entry.data}
+        if CONF_HARBOR_MIN_DEPTH not in new_data:
+            new_data[CONF_HARBOR_MIN_DEPTH] = 0.0
+
+        hass.config_entries.async_update_entry(config_entry, data=new_data, version=3)
+        _LOGGER.info(
+            "Successfully migrated config entry %s to version 3, added default harbor_min_depth",
+            config_entry.entry_id,
+        )
+
+    if config_entry.version > 3:
         _LOGGER.error(
             "Cannot migrate config entry %s: Config entry version %s is newer than "
-            "integration version 2",
+            "integration version 3",
             config_entry.entry_id,
             config_entry.version,
         )
@@ -258,6 +278,12 @@ SERVICE_GET_WATER_TEMP_SCHEMA = vol.Schema(
     }
 )
 
+SERVICE_GET_HARBOR_MIN_DEPTH_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): cv.string,
+    }
+)
+
 # Websocket Command Schemas
 WS_GET_WATER_LEVELS_SCHEMA = websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.extend(
     {
@@ -287,6 +313,19 @@ WS_GET_WATER_TEMP_SCHEMA = websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.extend(
         vol.Required("type"): "marees_france/get_water_temp",
         vol.Required("device_id"): cv.string,
         vol.Optional("date"): vol.Match(r"^\d{4}-\d{2}-\d{2}$"),
+    }
+)
+
+WS_GET_HARBOR_MIN_DEPTH_SCHEMA = websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.extend(
+    {
+        vol.Required("type"): "marees_france/get_harbor_min_depth",
+        vol.Required("device_id"): cv.string,
+    }
+)
+
+WS_GET_VERSION_SCHEMA = websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.extend(
+    {
+        vol.Required("type"): "marees_france/version",
     }
 )
 
@@ -497,6 +536,37 @@ async def _get_coefficients_data(
 
 
 @websocket_api.async_response
+async def ws_handle_get_harbor_min_depth(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
+) -> None:
+    """Handle websocket command for getting harbor min depth."""
+    try:
+        device_id = msg["device_id"]
+        harbor_id, _ = await _get_device_and_harbor_id(hass, device_id)
+        _LOGGER.debug(
+            "Websocket command get_harbor_min_depth for device %s (harbor: %s)",
+            device_id,
+            harbor_id,
+        )
+        result = await _get_harbor_min_depth_data(hass, harbor_id)
+        connection.send_result(msg["id"], result)
+    except HomeAssistantError as err:
+        _LOGGER.error("Websocket get_harbor_min_depth error: %s", err)
+        connection.send_error(msg["id"], "home_assistant_error", str(err))
+    except Exception as err:
+        _LOGGER.exception("Unexpected error in websocket get_harbor_min_depth")
+        connection.send_error(msg["id"], "unknown_error", str(err))
+
+
+@websocket_api.async_response
+async def ws_handle_get_version(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
+) -> None:
+    """Handle websocket command for getting integration version."""
+    connection.send_result(msg["id"], {"version": INTEGRATION_VERSION})
+
+
+@websocket_api.async_response
 async def ws_handle_get_water_temp(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
 ) -> None:
@@ -668,6 +738,9 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
     watertemp_store = Store[dict[str, dict[str, Any]]](
         hass, WATERTEMP_STORAGE_VERSION, WATERTEMP_STORAGE_KEY
     )
+    harborMinDepth_store = Store[dict[str, Any]](
+        hass, HARBORMINDEPTH_STORAGE_VERSION, HARBORMINDEPTH_STORAGE_KEY
+    )
 
     caches_cleared = []
     try:
@@ -706,6 +779,16 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
                 harbor_id,
             )
 
+        harborMinDepth_cache_full = await harborMinDepth_store.async_load() or {}
+        if harbor_id in harborMinDepth_cache_full:
+            del harborMinDepth_cache_full[harbor_id]
+            await harborMinDepth_store.async_save(harborMinDepth_cache_full)
+            caches_cleared.append("harbor min depth")
+            _LOGGER.debug(
+                "Reinitialize Service: Cleared harbor min depth cache for %s",
+                harbor_id,
+            )
+
         if caches_cleared:
             _LOGGER.info(
                 "Reinitialize Service: Successfully cleared cache(s) for %s: %s",
@@ -733,6 +816,7 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
         coeff_cache_full = await coeff_store.async_load() or {}
         water_level_cache_full = await water_level_store.async_load() or {}
         watertemp_cache_full = await watertemp_store.async_load() or {}
+        harborMinDepth_cache_full = await harborMinDepth_store.async_load() or {}
 
         today = date.today()
         yesterday = today - timedelta(days=1)
@@ -773,6 +857,18 @@ async def async_handle_reinitialize_harbor_data(call: ServiceCall) -> None:
             websession=websession,
         ):
             fetch_errors.append("water levels")
+
+        minDepth = config_entry.data.get(CONF_HARBOR_MIN_DEPTH)
+        if minDepth:
+            if not await _async_store_harbor_min_depth(
+                hass, harborMinDepth_store, harbor_id, minDepth
+            ):
+                fetch_errors.append("harbor min depth")
+        else:
+            _LOGGER.warning(
+                "Reinitialize Service: Harbor min depth missing for harbor %s, cannot refetch.",
+                harbor_id,
+            )
 
         lat = config_entry.data.get(CONF_HARBOR_LAT)
         lon = config_entry.data.get(CONF_HARBOR_LON)
@@ -1250,6 +1346,31 @@ async def _get_water_temp_data(
     return harbor_cache
 
 
+async def _get_harbor_min_depth_data(
+    hass: HomeAssistant, harbor_id: str
+) -> dict[str, Any]:
+    """Get min depth to navigate for a harbor"""
+    harborMinDepth_store = Store[dict[str, Any]](
+        hass, HARBORMINDEPTH_STORAGE_VERSION, HARBORMINDEPTH_STORAGE_KEY
+    )
+    cache = await harborMinDepth_store.async_load() or {}
+    harbor_cache = cache.get(harbor_id, {})
+    return harbor_cache
+
+
+async def async_handle_get_harbor_min_depth(call: ServiceCall) -> ServiceResponse:
+    """Handle the service call to get min depth for a device, using caching."""
+    device_id = call.data["device_id"]
+    hass = call.hass
+    harbor_id, _ = await _get_device_and_harbor_id(hass, device_id)
+    _LOGGER.debug(
+        "Service call get_harbor_min_depth for device %s (harbor: %s)",
+        device_id,
+        harbor_id,
+    )
+    return await _get_harbor_min_depth_data(hass, harbor_id)
+
+
 async def async_handle_get_water_temp(call: ServiceCall) -> ServiceResponse:
     """Handle the service call to get water temperature for a device, using caching."""
     device_id = call.data["device_id"]
@@ -1386,6 +1507,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     watertemp_store = Store[dict[str, dict[str, Any]]](
         hass, WATERTEMP_STORAGE_VERSION, WATERTEMP_STORAGE_KEY
     )
+    harborMinDepth_store = Store[dict[str, Any]](
+        hass, HARBORMINDEPTH_STORAGE_VERSION, HARBORMINDEPTH_STORAGE_KEY
+    )
 
     websession = async_get_clientsession(hass)
     coordinator = MareesFranceUpdateCoordinator(
@@ -1395,6 +1519,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         coeff_store,
         water_level_store,
         watertemp_store,
+        harborMinDepth_store,
         websession=websession,
     )
 
@@ -1469,6 +1594,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.debug(
             "Marées France: Registered service: %s.%s", DOMAIN, SERVICE_GET_WATER_TEMP
         )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_GET_HARBOR_MIN_DEPTH):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_GET_HARBOR_MIN_DEPTH,
+            async_handle_get_harbor_min_depth,
+            schema=SERVICE_GET_HARBOR_MIN_DEPTH_SCHEMA,
+            supports_response=SupportsResponse.ONLY,
+        )
+        _LOGGER.debug(
+            "Marées France: Registered service: %s.%s",
+            DOMAIN,
+            SERVICE_GET_HARBOR_MIN_DEPTH,
+        )
+
     # Register websocket commands
     websocket_api.async_register_command(
         hass,
@@ -1493,6 +1633,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "marees_france/get_water_temp",
         ws_handle_get_water_temp,
         WS_GET_WATER_TEMP_SCHEMA,
+    )
+    websocket_api.async_register_command(
+        hass,
+        "marees_france/get_harbor_min_depth",
+        ws_handle_get_harbor_min_depth,
+        WS_GET_HARBOR_MIN_DEPTH_SCHEMA,
+    )
+    websocket_api.async_register_command(
+        hass,
+        "marees_france/version",
+        ws_handle_get_version,
+        WS_GET_VERSION_SCHEMA,
     )
     _LOGGER.debug("Marées France: Registered websocket commands")
 
@@ -1696,6 +1848,9 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
         ),
         "water_temp": Store[dict[str, dict[str, Any]]](
             hass, WATERTEMP_STORAGE_VERSION, WATERTEMP_STORAGE_KEY
+        ),
+        "harbor_min_depth": Store[dict[str, Any]](
+            hass, HARBORMINDEPTH_STORAGE_VERSION, HARBORMINDEPTH_STORAGE_KEY
         ),
     }
 

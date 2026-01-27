@@ -1,0 +1,514 @@
+################################################################################
+#   
+# Presence Simulation for Alarm System 
+#   
+#   https://www.home-assistant.io/integrations/vlc
+#   
+#   Tutorials
+#   Smart Home Junkie's English tutorial: https://youtu.be/OTQu3BMr3EU
+#   Tristan's Smartes Heim's German tutorial: https://youtu.be/5vCp3iKZb4Q
+#   HectorziN Domótica's Spanish tutorial: https://youtu.be/2N7aihhnkNg
+#   
+#   
+
+## How to use:
+#   1. Assign the label `presence` to any entity you want to include
+#      in the presence simulation (lights, media players, switches, etc.)
+#   2. The group `group.presence_simulationen_group` will be automatically
+#      populated with those entities.
+#   3. Use this group in your presence simulation automations or scripts.
+#   4. The group updates automatically on HA start and every 5 minutes.
+#   5. You can check the group members in Developer Tools > States.
+#   6. Adjust the update interval in the automation if needed.
+#   7. Enjoy enhanced security with dynamic presence simulation!
+#   Note: Ensure that the label name `presence` matches exactly.
+################################################################################
+# Der switch um die presence simulation zu aktivieren/deaktivieren
+# der Sitch wird automatisch von der integration erstellt und kann soll umbenannt werden
+# in der Automation verwendet werden um die presence simulation zu aktivieren/deaktivieren
+#   input_boolean:
+#     presence_simulation_activ:                     #  Wird in der Alarm Automation verwendet um die Presence Simulation zu aktivieren/deaktivieren
+#       name: Presence Simulation Aktivieren
+#       icon: mdi:home-automation
+#   
+
+
+input_select:
+  presence_simulation_profile:
+    name: Presence Simulation Profile
+    options:
+      - off
+      - armed_home
+      - armed_away
+      - armed_night
+      - armed_vacation
+      - armed_custom_bypass
+
+
+template:
+  - sensor:
+      - name: "Presence Simulation Active Devices"
+        unit_of_measurement: "count"
+#        state_class: measurement
+#        attributes:
+#          description: "Number of active devices in the presence simulation group (alarm_ha_presence_simulation)"
+        state: >
+          {% if is_state('switch.presence_simulation', 'on') %}
+            {{ expand('group.presence_simulationen_group')
+               | selectattr('state','eq','on')
+               | list | count }}
+          {% else %}
+            0
+          {% endif %}
+
+
+
+
+group:
+  presence_simulationen_target:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presence Simulation Group TARGET for use in presence simulation service (alarm_ha_presence_simulation)"
+    entities:
+      - light.dummy
+  presence_simulationen_group_away:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presence Simulation Group AWAY (Dynamic - label presence) (alarm_ha_presence_simulation)"
+    entities:
+      - light.dummy
+  presence_simulationen_group_near:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presence Simulation Group NEAR (Dynamic - label presence_near) (alarm_ha_presence_simulation)"
+    entities:
+      - light.dummy
+  presence_simulationen_group_far:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presence Simulation Group FAR (Dynamic - label presence_far) (alarm_ha_presence_simulation)"
+    entities:
+      - light.dummy
+  presence_simulationen_group_night:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presence Simulation Group NIGHT (Dynamic - label presence_night) (alarm_ha_presence_simulation)"
+    entities:
+      - light.kerze
+      - switch.lichterkette_wohnzimmer
+      - switch.fake_tv
+  presence_simulationen_group_vacation:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presence Simulation Group VACATION (Dynamic - label presence_vacation) (alarm_ha_presence_simulation)"
+    entities:
+      - light.kerze
+      - switch.lichterkette_wohnzimmer
+      - switch.fake_tv
+  presence_simulationen_group_by_pass:                        #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Presence Simulation Group BY_PASS (Dynamic - label presence_by_pass) (alarm_ha_presence_simulation)"
+    entities:
+      - light.kerze
+      - switch.lichterkette_wohnzimmer
+      - switch.fake_tv
+
+
+#   Bonus: „Pseudo-Attribut“ per Template-Sensor
+#   template:
+#     - sensor:
+#         - name: "Presence Simulationen Group Info"
+#           state: >
+#             {{ label_entities('presence') | count }}
+#           attributes:
+#             last_update: >
+#               {{ states('input_datetime.presence_simulationen_group_last_update') }}
+#             entities: >
+#               {{ label_entities('presence') }}
+
+
+###############################################################################
+# Presence Simulation – Dynamic Group Update
+#
+# Purpose:
+#   Dynamically builds and maintains the group
+#   `group.presence_simulationen_group` based on Home Assistant Labels.
+#
+# How it works:
+#   - Uses Home Assistant's built-in `label_entities()` helper
+#   - Collects all entities tagged with the label: `presence`
+#   - Replaces the group content atomically using `group.set`
+#
+# Why this approach:
+#   - No hardcoded entity lists
+#   - Automatically adapts to new / removed entities
+#   - No dependency on device_id or attributes
+#   - Safe, fast, and officially supported by Home Assistant
+#
+# Notes:
+#   - The label name is intentionally spelled `presence`
+#     (must match the label exactly as defined in HA)
+#   - `group.set` always overwrites the full group
+#   - `object_id` must be given WITHOUT the `group.` prefix
+#
+# Update triggers:
+#   - On Home Assistant startup
+#   - Every 5 minutes (can be adjusted)
+###############################################################################
+
+#     Build entity list dynamically from label `presence`
+#     {% set ns = namespace(list=[]) %}
+#     {% for entity in label_entities('presence') %}
+#       {% set ns.list = ns.list + [entity] %}
+#     {% endfor %}
+#     {{ ns.list }}
+
+
+
+automation:
+  - id: presence_simulation_update_group
+    alias: "Presence Simulation – Update Entity Group (alarm_ha_presence_simulation)"
+    mode: single
+
+    trigger:
+      # Update group on Home Assistant start
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: automation_reloaded
+
+      # Periodic refresh to catch label changes
+      - platform: time_pattern
+        minutes: "/5"
+
+    action:
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presence_simulationen_group enthält near und far
+          object_id: presence_simulationen_group_away
+
+          # Build entity list dynamically from label `presence_vaf` oder `presence_near`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+
+            {% for entity in label_entities('presence_near') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+
+            {% for entity in label_entities('presence_far') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {% for entity in label_entities('presence_night') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presence_simulationen_group_near
+          object_id: presence_simulationen_group_near
+
+          # Build entity list dynamically from label `presence_near`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for entity in label_entities('presence_near') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presence_simulationen_group_far
+          object_id: presence_simulationen_group_far
+
+          # Build entity list dynamically from label `presence_far`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for entity in label_entities('presence_far') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presence_simulationen_group_far
+          object_id: presence_simulationen_group_night
+
+          # Build entity list dynamically from label `presence_far`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+            {% for entity in label_entities('presence_night') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presence_simulationen_group enthält near und far
+          object_id: presence_simulationen_group_vacation
+
+          # Build entity list dynamically from label `presence_far` oder `presence_near`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+
+            {% for entity in label_entities('presence_near') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+
+            {% for entity in label_entities('presence_far') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {% for entity in label_entities('presence_night') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {{ ns.list }}
+
+      - service: group.set
+        data:
+          # Resulting group entity:
+          #   group.presence_simulationen_group enthält near und far
+          object_id: presence_simulationen_group_by_pass
+
+          # Build entity list dynamically from label `presence_far` oder `presence_near`
+          entities: >
+            {% set ns = namespace(list=[]) %}
+
+            {% for entity in label_entities('presence_near') %}
+              {% set ns.list = ns.list + [entity] %}
+            {% endfor %}
+
+            {% for entity in label_entities('presence_far') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {% for entity in label_entities('presence_night') %}
+              {% if entity not in ns.list %}
+                {% set ns.list = ns.list + [entity] %}
+              {% endif %}
+            {% endfor %}
+
+            {{ ns.list }}
+
+
+
+  - id: presence_simulation_profile_switch
+    alias: "Presence Simulation – Switch Profile (alarm_ha_presence_simulation)"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_select.presence_simulation_profile
+    action:
+      - choose:
+          # ----------------------------------------------------
+          # AWAY → NEAR + FAR
+          # ----------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: input_select.presence_simulation_profile
+                state: armed_away
+            sequence:
+              - service: group.set
+                data:
+                  object_id: presence_simulationen_target
+                  entities: "{{ states.group.presence_simulationen_group_away.attributes.entity_id }}"
+          # ----------------------------------------------------
+          # HOME → FAR
+          # ----------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: input_select.presence_simulation_profile
+                state: armed_home
+            sequence:
+              - service: group.set
+                data:
+                  object_id: presence_simulationen_target
+                  entities: "{{ states.group.presence_simulationen_group_far.attributes.entity_id }}"
+          # ----------------------------------------------------
+          # NIGHT → FAR only
+          # ----------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: input_select.presence_simulation_profile
+                state: armed_night
+            sequence:
+              - service: group.set
+                data:
+                  object_id: presence_simulationen_target
+                  entities: "{{ states.group.presence_simulationen_group_night.attributes.entity_id }}"
+          # ----------------------------------------------------
+          # VACATION → FAR only
+          # ----------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: input_select.presence_simulation_profile
+                state: armed_vacation
+            sequence:
+              - service: group.set
+                data:
+                  object_id: presence_simulationen_target
+                  entities: "{{ states.group.presence_simulationen_group_vacation.attributes.entity_id }}"
+          # ----------------------------------------------------
+          # BY_PASS → FAR only
+          # ----------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: input_select.presence_simulation_profile
+                state: armed_custom_bypass
+            sequence:
+              - service: group.set
+                data:
+                  object_id: presence_simulationen_target
+                  entities: "{{ states.group.presence_simulationen_group_by_pass.attributes.entity_id }}"
+        default:
+          - service: script.turn_on
+            metadata: {}
+            data: {}
+            target:
+              entity_id: script.alarm_turn_presence_simulation_off
+
+
+
+  - id: alarm_presence_profile_sync
+    alias: "ALARM → Presence Simulation Profile Sync (alarm_ha_presence_simulation)"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: alarm_control_panel.my_alarm
+        to:
+          - armed_away
+          - armed_home
+          - armed_night
+          - armed_vacation
+          - armed_custom_bypass
+    action:
+      - choose:
+          # --------------------------------------------------
+          # ARMED NIGHT → Presence NIGHT
+          # --------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_night
+            sequence:
+              - service: input_select.select_option
+                data:
+                  entity_id: input_select.presence_simulation_profile
+                  option: armed_night
+          # --------------------------------------------------
+          # ARMED AWAY → Presence AWAY
+          # --------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_away
+            sequence:
+              - service: input_select.select_option
+                data:
+                  entity_id: input_select.presence_simulation_profile
+                  option: armed_away
+          # --------------------------------------------------
+          # ARMED HOME → Presence HOME (armed)
+          # --------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_home
+            sequence:
+              - service: input_select.select_option
+                data:
+                  entity_id: input_select.presence_simulation_profile
+                  option: armed_home
+          # --------------------------------------------------
+          # ARMED VACATION → Presence VACATION
+          # --------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_vacation
+            sequence:
+              - service: input_select.select_option
+                data:
+                  entity_id: input_select.presence_simulation_profile
+                  option: armed_vacation
+
+          # --------------------------------------------------
+          # DISARMED → Presence OFF
+          # --------------------------------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: disarmed
+            sequence:
+              - service: input_select.select_option
+                data:
+                  entity_id: input_select.presence_simulation_profile
+                  option: off
+
+
+
+  - id: presence_simulation_activity_monitor
+    alias: "Presence Simulation – Activity Monitor (alarm_ha_presence_simulation)"
+    mode: queued
+    max: 50
+
+    trigger:
+      - platform: event
+        event_type: state_changed
+
+
+    condition:
+      # Presence Simulation aktiv
+      - condition: state
+        entity_id: switch.presence_simulation
+        state: "on"
+
+      # gültiger Statewechsel
+      - condition: template
+        value_template: >
+          {{ trigger.event.data.old_state is not none
+            and trigger.event.data.new_state is not none
+            and trigger.event.data.old_state.state
+                != trigger.event.data.new_state.state }}
+
+      # nur relevante Domains
+      - condition: template
+        value_template: >
+          {{ trigger.event.data.entity_id.split('.')[0]
+            in ['light','switch','media_player','fan'] }}
+
+      # nur Target-Gruppe (robust!)
+      - condition: template
+        value_template: >
+          {% set targets = state_attr('group.presence_simulationen_target', 'entity_id') %}
+          {{ targets is iterable and trigger.event.data.entity_id in targets }}
+
+
+    action:
+      - variables:
+          entity: "{{ trigger.event.data.entity_id }}"
+          old: "{{ trigger.event.data.old_state.state }}"
+          new: "{{ trigger.event.data.new_state.state }}"
+          name: "{{ state_attr(entity, 'friendly_name') or entity }}"
+          room: "{{ area_name(entity) or 'unknown' }}"
+
+      # erstmal Log (Debug / Nachweis)
+      - service: system_log.write
+        data:
+          level: info
+          message: >
+            [PresenceSimulation] {{ name }} ({{ entity }}, {{ room }})
+            {{ old }} → {{ new }}
+      - service: logbook.log
+        data:
+          name: "Presence Simulation"
+          message: >
+            {{ name }} ({{ room }}) {{ old }} → {{ new }}
+          entity_id: "{{ entity }}"
+
+

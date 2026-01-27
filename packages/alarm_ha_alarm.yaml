@@ -82,19 +82,19 @@ template:
 
 group:
   alarm_sensor_group:       #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
-    name: "Alarm Sensors ALL (Dynamic - label alarm_sensor....) (alarm_ha_presense_simulation)"
+    name: "Alarm Sensors ALL (Dynamic - label alarm_sensor....) (alarm_ha_presence_simulation)"
     entities:
       - sensor.ms1_bewegung
   alarm_sensor_group_near:       #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
-    name: "Alarm Sensors NEAR (Dynamic - label alarm_sensor_near) (alarm_ha_presense_simulation)"
+    name: "Alarm Sensors NEAR (Dynamic - label alarm_sensor_near) (alarm_ha_presence_simulation)"
     entities:
       - sensor.ms1_bewegung
   alarm_sensor_group_far:       #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
-    name: "Alarm Sensors FAR (Dynamic - label alarm_sensor_far) (alarm_ha_presense_simulation)"
+    name: "Alarm Sensors FAR (Dynamic - label alarm_sensor_far) (alarm_ha_presence_simulation)"
     entities:
       - sensor.ms1_bewegung
   alarm_sensor_group_night:       #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
-    name: "Alarm Sensors NIGHT (Dynamic - label alarm_sensor_night) (alarm_ha_presense_simulation)"
+    name: "Alarm Sensors NIGHT (Dynamic - label alarm_sensor_night) (alarm_ha_presence_simulation)"
     entities:
       - sensor.ms1_bewegung
 
@@ -424,10 +424,16 @@ automation:
         entity_id: alarm_control_panel.my_alarm
         to:
           - armed_away
+          - armed_home
           - armed_night
           - armed_vacation
           - armed_custom_bypass
     action:
+      - service: script.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: script.alarm_turn_presence_simulation_on
       - choose:
 
           # ----------------------------
@@ -445,6 +451,22 @@ automation:
                   title: "Alarmanlage armed away"
                   message: >
                     Die Alarmanlage ist scharf (abwesend) seit {{ states('sensor.time') }}
+
+          # ----------------------------
+          # AWAY
+          # ----------------------------
+          - conditions:
+              - condition: state
+                entity_id: alarm_control_panel.my_alarm
+                state: armed_home
+            sequence:
+              - service: script.alarm_presence_armed_home
+              - service: script.notify_dispatch
+                data:
+                  prio: L
+                  title: "Alarmanlage armed home"
+                  message: >
+                    Die Alarmanlage ist scharf (home) seit {{ states('sensor.time') }}
 
           # ----------------------------
           # NIGHT
@@ -595,14 +617,21 @@ script:
     
   alarm_turn_presence_simulation_on:
     alias: "alarm_turn_presence_simulation_on (alarm_ha_alarm)"
-    sequence:
-      - service: presence_simulation.start
     mode: single
+    sequence:
+#      - service: presence_simulation.start
+      - service: switch.turn_on
+        target:
+          entity_id: switch.presence_simulation
+
   alarm_turn_presence_simulation_off:
     alias: "alarm_turn_presence_simulation_off (alarm_ha_alarm)"
-    sequence:
-      - service: presence_simulation.stop
     mode: single
+    sequence:
+#      - service: presence_simulation.stop
+      - service: switch.turn_off
+        target:
+          entity_id: switch.presence_simulation
 
 
   alarm_security_alarm_triggered:
@@ -677,30 +706,54 @@ script:
 
 
 ###########################################################################################
-#### Security presense BEGIN
+#### Security presence BEGIN
 #############################################################################################
   alarm_presence_away:
     alias: "Alarm Presence AWAY"
     sequence:
       - service: input_select.select_option
         data:
-          entity_id: input_select.presense_simulation_profile
+          entity_id: input_select.presence_simulation_profile
           option: away
+
+  alarm_presence_armed_home:
+    alias: "Alarm Presence ARMED HOME"
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.presence_simulation_profile
+          option: armed_home
 
   alarm_presence_night:
     alias: "Alarm Presence NIGHT"
     sequence:
       - service: input_select.select_option
         data:
-          entity_id: input_select.presense_simulation_profile
+          entity_id: input_select.presence_simulation_profile
           option: night
+
+  alarm_presence_vacation:
+    alias: "Alarm Presence VACATION"
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.presence_simulation_profile
+          option: vacation
+
+  alarm_presence_custom_bypass:
+    alias: "Alarm Presence CUSTOM BY PASS"
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.presence_simulation_profile
+          option: custom_by_pass
 
   alarm_presence_off:
     alias: "Alarm Presence OFF"
     sequence:
       - service: input_select.select_option
         data:
-          entity_id: input_select.presense_simulation_profile
+          entity_id: input_select.presence_simulation_profile
           option: off
 
 ## ---------------------------------------------------------------------------------------
