@@ -106,8 +106,30 @@ class BrainLightsEngine(hass.Hass):
         # init capabilities
         self._init_light_capabilities()
 
-        # init last light data
+        # -----------------------------------------------------------------
+        # Cache for last light turn_on payloads
+        # Used to skip unchanged turn_on calls
+        # -----------------------------------------------------------------
         self._last_light_data = {}
+
+        # -----------------------------------------------------------------
+        # Track which active context currently controls which lights
+        # key format: room:zone
+        # value example:
+        #   {
+        #     "light.e1": "nacht",
+        #     "light.e2": "nacht"
+        #   }
+        # -----------------------------------------------------------------
+        self._active_context_lights = {}
+
+        # -----------------------------------------------------------------
+        # Listen for manual light changes immediately
+        # We only need state changes here. If a context-controlled light
+        # is manually turned off in the app, we sync internal engine state.
+        # -----------------------------------------------------------------
+        self.listen_state(self._on_context_light_state_change, "light")
+
 
         # every minute status log
         self.run_every(self._log_active_contexts, self.datetime(), 60)
@@ -525,9 +547,14 @@ class BrainLightsEngine(hass.Hass):
             "timer": None   # 👈 WICHTIG: Platz für Handle
         }
 
+        # Build fast lookup for lights controlled by this active context
+        lights = self._get_context_light_entities(ctx)
+        self._active_context_lights[key] = {
+            entity_id: ctx_id for entity_id in lights
+        }
+
         # Start/replace timer
         self.start_timer(key, ctx)
-
         # Execute ON actions
         self.execute_actions_on(ctx)
 
@@ -556,6 +583,7 @@ class BrainLightsEngine(hass.Hass):
 
         # Remove active context
         self.active_contexts.pop(key, None)
+        self._active_context_lights.pop(key, None)
         
         """
         ctx_id = ctx.get("id")
@@ -857,12 +885,20 @@ class BrainLightsEngine(hass.Hass):
                         min_m = caps.get("min_mireds")
                         max_m = caps.get("max_mireds")
 
+                        min_k = caps.get("min_kelvin")
+                        max_k = caps.get("max_kelvin")
+
                         if min_m is not None:
                             mired = max(mired, min_m)
                         if max_m is not None:
                             mired = min(mired, max_m)
 
-                        data["color_temp"] = int(mired)
+                        if min_k is not None:
+                            kelvin = max(kelvin, min_k)
+                        if max_k is not None:
+                            kelvin = min(kelvin, max_k)
+
+                        data["color_temp_kelvin"] = int(kelvin)
 
                         self.dbg(
                             4,
@@ -1046,7 +1082,7 @@ class BrainLightsEngine(hass.Hass):
 
 
 
-    def call_light_off(self, item, transition=0):
+    def call_light_off_old(self, item, transition=0):
         try:
             if isinstance(item, str):
                 entity = item
@@ -1065,6 +1101,43 @@ class BrainLightsEngine(hass.Hass):
 
             self.call_service("light/turn_off", entity_id=entity, **data)
             self.dbg(3, f"light.turn_off: {entity} data={data}")
+        except Exception as e:
+            self.dbg(2, f"light.turn_off failed: {item} -> {e}")
+
+
+    def call_light_off(self, item):
+        """
+        Turn a light off and clear cached runtime state for that entity.
+
+        Purpose:
+        - execute light.turn_off
+        - remove cached last turn_on payload
+        - prevent stale compare state after OFF
+        """
+        try:
+            if isinstance(item, str):
+                entity = item
+                data = {}
+            else:
+                entity = item.get("entity") or item.get("entity_id")
+                data = {}
+
+                # Optional transition
+                if "transition" in item:
+                    data["transition"] = item.get("transition")
+
+            if not entity:
+                return
+
+            self.call_service("light/turn_off", entity_id=entity, **data)
+
+            # Clear cached ON payload so next turn_on is never skipped
+            if entity in self._last_light_data:
+                del self._last_light_data[entity]
+                self.dbg(3, f"[SYNC] cleared cached light state for {entity} after turn_off")
+
+            self.dbg(3, f"[APPLY] light.turn_off {entity} data={data}")
+
         except Exception as e:
             self.dbg(2, f"light.turn_off failed: {item} -> {e}")
 
@@ -1485,8 +1558,8 @@ class BrainLightsEngine(hass.Hass):
             # Static device limits (may be missing on some devices)
             # These are IMPORTANT for clamping and avoiding HA warnings
             # -------------------------------------------------
-            min_kelvin = attrs.get("min_color_temp_kelvin")
-            max_kelvin = attrs.get("max_color_temp_kelvin")
+            min_kelvin = attrs.get("min_kelvin")
+            max_kelvin = attrs.get("max_kelvin")
 
             min_mireds = attrs.get("min_mireds")
             max_mireds = attrs.get("max_mireds")
@@ -1551,3 +1624,121 @@ class BrainLightsEngine(hass.Hass):
                 norm[k] = v
 
         return norm
+
+
+    def _is_light_really_on(self, entity_id):
+        """
+        Return True if the light is currently really on in Home Assistant.
+
+        States treated as OFF:
+        - off
+        - unknown
+        - unavailable
+        - None
+        """
+        state = self.get_state(entity_id)
+        return state not in (None, "off", "unknown", "unavailable")
+
+    def _get_context_light_entities(self, ctx):
+        """
+        Return a flat list of light entities from ctx.actions.lights_on.
+
+        Supports:
+        - string items (e.g. "light.e1")
+        - dict items with "entity" or "entity_id"
+
+        Example input:
+        actions:
+        lights_on:
+            - light.e1
+            - entity: light.e2
+
+        Returns:
+        ["light.e1", "light.e2"]
+        """
+        lights = []
+
+        if not ctx:
+            return lights
+
+        actions = ctx.get("actions", {})
+        for item in actions.get("lights_on", []):
+            if isinstance(item, str):
+                lights.append(item)
+            elif isinstance(item, dict):
+                ent = item.get("entity") or item.get("entity_id")
+                if ent:
+                    lights.append(ent)
+
+        return lights
+
+    def _on_context_light_state_change(self, entity, attribute, old, new, kwargs):
+        """
+        Immediate sync when a context-controlled light changes state.
+
+        Main purpose:
+        - if a light managed by an active context is manually turned off,
+        clear cached turn_on payload for that light
+        - if all lights of that active context are off, remove the context
+        from active_contexts and cancel its timer
+
+        This prevents stale active contexts when the user manually turns
+        off a context light in the app.
+        """
+        self.dbg(5, f"[SYNC] light state event: {entity} {old} -> {new}")
+
+        # Ignore unchanged states
+        if old == new:
+            return
+
+        # We only care when a light becomes OFF-like
+        if new not in ("off", "unknown", "unavailable"):
+            return
+
+        # Check all currently active contexts
+        for key, active in list(self.active_contexts.items()):
+            ctx = active.get("ctx") or {}
+            ctx_id = active.get("context_id", "?")
+
+            ctx_lights = self._active_context_lights.get(key, {})
+            if entity not in ctx_lights:
+                continue
+
+            self.dbg(
+                3,
+                f"[SYNC] detected OFF on context light {entity} "
+                f"(ctx='{ctx_id}', key={key})"
+            )
+
+            # Clear cached light payload for this entity
+            if entity in self._last_light_data:
+                del self._last_light_data[entity]
+                self.dbg(
+                    3,
+                    f"[SYNC] cleared cached light state for {entity} "
+                    f"(ctx='{ctx_id}', key={key})"
+                )
+
+            # Check if any light of this context is still really on
+            still_on = False
+            for light_entity in ctx_lights.keys():
+                if self._is_light_really_on(light_entity):
+                    still_on = True
+                    break
+
+            # If all lights are off, remove active context immediately
+            if not still_on:
+                self.dbg(
+                    2,
+                    f"[SYNC] all context lights are off "
+                    f"(ctx='{ctx_id}', key={key}) -> removing context"
+                )
+
+                handle = active.get("timer")
+                if handle and self.timer_running(handle):
+                    self.cancel_timer(handle)
+                    self.dbg(3, f"[SYNC] canceled timer for ctx='{ctx_id}' key={key}")
+
+                self.active_contexts.pop(key, None)
+                self._active_context_lights.pop(key, None)
+

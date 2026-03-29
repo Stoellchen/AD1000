@@ -1,12 +1,12 @@
 """Constants and Classes for person_location integration."""
 
 import asyncio
+from datetime import datetime, timedelta
 import logging
 import threading
-from datetime import datetime, timedelta
 
-import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
+
 from homeassistant.components.mobile_app.const import ATTR_VERTICAL_ACCURACY
 from homeassistant.components.waze_travel_time.const import REGIONS as WAZE_REGIONS
 from homeassistant.components.zone.const import DOMAIN as ZONE_DOMAIN
@@ -23,54 +23,65 @@ from homeassistant.const import (
     STATE_ON,
     STATE_UNKNOWN,
 )
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
+import homeassistant.helpers.config_validation as cv
+from homeassistant.util import slugify
 from homeassistant.util.yaml.objects import (
     NodeListClass,
     NodeStrClass,
 )
 
 # Our info:
+
 DOMAIN = "person_location"
 API_STATE_OBJECT = DOMAIN + "." + DOMAIN + "_integration"
 INTEGRATION_NAME = "Person Location"
 ISSUE_URL = "https://github.com/rodpayne/home-assistant_person_location/issues"
-VERSION = "2025.11.29"
+
+VERSION = "2026.01.31"
 
 # Titles for the config entries:
-#TITLE_IMPORTED_YAML_CONFIG = "Imported YAML Config"
+
+# TITLE_IMPORTED_YAML_CONFIG = "Imported YAML Config"
 TITLE_IMPORTED_YAML_CONFIG = "Person Location Config"
 TITLE_PERSON_LOCATION_CONFIG = "Person Location Config"
 
 # Constants:
-METERS_PER_KM = 1000
-METERS_PER_MILE = 1609.34
+
 IC3_STATIONARY_STATE_PREFIX = "StatZon"
 IC3_STATIONARY_ZONE_PREFIX = "ic3_stationary_"
+METERS_PER_KM = 1000
+METERS_PER_MILE = 1609.34
 
 # Fixed parameters:
+
+FAR_AWAY_METERS = 400 * METERS_PER_KM
 MIN_DISTANCE_TRAVELLED_TO_GEOCODE = 5  # in km?
 THROTTLE_INTERVAL = timedelta(
     seconds=2
 )  # See https://operations.osmfoundation.org/policies/nominatim/ regarding throttling.
 WAZE_MIN_METERS_FROM_HOME = 500
-FAR_AWAY_METERS = 400 * METERS_PER_KM
 
 # Parameters that we may want to be configurable in the future:
+
 DEFAULT_LOCALITY_PRIORITY_OSM = (
-#    "neighbourhood",       # smallest urban division (e.g. block, named area)
-    "suburb",              # named area within a city
-    "hamlet",              # very small rural settlement
-    "village",             # small rural settlement
-    "town",                # larger than village, smaller than city
-    "city_district",       # administrative district within a city
-    "municipality",        # local government unit (varies by country)
-    "city",                # major urban center
-    "county",              # regional division (e.g. Utah County)
-    "state_district",      # sub-state division (used in some countries)
-    "state",               # e.g. Utah
-    "country",             # e.g. United States
+    # "neighbourhood", # ---- smallest urban division (e.g. block, named area)
+    "suburb",  # ------------ named area within a city
+    "hamlet",  # ------------ very small rural settlement
+    "village",  # ----------- small rural settlement
+    "town",  # -------------- larger than village, smaller than city
+    "city_district",  # ----- administrative district within a city
+    "municipality",  # ------ local government unit (varies by country)
+    "city",  # -------------- major urban center
+    "county",  # ------------ regional division (e.g. Utah County)
+    "state_district",  # ---- sub-state division (used in some countries)
+    "state",  # ------------- e.g. Utah
+    "country",  # ----------- e.g. United States
 )
 
 # Attribute names:
+
 ATTR_ALTITUDE = "altitude"
 ATTR_BREAD_CRUMBS = "bread_crumbs"
 ATTR_COMPASS_BEARING = "compass_bearing"
@@ -94,52 +105,16 @@ ATTR_OPEN_STREET_MAP = "Open_Street_Map"
 ATTR_RADAR = "Radar"
 
 # Items under target.this_entity_info:
+
 INFO_GEOCODE_COUNT = "geocode_count"
 INFO_LOCALITY = "locality"
 INFO_TRIGGER_COUNT = "trigger_count"
 INFO_LOCATION_LATITUDE = "location_latitide"
 INFO_LOCATION_LONGITUDE = "location_longitide"
 
-# Configuration Parameters:
-CONF_LANGUAGE = "language"
-DEFAULT_LANGUAGE = "en"
-
-CONF_FRIENDLY_NAME_TEMPLATE = "friendly_name_template"
-DEFAULT_FRIENDLY_NAME_TEMPLATE = (
-    "{{person_name}} ({{source.attributes.friendly_name}}) {{friendly_name_location}}"
-)
-
-CONF_HOURS_EXTENDED_AWAY = "extended_away"
-DEFAULT_HOURS_EXTENDED_AWAY = 48
-
-CONF_MINUTES_JUST_ARRIVED = "just_arrived"
-DEFAULT_MINUTES_JUST_ARRIVED = 3
-
-CONF_MINUTES_JUST_LEFT = "just_left"
-DEFAULT_MINUTES_JUST_LEFT = 3
-
-CONF_SHOW_ZONE_WHEN_AWAY = "show_zone_when_away"
-DEFAULT_SHOW_ZONE_WHEN_AWAY = False
-
-CONF_OUTPUT_PLATFORM = "platform"
-DEFAULT_OUTPUT_PLATFORM = "sensor"
-VALID_OUTPUT_PLATFORM = ["sensor", "device_tracker"]
-
-CONF_REGION = "region"
-DEFAULT_REGION = "US"
-
-CONF_DISTANCE_DURATION_SOURCE = "distance_duration_source"
-CONF_USE_WAZE = "use_waze"
-CONF_WAZE_REGION = "waze_region"
-
-CONF_GOOGLE_API_KEY = "google_api_key"
-CONF_MAPBOX_API_KEY = "mapbox_api_key"
-CONF_MAPQUEST_API_KEY = "mapquest_api_key"
-CONF_NAME = "name"
-CONF_OSM_API_KEY = "osm_api_key"
-CONF_RADAR_API_KEY = "radar_api_key"
-DEFAULT_API_KEY_NOT_SET = "not used"
-
+# --------------------------------------------
+#  Data (structural configuration parameters)
+# --------------------------------------------
 
 CONF_CREATE_SENSORS = "create_sensors"
 VALID_CREATE_SENSORS = [
@@ -161,23 +136,178 @@ CONF_DEVICES = "devices"
 VALID_ENTITY_DOMAINS = ("binary_sensor", "device_tracker", "person", "sensor")
 
 CONF_FROM_YAML = "configuration_from_yaml"
+CONF_DISTANCE_DURATION_SOURCE = "distance_duration_source"
+CONF_USE_WAZE = "use_waze"
+CONF_WAZE_REGION = "waze_region"
+
+CONF_LANGUAGE = "language"
+DEFAULT_LANGUAGE = "en"
+
+CONF_OUTPUT_PLATFORM = "platform"
+DEFAULT_OUTPUT_PLATFORM = "sensor"
+VALID_OUTPUT_PLATFORM = ["sensor", "device_tracker"]
+
+CONF_REGION = "region"
+DEFAULT_REGION = "US"
+
+# API keys
+CONF_GOOGLE_API_KEY = "google_api_key"
+CONF_MAPBOX_API_KEY = "mapbox_api_key"
+CONF_MAPQUEST_API_KEY = "mapquest_api_key"
+CONF_OSM_API_KEY = "osm_api_key"
+CONF_RADAR_API_KEY = "radar_api_key"
+DEFAULT_API_KEY_NOT_SET = "not used"
+REDACT_KEYS = {
+    CONF_GOOGLE_API_KEY,
+    CONF_MAPBOX_API_KEY,
+    CONF_MAPQUEST_API_KEY,
+    CONF_OSM_API_KEY,
+    CONF_RADAR_API_KEY,
+}
+
+# API providers
+SWITCH_GOOGLE_GEOCODING_API = "google_geocoding_api"
+SWITCH_GOOGLE_DISTANCE_API = "google_distance_matrix_api"
+SWITCH_MAPBOX_DIRECTIONS_API = "mapbox_directions_api"
+SWITCH_MAPBOX_STATIC_IMAGE_API = "mapbox_static_image_api"
+SWITCH_MAPQUEST_GEOCODING_API = "mapquest_geocoding_api"
+SWITCH_OSM_NOMINATIM_GEOCODING_API = "nominatim_geocoding_api"
+SWITCH_RADAR_GEOCODING_API = "radar_geocoding_api"
+SWITCH_RADAR_DISTANCE_API = "radar_routing_distance_api"
+SWITCH_WAZE_TRAVEL_TIME = "waze_travel_time"
+
+# API providers for images
+SWITCH_GOOGLE_MAPS_STATIC_API = "google_maps_static_api"
+SWITCH_MAPBOX_STATIC_IMAGE_API = "mapbox_static_image_api"
+SWITCH_MAPQUEST_STATIC_MAP_API = "mapquest_static_map_api"
+SWITCH_RADAR_STATIC_MAPS_API = "radar_static_maps_api"
+
+# API providers and their keys
+API_PROVIDER_SWITCHES = [
+    (SWITCH_GOOGLE_GEOCODING_API, CONF_GOOGLE_API_KEY),
+    (SWITCH_GOOGLE_DISTANCE_API, CONF_GOOGLE_API_KEY),
+    (SWITCH_GOOGLE_MAPS_STATIC_API, CONF_GOOGLE_API_KEY),
+    (SWITCH_MAPBOX_DIRECTIONS_API, CONF_MAPBOX_API_KEY),
+    (SWITCH_MAPBOX_STATIC_IMAGE_API, CONF_MAPBOX_API_KEY),
+    (SWITCH_MAPQUEST_GEOCODING_API, CONF_MAPQUEST_API_KEY),
+    (SWITCH_MAPQUEST_STATIC_MAP_API, CONF_MAPQUEST_API_KEY),
+    (SWITCH_OSM_NOMINATIM_GEOCODING_API, CONF_OSM_API_KEY),
+    (SWITCH_RADAR_GEOCODING_API, CONF_RADAR_API_KEY),
+    (SWITCH_RADAR_DISTANCE_API, CONF_RADAR_API_KEY),
+    (SWITCH_RADAR_STATIC_MAPS_API, CONF_RADAR_API_KEY),
+    (SWITCH_WAZE_TRAVEL_TIME, None),
+]
+
+# Image API providers by key
+IMAGE_API_PROVIDER_SWITCHES = {
+    CONF_GOOGLE_API_KEY: SWITCH_GOOGLE_MAPS_STATIC_API,
+    CONF_MAPBOX_API_KEY: SWITCH_MAPBOX_STATIC_IMAGE_API,
+    CONF_MAPQUEST_API_KEY: SWITCH_MAPQUEST_STATIC_MAP_API,
+    CONF_RADAR_API_KEY: SWITCH_RADAR_STATIC_MAPS_API,
+}
+
+# State abbreviation dictionary
+
+STATE_ABBREVIATIONS = {
+    "AL": "Alabama",
+    "AK": "Alaska",
+    "AZ": "Arizona",
+    "AR": "Arkansas",
+    "CA": "California",
+    "CO": "Colorado",
+    "CT": "Connecticut",
+    "DE": "Delaware",
+    "FL": "Florida",
+    "GA": "Georgia",
+    "HI": "Hawaii",
+    "ID": "Idaho",
+    "IL": "Illinois",
+    "IN": "Indiana",
+    "IA": "Iowa",
+    "KS": "Kansas",
+    "KY": "Kentucky",
+    "LA": "Louisiana",
+    "ME": "Maine",
+    "MD": "Maryland",
+    "MA": "Massachusetts",
+    "MI": "Michigan",
+    "MN": "Minnesota",
+    "MS": "Mississippi",
+    "MO": "Missouri",
+    "MT": "Montana",
+    "NE": "Nebraska",
+    "NV": "Nevada",
+    "NH": "New Hampshire",
+    "NJ": "New Jersey",
+    "NM": "New Mexico",
+    "NY": "New York",
+    "NC": "North Carolina",
+    "ND": "North Dakota",
+    "OH": "Ohio",
+    "OK": "Oklahoma",
+    "OR": "Oregon",
+    "PA": "Pennsylvania",
+    "RI": "Rhode Island",
+    "SC": "South Carolina",
+    "SD": "South Dakota",
+    "TN": "Tennessee",
+    "TX": "Texas",
+    "UT": "Utah",
+    "VT": "Vermont",
+    "VA": "Virginia",
+    "WA": "Washington",
+    "WV": "West Virginia",
+    "WI": "Wisconsin",
+    "WY": "Wyoming",
+    "DC": "District of Columbia",
+}
 
 # Camera provider fields
 
+CONF_CONTENT_TYPE = "content_type"
+CONF_NAME = "name"
 CONF_STATE = "state"
 CONF_STILL_IMAGE_URL = "still_image_url"
-CONF_CONTENT_TYPE = "content_type"
 CONF_VERIFY_SSL = "verify_ssl"
 
 # Camera provider management (OptionsFlow + config entry)
 
+CONF_DONE = "done"
+CONF_EDIT_PROVIDER = "edit_provider"
+CONF_NEW_PROVIDER_NAME = "new_provider_name"
+CONF_NEW_PROVIDER_STATE = "new_provider_state"
+CONF_NEW_PROVIDER_URL = "new_provider_url"
 CONF_PROVIDERS = "providers"
 CONF_REMOVE_PROVIDERS = "remove_providers"
-CONF_NEW_PROVIDER_NAME = "new_provider_name"
-CONF_NEW_PROVIDER_URL = "new_provider_url"
-CONF_NEW_PROVIDER_STATE = "new_provider_state"
-CONF_EDIT_PROVIDER = "edit_provider"
-CONF_DONE = "done"
+
+# -----------------------------------------------
+#  Options (behavioral configuration parameters)
+# -----------------------------------------------
+
+CONF_FRIENDLY_NAME_TEMPLATE = "friendly_name_template"
+DEFAULT_FRIENDLY_NAME_TEMPLATE = (
+    "{{person_name}} ({{source.attributes.friendly_name}}) {{friendly_name_location}}"
+)
+
+CONF_HOURS_EXTENDED_AWAY = "extended_away"
+DEFAULT_HOURS_EXTENDED_AWAY = 48
+
+CONF_MINUTES_JUST_ARRIVED = "just_arrived"
+DEFAULT_MINUTES_JUST_ARRIVED = 3
+
+CONF_MINUTES_JUST_LEFT = "just_left"
+DEFAULT_MINUTES_JUST_LEFT = 3
+
+CONF_SHOW_ZONE_WHEN_AWAY = "show_zone_when_away"
+DEFAULT_SHOW_ZONE_WHEN_AWAY = False
+
+ALLOWED_OPTIONS_KEYS = {
+    CONF_FRIENDLY_NAME_TEMPLATE,
+    CONF_HOURS_EXTENDED_AWAY,
+    CONF_MINUTES_JUST_ARRIVED,
+    CONF_MINUTES_JUST_LEFT,
+    CONF_SHOW_ZONE_WHEN_AWAY,
+}
 
 STARTUP_VERSION = """
 -------------------------------------------------------------------
@@ -203,7 +333,9 @@ CONFIG_SCHEMA = vol.Schema(
         DOMAIN: vol.Schema(
             {
                 vol.Optional(CONF_CREATE_SENSORS, default=[]): vol.All(
-                    cv.ensure_list, [vol.In(VALID_CREATE_SENSORS)]
+                    cv.ensure_list,  # turn string into list
+                    [vol.In(VALID_CREATE_SENSORS)],
+                    sorted,  # ensures deterministic ordering
                 ),
                 vol.Optional(
                     CONF_HOURS_EXTENDED_AWAY, default=DEFAULT_HOURS_EXTENDED_AWAY
@@ -237,10 +369,8 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional(
                     CONF_RADAR_API_KEY, default=DEFAULT_API_KEY_NOT_SET
                 ): cv.string,
-                vol.Optional(CONF_FOLLOW_PERSON_INTEGRATION, default=False
-                ): cv.boolean,
-                vol.Optional(CONF_DISTANCE_DURATION_SOURCE, default="waze"
-                ): cv.string,
+                vol.Optional(CONF_FOLLOW_PERSON_INTEGRATION, default=False): cv.boolean,
+                vol.Optional(CONF_DISTANCE_DURATION_SOURCE, default="waze"): cv.string,
                 vol.Optional(CONF_PERSON_NAMES, default=[]): vol.All(
                     cv.ensure_list, [PERSON_SCHEMA]
                 ),
@@ -248,23 +378,19 @@ CONFIG_SCHEMA = vol.Schema(
             extra=vol.ALLOW_EXTRA,
         ),
     },
-    extra=vol.ALLOW_EXTRA,   
+    extra=vol.ALLOW_EXTRA,
 )
 
-ALLOWED_OPTIONS_KEYS = {
-    CONF_HOURS_EXTENDED_AWAY,
-    CONF_MINUTES_JUST_ARRIVED,
-    CONF_MINUTES_JUST_LEFT,
-    CONF_SHOW_ZONE_WHEN_AWAY,
-    CONF_FRIENDLY_NAME_TEMPLATE,
-}
-
 # Items under hass.data[DOMAIN]:
+
 DATA_STATE = "state"
 DATA_ATTRIBUTES = "attributes"
 DATA_CONFIG_ENTRY = "config_entry"
-DATA_CONFIGURATION = "configuration"
-DATA_ENTITY_INFO = "entity_info"
+DATA_CONFIGURATION = "configuration"  # CFG = Merged YAML and Config Data and Options
+DATA_ENTITY_INFO = "entity_info"  # TODO: structure like switch_entities
+DATA_INTEGRATION = "integration"  # PLI = Person Location integration runtime data
+DATA_SENSOR_ENTITIES = "sensor_entities"  # TODO: structure like switch_entities
+DATA_SWITCH_ENTITIES = "switch_entities"
 DATA_UNDO_STATE_LISTENER = "undo_state_listener"
 DATA_UNDO_UPDATE_LISTENER = "undo_update_listener"
 DATA_ASYNC_SETUP_ENTRY = "async_setup_entry"
@@ -279,21 +405,67 @@ TARGET_ASYNCIO_LOCK = asyncio.Lock()
 
 _LOGGER = logging.getLogger(__name__)
 
-def get_waze_region(country_code: str) -> str:
-    """Determine Waze region from country code or Waze region setting"""
-    country_code = country_code.lower()
-    if country_code in ("us", "ca", "mx"):
-        return "us"
-    if country_code in WAZE_REGIONS:
-        return country_code
-    return "eu"
+_warned_messages = set()
+
+
+def warn_once(logger: logging.Logger, message: str) -> bool:
+    """Log a warning only once for message."""
+    if message not in _warned_messages:
+        logger.warning(message)
+        _warned_messages.add(message)
+        return True
+    return False
+
+
+_error_messages = set()
+
+
+def error_once(logger: logging.Logger, message: str) -> bool:
+    """Log an error only once for message."""
+    if message not in _error_messages:
+        logger.error(message)
+        _error_messages.add(message)
+        return True
+    return False
+
+
+def get_home_coordinates(hass: HomeAssistant) -> tuple:
+    """Get Home latitude and longitude and validate that they have been entered."""
+    lat = hass.config.latitude
+    lon = hass.config.longitude
+
+    if not lat or not lon or (lat == 0 and lon == 0):
+        description = "Home Location is needed for geocoding (Settings → System → General → Location)"
+        if error_once(
+            _LOGGER,
+            description,
+        ):
+            # ⭐ Create a repair notification - Required configuration is missing
+            ir.async_create_issue(
+                hass,
+                DOMAIN,
+                "home_location_required",
+                is_fixable=False,
+                severity=ir.IssueSeverity.ERROR,
+                title="Home Assistant Location Required",
+                description=description,
+            )
+
+        return (None, None)
+
+    # ⭐ Clear repair notification
+    registry = ir.async_get(hass)
+    if registry.async_get_issue(DOMAIN, "home_location_required"):
+        ir.async_delete_issue(hass, DOMAIN, "home_location_required")
+
+    return (lat, lon)
+
 
 class PERSON_LOCATION_INTEGRATION:
-    """Class to represent the integration itself."""
+    """Class to represent the integration runtime."""
 
-    def __init__(self, _entity_id, _hass, _config):
+    def __init__(self, _entity_id, _hass: HomeAssistant) -> None:
         """Initialize the integration instance."""
-
         # Log startup message:
         _LOGGER.info(
             STARTUP_VERSION.format(name=DOMAIN, version=VERSION, issue_link=ISSUE_URL)
@@ -301,165 +473,35 @@ class PERSON_LOCATION_INTEGRATION:
 
         self.entity_id = _entity_id
         self.hass = _hass
-        self.config = _config
+
         self.state = "on"
         self.attributes = {}
-        self.attributes[ATTR_ICON] = "mdi:api"
-
         self.configuration = {}
         self.entity_info = {}
+
         self._target_sensors_restored = []
 
-
-        home_zone = "zone.home"
-        self.attributes[ATTR_FRIENDLY_NAME] = f"{INTEGRATION_NAME} Service"
-        self.attributes["home_latitude"] = str(
-            self.hass.states.get(home_zone).attributes.get(ATTR_LATITUDE)
-        )
-        self.attributes["home_longitude"] = str(
-            self.hass.states.get(home_zone).attributes.get(ATTR_LONGITUDE)
-        )
+        self.attributes[ATTR_ICON] = "mdi:api"
         self.attributes["api_last_updated"] = datetime.now()
-        self.attributes["api_error_count"] = 0
+        self.attributes["api_exception_count"] = 0
         self.attributes["api_calls_requested"] = 0
         self.attributes["api_calls_skipped"] = 0
         self.attributes["api_calls_throttled"] = 0
         self.attributes["startup"] = True
         self.attributes["waze_error_count"] = 0
-        self.attributes[
-            ATTR_ATTRIBUTION
-        ] = f"System information for the {INTEGRATION_NAME} integration \
-                ({DOMAIN}), version {VERSION}."
-
-        if DOMAIN in self.config:
-            self.configuration[CONF_FROM_YAML] = True
-
-            # Pull in configuration from configuration.yaml:
-
-            self.configuration[CONF_GOOGLE_API_KEY] = self.config[DOMAIN].get(
-                CONF_GOOGLE_API_KEY, DEFAULT_API_KEY_NOT_SET
-            )
-            self.configuration[CONF_LANGUAGE] = self.config[DOMAIN].get(
-                CONF_LANGUAGE, DEFAULT_LANGUAGE
-            )
-            self.configuration[CONF_FRIENDLY_NAME_TEMPLATE] = self.config[DOMAIN].get(
-                CONF_FRIENDLY_NAME_TEMPLATE, DEFAULT_FRIENDLY_NAME_TEMPLATE
-            )
-            self.configuration[CONF_HOURS_EXTENDED_AWAY] = self.config[DOMAIN].get(
-                CONF_HOURS_EXTENDED_AWAY, DEFAULT_HOURS_EXTENDED_AWAY
-            )
-            self.configuration[CONF_MINUTES_JUST_ARRIVED] = self.config[DOMAIN].get(
-                CONF_MINUTES_JUST_ARRIVED, DEFAULT_MINUTES_JUST_ARRIVED
-            )
-            self.configuration[CONF_MINUTES_JUST_LEFT] = self.config[DOMAIN].get(
-                CONF_MINUTES_JUST_LEFT, DEFAULT_MINUTES_JUST_LEFT
-            )
-            self.configuration[CONF_OUTPUT_PLATFORM] = self.config[DOMAIN].get(
-                CONF_OUTPUT_PLATFORM, DEFAULT_OUTPUT_PLATFORM
-            )
-            self.configuration[CONF_MAPBOX_API_KEY] = self.config[DOMAIN].get(
-                CONF_MAPBOX_API_KEY, DEFAULT_API_KEY_NOT_SET
-            )
-            self.configuration[CONF_MAPQUEST_API_KEY] = self.config[DOMAIN].get(
-                CONF_MAPQUEST_API_KEY, DEFAULT_API_KEY_NOT_SET
-            )
-            self.configuration[CONF_OSM_API_KEY] = self.config[DOMAIN].get(
-                CONF_OSM_API_KEY, DEFAULT_API_KEY_NOT_SET
-            )
-            self.configuration[CONF_RADAR_API_KEY] = self.config[DOMAIN].get(
-                CONF_RADAR_API_KEY, DEFAULT_API_KEY_NOT_SET
-            )
-            self.configuration[CONF_SHOW_ZONE_WHEN_AWAY] = self.config[DOMAIN].get(
-                CONF_SHOW_ZONE_WHEN_AWAY, DEFAULT_SHOW_ZONE_WHEN_AWAY
-            )
-            self.configuration[CONF_REGION] = self.config[DOMAIN].get(
-                CONF_REGION, DEFAULT_REGION
-            )
-            self.configuration[CONF_WAZE_REGION] = get_waze_region(
-                self.configuration[CONF_REGION]
-            )
-            if self.configuration[CONF_WAZE_REGION] in WAZE_REGIONS:
-                self.configuration[CONF_USE_WAZE] = True
-            else:
-                self.configuration[CONF_USE_WAZE] = False
-                _LOGGER.warning(
-                    "Configured Waze region (%s) is not valid",
-                    self.configuration[CONF_WAZE_REGION],
-                )
-                _LOGGER.debug(
-                    "Valid Waze regions: %s",
-                    WAZE_REGIONS,
-                )
-            raw_conf_create_sensors = self.config[DOMAIN].get(CONF_CREATE_SENSORS, [])
-            itemType = type(raw_conf_create_sensors)
-            if itemType in (list, NodeListClass):
-                self.configuration[CONF_CREATE_SENSORS] = sorted(
-                    raw_conf_create_sensors
-                )
-            elif itemType in (str, NodeStrClass):
-                self.configuration[CONF_CREATE_SENSORS] = sorted(
-                    [x.strip() for x in raw_conf_create_sensors.split(",")]
-                )
-            else:
-                _LOGGER.error(
-                    "Configured %s: %s is not valid (type %s)",
-                    CONF_CREATE_SENSORS,
-                    raw_conf_create_sensors,
-                    itemType,
-                )
-                self.configuration[CONF_CREATE_SENSORS] = []
-            for sensor_name in self.configuration[CONF_CREATE_SENSORS]:
-                if sensor_name not in VALID_CREATE_SENSORS:
-                    _LOGGER.error(
-                        "Configured %s: %s is not valid",
-                        CONF_CREATE_SENSORS,
-                        sensor_name,
-                    )
-            self.configuration[CONF_FOLLOW_PERSON_INTEGRATION] = self.config[
-                DOMAIN
-            ].get(CONF_FOLLOW_PERSON_INTEGRATION, False)
-
-            self.configuration[CONF_DEVICES] = {}
-            for person_name_config in self.config[DOMAIN].get(CONF_PERSON_NAMES, []):
-                person_name = person_name_config[CONF_NAME]
-                _LOGGER.debug("person_name_config name = %s", person_name)
-                devices = person_name_config[CONF_DEVICES]
-                if (devices is str) or (devices is NodeStrClass):
-                    devices = [devices]
-                for device in devices:
-                    _LOGGER.debug("person_name_config device = %s", device)
-                    self.configuration[CONF_DEVICES][device] = person_name
-
-        else:
-            self.configuration[CONF_FROM_YAML] = False
-
-            # Provide defaults if no configuration.yaml config:
-
-            self.configuration[CONF_GOOGLE_API_KEY] = DEFAULT_API_KEY_NOT_SET
-            self.configuration[CONF_LANGUAGE] = DEFAULT_LANGUAGE
-            self.configuration[CONF_HOURS_EXTENDED_AWAY] = DEFAULT_HOURS_EXTENDED_AWAY
-            self.configuration[CONF_MINUTES_JUST_ARRIVED] = DEFAULT_MINUTES_JUST_ARRIVED
-            self.configuration[CONF_MINUTES_JUST_LEFT] = DEFAULT_MINUTES_JUST_LEFT
-            self.configuration[CONF_OUTPUT_PLATFORM] = DEFAULT_OUTPUT_PLATFORM
-            self.configuration[CONF_MAPQUEST_API_KEY] = DEFAULT_API_KEY_NOT_SET
-            self.configuration[CONF_OSM_API_KEY] = DEFAULT_API_KEY_NOT_SET
-            self.configuration[CONF_RADAR_API_KEY] = DEFAULT_API_KEY_NOT_SET
-            self.configuration[CONF_REGION] = DEFAULT_REGION
-            self.configuration[CONF_WAZE_REGION] = DEFAULT_REGION
-            self.configuration[CONF_USE_WAZE] = True
-            self.configuration[CONF_CREATE_SENSORS] = []
-            self.configuration[CONF_FOLLOW_PERSON_INTEGRATION] = False
-            self.configuration[CONF_DEVICES] = {}
+        self.attributes[ATTR_ATTRIBUTION] = (
+            f"System information for the {INTEGRATION_NAME} integration ({DOMAIN}), version {VERSION}."
+        )
 
         # ❌ self.set_state()
 
-    def set_state(self):
+    def set_state(self) -> None:
         """Schedule async_set_state safely from a thread or sync context."""
         self.hass.loop.call_soon_threadsafe(
             lambda: self.hass.async_create_task(self.async_set_state())
         )
 
-    async def async_set_state(self):
+    async def async_set_state(self) -> None:
         """Async-safe state setter."""
         integration_state_data = {
             DATA_STATE: self.state,
@@ -472,22 +514,23 @@ class PERSON_LOCATION_INTEGRATION:
         else:
             self.hass.data[DOMAIN] = integration_state_data
 
-        simple_attributes = {ATTR_ICON: self.attributes[ATTR_ICON]}
-        self.hass.states.async_set(self.entity_id, self.state, simple_attributes)
+        # simple_attributes = {ATTR_ICON: self.attributes[ATTR_ICON]}
+        # self.hass.states.async_set(self.entity_id, self.state, simple_attributes)
+        self.hass.states.async_set(self.entity_id, self.state, self.attributes)
 
         _LOGGER.debug(
-            "(%s.async_set_state) -state: %s -attributes: %s",
+            "[async_set_state] (%s) -state: %s -attributes: %s",
             self.entity_id,
             self.state,
             self.attributes,
         )
-        
+
+
 class PERSON_LOCATION_TRIGGER:
     """Class to represent device trackers that trigger us."""
 
-    def __init__(self, _entity_id, _pli):
+    def __init__(self, _entity_id, _pli: PERSON_LOCATION_INTEGRATION) -> None:
         """Initialize the entity instance."""
-
         _LOGGER.debug("[PERSON_LOCATION_TRIGGER] (%s) === __init__ ===", _entity_id)
 
         self.entity_id = _entity_id
@@ -499,9 +542,9 @@ class PERSON_LOCATION_TRIGGER:
         targetStateObject = self.hass.states.get(self.entity_id)
         if targetStateObject is not None:
             self.firstTime = False
-            if (targetStateObject.state.startswith(IC3_STATIONARY_STATE_PREFIX) 
-                    or 
-                targetStateObject.state == STATE_NOT_HOME
+            if (
+                targetStateObject.state.startswith(IC3_STATIONARY_STATE_PREFIX)
+                or targetStateObject.state == STATE_NOT_HOME
             ):
                 self.state = "Away"
             else:
@@ -540,7 +583,10 @@ class PERSON_LOCATION_TRIGGER:
             self.personName = self.attributes["account_name"]
         elif "owner_fullname" in self.attributes:
             self.personName = self.attributes["owner_fullname"].split()[0].lower()
-        elif "friendly_name" in self.attributes and self.entity_id.split(".")[0] == "person":
+        elif (
+            "friendly_name" in self.attributes
+            and self.entity_id.split(".")[0] == "person"
+        ):
             self.personName = self.attributes["friendly_name"]
         else:
             self.personName = self.entity_id.split(".")[1].split("_")[0].lower()
@@ -558,6 +604,6 @@ class PERSON_LOCATION_TRIGGER:
         self.targetName = (
             self.configuration[CONF_OUTPUT_PLATFORM]
             + "."
-            + self.personName.lower()
+            + slugify(self.personName)
             + "_location"
         )

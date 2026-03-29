@@ -9,8 +9,8 @@
 
 
 automation:
-- id: 'weather_info_2_days_forecast_marmande'
-  alias: "Weather Wetteransage 2 Tage Marmande (weather_ha_forecast)"
+- id: 'weather_info_2_days_forecast_cazaugitat'
+  alias: "Weather Wetteransage 2 Tage Chaudeborde (weather_ha_forecast)"
   description: Spricht das Wetter für heute und morgen um 10 Uhr
   mode: single
   trigger:
@@ -21,7 +21,7 @@ automation:
     # Forecast holen
     - service: weather.get_forecasts
       data:
-        entity_id: weather.marmande
+        entity_id: weather.cazaugitat
         type: daily
       response_variable: wf
 
@@ -29,13 +29,13 @@ automation:
     - variables:
         weather_map: "{{ states['binary_sensor.weather_forecast_map_de'].attributes }}"
 
-        today: "{{ wf['weather.marmande'].forecast[0] }}"
-        today_p1: "{{ wf['weather.marmande'].forecast[1] }}"
-        today_p2: "{{ wf['weather.marmande'].forecast[2] }}"
-        temp_now: "{{ state_attr('weather.marmande','temperature') }}"
+        today: "{{ wf['weather.cazaugitat'].forecast[0] }}"
+        today_p1: "{{ wf['weather.cazaugitat'].forecast[1] }}"
+        today_p2: "{{ wf['weather.cazaugitat'].forecast[2] }}"
+        temp_now: "{{ state_attr('weather.cazaugitat','temperature') }}"
 
         state_now: >
-          {{ weather_map.get(states('weather.marmande'), states('weather.marmande')) }}
+          {{ weather_map.get(states('weather.cazaugitat'), states('weather.cazaugitat')) }}
 
         today_cond: >
           {{ weather_map.get(today.condition, today.condition) }}
@@ -65,7 +65,7 @@ automation:
         message: >
           Guten Morgen.
 
-           Heute in Marmande {{ state_now }}
+           Heute in Chaudeborde {{ state_now }}
            bei {{ temp_now }} Grad.
            Die Höchsttemperatur liegt bei {{ today.temperature }} Grad,
            die Tiefsttemperatur bei {{ today.templow }} Grad.

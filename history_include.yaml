@@ -44,6 +44,7 @@ entity_globs:
   - sensor.flightradar24*
   - sensor.vmplex001
   # ---energy start -----------------
+  - sensor.energy_*
   - sensor.*_current
   - sensor.*_energy
   - sensor.*_energy_sum

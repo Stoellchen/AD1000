@@ -457,36 +457,43 @@ automation:
     mode: queued
     max: 50
 
-    trigger:
-      - platform: event
-        event_type: state_changed
+#    trigger:
+#      - platform: event
+#        event_type: state_changed
+#    condition:
+#      # Presence Simulation aktiv
+#      - condition: state
+#        entity_id: switch.presence_simulation
+#        state: "on"
+#      # gültiger Statewechsel
+#      - condition: template
+#        value_template: >
+#          {{ trigger.event.data.old_state is not none
+#            and trigger.event.data.new_state is not none
+#            and trigger.event.data.old_state.state
+#                != trigger.event.data.new_state.state }}
+#      # nur relevante Domains
+#      - condition: template
+#        value_template: >
+#          {{ trigger.event.data.entity_id.split('.')[0]
+#            in ['light','switch','media_player','fan'] }}
+#      # nur Target-Gruppe (robust!)
+#      - condition: template
+#        value_template: >
+#          {% set targets = state_attr('group.presence_simulationen_target', 'entity_id') %}
+#          {{ targets is iterable and trigger.event.data.entity_id in targets }}
+#
 
+    trigger:
+      - platform: state
+        entity_id: "{{ state_attr('group.presence_simulationen_target','entity_id') }}"
+        from: ~
+        to: ~
 
     condition:
-      # Presence Simulation aktiv
       - condition: state
         entity_id: switch.presence_simulation
         state: "on"
-
-      # gültiger Statewechsel
-      - condition: template
-        value_template: >
-          {{ trigger.event.data.old_state is not none
-            and trigger.event.data.new_state is not none
-            and trigger.event.data.old_state.state
-                != trigger.event.data.new_state.state }}
-
-      # nur relevante Domains
-      - condition: template
-        value_template: >
-          {{ trigger.event.data.entity_id.split('.')[0]
-            in ['light','switch','media_player','fan'] }}
-
-      # nur Target-Gruppe (robust!)
-      - condition: template
-        value_template: >
-          {% set targets = state_attr('group.presence_simulationen_target', 'entity_id') %}
-          {{ targets is iterable and trigger.event.data.entity_id in targets }}
 
 
     action:

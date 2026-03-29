@@ -1,5 +1,6 @@
 """Constants for the Marées France integration."""
 
+from dataclasses import dataclass
 import json
 import logging
 from pathlib import Path
@@ -147,3 +148,9 @@ JSMODULES: Final[list[dict[str, str]]] = [
     },
 ]
 URL_BASE: Final[str] = "/marees-france"  # Base URL for frontend resources
+
+
+@dataclass
+class PointData:
+    total_minutes: int
+    height_num: float
