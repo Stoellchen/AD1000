@@ -53,9 +53,9 @@ template:
           %}
           {% set worst_avg = (vals | max) if (vals | length > 0) else 9999 %}
 
-          {% if down >= 2 or worst_avg > 120 %}
+          {% if down >= 3 or worst_avg > 150 %}
             ALARM
-          {% elif down >= 1 or worst_avg > 70 %}
+          {% elif down >= 2 or worst_avg > 100 %}
             WARN
           {% else %}
             OK

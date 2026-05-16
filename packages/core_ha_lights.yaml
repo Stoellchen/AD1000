@@ -25,91 +25,222 @@ input_boolean:
     name: Lighting Blue Hour
     icon: mdi:weather-sunset
 
-  motion_eval_enabled_buero:
-    name: Motion Buero (off)
-    icon: mdi:motion-sensor
-
-  motion_eval_enabled_keller:
-    name: Motion Keller (off)
-    icon: mdi:motion-sensor
-
-  motion_eval_enabled_schlafzimmer_rechts:
-    name: Motion Schlafzimmer Rechts (off)
-    icon: mdi:motion-sensor
-
-  motion_eval_enabled_schlafzimmer_links:
-    name: Motion Schlafzimmer Links (off)
-    icon: mdi:motion-sensor
-
-  motion_eval_enabled_schlafzimmer_1:
-    name: Motion Schlafzimmer 1 (off)
-    icon: mdi:motion-sensor
-
-  motion_eval_enabled_schlafzimmer_2:
-    name: Motion Schlafzimmer 2 (off)
-    icon: mdi:motion-sensor
-
-  motion_eval_enabled_schlafzimmer_3:
-    name: Motion Schlafzimmer 3 (off)
-    icon: mdi:motion-sensor
-
-  motion_eval_enabled_schlafzimmer_4:
-    name: Motion Schlafzimmer 4 (off)
-    icon: mdi:motion-sensor
-
-  motion_eval_enabled_esszimmer:
-    name: Motion Esszimmer (off)
-    icon: mdi:motion-sensor
-
-  motion_eval_enabled_werkstatt:
-    name: Motion Werkstatt (off)
-    icon: mdi:motion-sensor
 
   motion_eval_enabled_wohnzimmer:
-    name: Motion Wohnzimmer (off)
+    name: Motion Wohnzimmer
+    icon: mdi:motion-sensor
+  motion_eval_enabled_esszimmer:
+    name: Motion Esszimmer
+    icon: mdi:motion-sensor
+  motion_eval_enabled_kueche:
+    name: Motion Küche
+    icon: mdi:motion-sensor
+  motion_eval_enabled_buero:
+    name: Motion Büro
+    icon: mdi:motion-sensor
+  motion_eval_enabled_korridor:
+    name: Motion Korridor
     icon: mdi:motion-sensor
 
-  manual_timer_enabled_buero:
-    name: Timer Keller (off)
-    icon: mdi:timer-lock
 
-  manual_timer_enabled_keller:
-    name: Timer Keller (off)
-    icon: mdi:timer-lock
+  motion_eval_enabled_schlafzimmer:
+    name: Motion Schlafzimmer
+    icon: mdi:motion-sensor
+  motion_eval_enabled_schlafzimmer_2:
+    name: Motion Schlafzimmer 2
+    icon: mdi:motion-sensor
+  motion_eval_enabled_schlafzimmer_3:
+    name: Motion Schlafzimmer 3
+    icon: mdi:motion-sensor
+  motion_eval_enabled_schlafzimmer_4:
+    name: Motion Schlafzimmer 4
+    icon: mdi:motion-sensor
 
-  manual_timer_enabled_schlafzimmer_rechts:
-    name: Timer Schlafzimmer Rechts (off)
-    icon: mdi:timer-lock
+  motion_eval_enabled_garage:
+    name: Motion Garage
+    icon: mdi:motion-sensor
+  motion_eval_enabled_eingangsbereich:
+    name: Motion Einangsbereich
+    icon: mdi:motion-sensor
 
-  manual_timer_enabled_schlafzimmer_links:
-    name: Timer Schlafzimmer Links (off)
-    icon: mdi:timer-lock
+  motion_eval_enabled_sitzplatz:
+    name: Motion Sitzplatz
+    icon: mdi:motion-sensor
+  motion_eval_enabled_schwimmbad:
+    name: Motion Schwimmbad
+    icon: mdi:motion-sensor
+  motion_eval_enabled_garten:
+    name: Motion Garten
+    icon: mdi:motion-sensor
 
-  manual_timer_enabled_schlafzimmer_1:
-    name: Timer Schlafzimmer 1 (off)
-    icon: mdi:timer-lock
-
-  manual_timer_enabled_schlafzimmer_2:
-    name: Timer Schlafzimmer 2 (off)
-    icon: mdi:timer-lock
-
-  manual_timer_enabled_schlafzimmer_3:
-    name: Timer Schlafzimmer 3 (off)
-    icon: mdi:timer-lock
-
-  manual_timer_enabled_schlafzimmer_4:
-    name: Timer Schlafzimmer 4 (off)
-    icon: mdi:timer-lock
-
-  manual_timer_enabled_esszimmer:
-    name: Timer Esszimmer (off)
-    icon: mdi:timer-lock
-
-  manual_timer_enabled_werkstatt:
-    name: Timer Werkstatt (off)
-    icon: mdi:timer-lock
 
   manual_timer_enabled_wohnzimmer:
-    name: Timer Wohnzimmer (off)
+    name: Timer Wohnzimmer
+    icon: mdi:timer-lock
+  manual_timer_enabled_esszimmer:
+    name: Timer Esszimmer
+    icon: mdi:timer-lock
+  manual_timer_enabled_kueche:
+    name: Timer Küche
+    icon: mdi:timer-lock
+  manual_timer_enabled_buero:
+    name: Timer Büro
+    icon: mdi:timer-lock
+  manual_timer_enabled_korridor:
+    name: Timer Korridor
     icon: mdi:timer-lock
 
+
+  manual_timer_enabled_schlafzimmer:
+    name: Timer Schlafzimmer
+    icon: mdi:timer-lock
+  manual_timer_enabled_schlafzimmer_2:
+    name: Timer Schlafzimmer 2
+    icon: mdi:timer-lock
+  manual_timer_enabled_schlafzimmer_3:
+    name: Timer Schlafzimmer 3
+    icon: mdi:timer-lock
+  manual_timer_enabled_schlafzimmer_4:
+    name: Timer Schlafzimmer 4
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_garage:
+    name: Timer Garage
+    icon: mdi:timer-lock
+  manual_timer_enabled_eingangsbereich:
+    name: Timer Einangsbereich
+    icon: mdi:timer-lock
+
+  manual_timer_enabled_sitzplatz:
+    name: Timer Sitzplatz
+    icon: mdi:timer-lock
+  manual_timer_enabled_schwimmbad:
+    name: Timer Schwimmbad
+    icon: mdi:timer-lock
+  manual_timer_enabled_garten:
+    name: Timer Garten
+    icon: mdi:timer-lock
+
+
+
+#  type: custom:auto-entities
+#  card:
+#    type: entities
+#    title: 🏠 Raum-Steuerung
+#  filter:
+#    template: >
+#      {% set ns = namespace(rows=[]) %}
+#  
+#      {# Wir sortieren die Liste der Entitäten hier direkt nach dem Namen
+#      (friendly_name) #}
+#  
+#      {% for state in states.input_select 
+#         | selectattr('entity_id', 'search', 'room_mode_') 
+#         | sort(attribute='attributes.friendly_name') %}
+#         
+#        {% set id = state.entity_id.split('room_mode_')[1] %}
+#        
+#        {% set ns.rows = ns.rows + [{
+#          "type": "custom:fold-entity-row",
+#          "head": {
+#            "type": "custom:multiple-entity-row",
+#            "entity": state.entity_id,
+#            "name": state.attributes.friendly_name | replace('Room Mode ', '') | replace('Modus ', ''),
+#            "icon": "mdi:star-settings",
+#            "show_state": false,
+#            "entities": [
+#              {
+#                "entity": "input_boolean.motion_eval_enabled_" ~ id,
+#                "name": "Motion",
+#                "toggle": true
+#              },
+#              {
+#                "entity": "input_boolean.manual_timer_enabled_" ~ id,
+#                "name": "Timer",
+#                "toggle": true
+#              }
+#            ]
+#          },
+#          "entities": [
+#            {
+#              "entity": "input_boolean.motion_eval_enabled_" ~ id,
+#              "name": "Bewegungssensor aktiv",
+#              "icon": "mdi:motion-sensor"
+#            },
+#            {
+#              "entity": "input_boolean.manual_timer_enabled_" ~ id,
+#              "name": "Timer aktiv",
+#              "icon": "mdi:timer-outline"
+#            },
+#            {
+#              "entity": state.entity_id,
+#              "name": "Modus wählen:",
+#              "icon": "mdi:speaker-message"
+#            }
+#          ]
+#        }] %}
+#      {% endfor %}
+#      {{ ns.rows }}
+#  
+#  
+#  
+#  type: custom:auto-entities
+#  card:
+#    type: vertical-stack
+#  card_param: cards
+#  filter:
+#    include:
+#      - entity_id: input_select.room_mode_*
+#        options:
+#          type: custom:mushroom-select-card
+#          layout: horizontal
+#          option_display: segmented
+#          secondary_info: none
+#          icon_type: none
+#          card_mod:
+#            style: |
+#              ha-card {
+#                background: none;
+#                border-bottom: 1px solid rgba(255,255,255,0.1);
+#                border-radius: 0;
+#                padding: 5px 0;
+#              }
+#    exclude: []
+#  sort:
+#    method: friendly_name
+#    ignore_case: true
+#  
+#  
+#  
+#  type: custom:auto-entities
+#  card:
+#    type: entities
+#    title: On heisst kein Trigger!!
+#  filter:
+#    include:
+#      - options: {}
+#        entity_id: input_boolean.motion_eval_enabled_*
+#        sort:
+#          method: friendly_name
+#          ignore_case: true
+#    exclude: []
+#  
+#  
+#  type: custom:auto-entities
+#  card:
+#    type: entities
+#    title: On heisst kein timer!!
+#  filter:
+#    include:
+#      - options: {}
+#        entity_id: input_boolean.manual_timer_enabled_*
+#        sort:
+#          method: friendly_name
+#          ignore_case: true
+#    exclude: []
+#  
+#  
+#  
+#  
+#  
+#  

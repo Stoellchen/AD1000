@@ -2349,20 +2349,34 @@ display:
           it.image(100, 15, id(pageicon_back), id(shiny_green));
           it.image(cx - 50, cy - 50, id(pageicon_80_big), id(darkest_green)); 
 
+          // it.print(cx, cys, id(font_small), TextAlign::CENTER, "Gerätestatus");
+          // cys += 20;
+          // it.printf(cx, cys, id(font_small), TextAlign::CENTER, "Name: %s", id(this_device).c_str());
+          // cys += 15;
+          // it.printf(cx, cys, id(font_small), TextAlign::CENTER, "IP: %s", WiFi.localIP().toString().c_str());
+          // cys += 15;
+          // it.printf(cx, cys, id(font_small), TextAlign::CENTER, "Subnet: %s", WiFi.subnetMask().toString().c_str());
+          // cys += 15;
+          // it.printf(cx, cys, id(font_small), TextAlign::CENTER, "Gateway: %s", WiFi.gatewayIP().toString().c_str());
+          // cys += 15;
+          // it.printf(cx, cys, id(font_small), TextAlign::CENTER, "RSSI: %d dBm", WiFi.RSSI());
+          // cys += 15;
+          // it.printf(cx, cys, id(font_small), TextAlign::CENTER, "MAC: %s", WiFi.macAddress().c_str());
+          //  cys += 15;
+
+
           it.print(cx, cys, id(font_small), TextAlign::CENTER, "Gerätestatus");
           cys += 20;
           it.printf(cx, cys, id(font_small), TextAlign::CENTER, "Name: %s", id(this_device).c_str());
           cys += 15;
-          it.printf(cx, cys, id(font_small), TextAlign::CENTER, "IP: %s", WiFi.localIP().toString().c_str());
+          // Korrigierte IP-Anzeige:
+          // it.printf(cx, cys, id(font_small), TextAlign::CENTER, "IP: %s", esphome::wifi::global_wifi_component->get_ip_address().str().c_str());
+          // cys += 15;
+          // Gateway und Subnet sind über das Standard-WiFi-Objekt oft nur verfügbar, wenn WiFi.h inkludiert ist.
+          // Alternativ einfach weglassen oder sicherstellen, dass WiFi.h oben bei 'includes' steht.
+          it.printf(cx, cys, id(font_small), TextAlign::CENTER, "RSSI: %d dBm", esphome::wifi::global_wifi_component->wifi_rssi());
           cys += 15;
-          it.printf(cx, cys, id(font_small), TextAlign::CENTER, "Subnet: %s", WiFi.subnetMask().toString().c_str());
-          cys += 15;
-          it.printf(cx, cys, id(font_small), TextAlign::CENTER, "Gateway: %s", WiFi.gatewayIP().toString().c_str());
-          cys += 15;
-          it.printf(cx, cys, id(font_small), TextAlign::CENTER, "RSSI: %d dBm", WiFi.RSSI());
-          cys += 15;
-          it.printf(cx, cys, id(font_small), TextAlign::CENTER, "MAC: %s", WiFi.macAddress().c_str());
-          cys += 15;
+
 
           // Erweiterte Infos
           it.printf(cx, cys, id(font_small), TextAlign::CENTER, "Build: %s %s", __DATE__, __TIME__);

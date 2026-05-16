@@ -1,0 +1,194 @@
+###############################################################################
+# core_ha_moeswaterleaksensor.yaml
+#
+# Zentrale für globale Schalter / Optionen für die Beleuchtungssteuerung.
+#
+# Wichtig:
+#   - Keine Zeitlogik hier
+#   - Kein Sonnenstand hier
+#   - Nur Schalter / Flags
+###############################################################################
+
+###############################################################################
+# Globaler Schalter für optionale Blue-Hour-Modulation (systemweit)
+###############################################################################
+
+input_text:
+  moeswl001_status:
+    name: "Status MoesWL001"
+    initial: "OK"
+  moeswl002_status:
+    name: "Status MoesWL002"
+    initial: "OK"
+  moeswl003_status:
+    name: "Status MoesWL003"
+    initial: "OK"
+  moeswl004_status:
+    name: "Status MoesWL004"
+    initial: "OK"
+  moeswl005_status:
+    name: "Status MoesWL005"
+    initial: "OK"
+  moeswl006_status:
+    name: "Status MoesWL006"
+    initial: "OK"
+  moeswl007_status:
+    name: "Status MoesWL007"
+    initial: "OK"
+  moeswl008_status:
+    name: "Status MoesWL008"
+    initial: "OK"
+  moeswl009_status:
+    name: "Status MoesWL009"
+    initial: "OK"
+  moeswl010_status:
+    name: "Status MoesWL010"
+    initial: "OK"
+
+automation:
+  - id: alert_water_leak_global
+    alias: "🚨 Alarm: Wasserleck detektiert (core_ha_moeswaterleaksensor)"
+    mode: parallel
+    max: 10
+    
+    trigger:
+      # Wir triggern auf jeden binären Sensor, der nass wird
+      - platform: state
+        entity_id: 
+          - binary_sensor.moeswl001_water_leak_2
+          - binary_sensor.moeswl002_water_leak_2
+          - binary_sensor.moeswl003_water_leak_2
+          - binary_sensor.moeswl004_water_leak_2
+          - binary_sensor.moeswl005_water_leak_2
+          - binary_sensor.moeswl006_water_leak_2
+          - binary_sensor.moeswl007_water_leak_2
+          - binary_sensor.moeswl008_water_leak_2
+          - binary_sensor.moeswl009_water_leak_2
+          - binary_sensor.moeswl010_water_leak_2
+        to: "on"
+        
+    condition:
+      # Hier nutzen wir deine Dashboard-Logik:
+      # Hat das Gerät dieses Sensors das Label 'SENSOR_WATER'?
+      - condition: template
+        value_template: >
+          {{ device_id(trigger.entity_id) in label_devices('SENSOR_WATER') }}
+
+    action:
+      - variables:
+          # Wir holen Bereich und Name genau wie im Dashboard
+          area: "{{ area_name(trigger.entity_id) | default('Technikraum') }}"
+          friendly_name: "{{ state_attr(trigger.entity_id, 'friendly_name') }}"
+          timestamp: "{{ now().strftime('%d.%m.%Y %H:%M') }}"
+          text_field: "input_text.{{ trigger.entity_id.split('.')[1].split('_')[0] }}_status"
+
+      - service: script.notify_dispatch
+        data:
+          prio: "A"
+          title: "🚨 WASSERALARM: {{ area }}!"
+          message: "Feuchtigkeit entdeckt: {{ friendly_name }}. Bitte sofort {{ area }} prüfen!"
+
+      # Zeitstempel in das Textfeld schreiben
+      - service: input_text.set_value
+        target:
+          entity_id: "{{ text_field }}"
+        data:
+          value: "ALARM am {{ timestamp }}"
+
+
+  - id: alert_water_leak_arrival_check
+    alias: "🚨 Wasser: Check bei Ankunft (core_ha_moeswaterleaksensor)"
+    mode: single
+    trigger:
+      # Trigger 1: Thomas kommt nach Hause
+      - platform: state
+        entity_id: binary_sensor.occupied_home_1
+        from: "off"
+        to: "on"
+      # Trigger 2: Alle 30 Minuten (auf der halben und vollen Stunde)
+      - platform: time_pattern
+        minutes: "/30"
+    condition:
+      # Bedingung 1: Thomas muss zu Hause sein
+      - condition: state
+        entity_id: binary_sensor.occupied_home_1
+        state: "on"
+      # Bedingung 2: Mindestens eines der 10 Textfelder ist NICHT "OK"
+      - condition: template
+        value_template: >
+          {% set status_fields = [
+            'input_text.moeswl001_status', 'input_text.moeswl002_status',
+            'input_text.moeswl003_status', 'input_text.moeswl004_status',
+            'input_text.moeswl005_status', 'input_text.moeswl006_status',
+            'input_text.moeswl007_status', 'input_text.moeswl008_status',
+            'input_text.moeswl009_status', 'input_text.moeswl010_status'
+          ] %}
+          {{ states | selectattr('entity_id', 'in', status_fields) 
+                    | selectattr('state', 'ne', 'OK') | list | length > 0 }}
+    action:
+      # 5 Minuten Verzögerung (Zeit zum Ankommen)
+      - delay: "00:05:00"
+      
+      # Erneute Prüfung nach dem Delay (vielleicht wurde es schon resettet?)
+      - condition: template
+        value_template: >
+          {% set status_fields = [
+            'input_text.moeswl001_status', 'input_text.moeswl002_status',
+            'input_text.moeswl003_status', 'input_text.moeswl004_status',
+            'input_text.moeswl005_status', 'input_text.moeswl006_status',
+            'input_text.moeswl007_status', 'input_text.moeswl008_status',
+            'input_text.moeswl009_status', 'input_text.moeswl010_status'
+          ] %}
+          {{ states | selectattr('entity_id', 'in', status_fields) 
+                    | selectattr('state', 'ne', 'OK') | list | length > 0 }}
+
+      - variables:
+          # Wir sammeln die betroffenen Räume für die Nachricht
+          problem_areas: >
+            {% set status_fields = [
+              'input_text.moeswl001_status', 'input_text.moeswl002_status',
+              'input_text.moeswl003_status', 'input_text.moeswl004_status',
+              'input_text.moeswl005_status', 'input_text.moeswl006_status',
+              'input_text.moeswl007_status', 'input_text.moeswl008_status',
+              'input_text.moeswl009_status', 'input_text.moeswl010_status'
+            ] %}
+            {% set areas = namespace(names=[]) %}
+            {% for f in status_fields %}
+              {% if states(f) != 'OK' %}
+                {# Wir leiten den Bereich vom Sensor-Namen ab #}
+                {% set s_id = 'binary_sensor.' ~ f.split('.')[1].replace('_status', '') ~ '_water_leak_2' %}
+                {% set a = area_name(s_id) or 'Technikraum' %}
+                {% if a not in areas.names %}{% set areas.names = areas.names + [a] %}{% endif %}
+              {% endif %}
+            {% endfor %}
+            {{ areas.names | join(' und ') }}
+
+      - service: script.notify_dispatch
+        data:
+          prio: "A"
+          title: "🚨 UNGEKLÄRTER WASSERALARM!"
+          message: "Achtung: In folgenden Bereichen gab es während deiner Abwesenheit einen Wasseralarm, der noch nicht quittiert wurde: {{ problem_areas }}. Bitte das Haus prüfen!"
+
+
+
+script:
+  reset_water_sensors:
+    alias: "Alle Wassersensoren Reset (core_ha_moeswaterleaksensor)"
+    sequence:
+      - service: input_text.set_value
+        target:
+          entity_id:
+            - input_text.moeswl001_status
+            - input_text.moeswl002_status
+            - input_text.moeswl003_status
+            - input_text.moeswl004_status
+            - input_text.moeswl005_status
+            - input_text.moeswl006_status
+            - input_text.moeswl007_status
+            - input_text.moeswl008_status
+            - input_text.moeswl009_status
+            - input_text.moeswl010_status
+        data:
+          value: "OK"
+
+###############################################################################

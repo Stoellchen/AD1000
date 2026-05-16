@@ -34,6 +34,18 @@
 # - Secrets in secrets.yaml auslagern
 ###############################################################################
 
+
+# Hinweis: Falls du ein Passwort auf der SLZB-Oberfläche vergeben hast, müssten wir den Befehl noch um 
+# Authentifizierungsdaten ergänzen.
+rest_command:
+  reboot_slzb_coordinator:
+    # Wir nutzen die API des SLZB, um den Reboot auszulösen
+    # url: "http://slzbmr4001.main.arpa/api/reboot"
+    url: "http://slzbmr4001.main.arpa/api2?action=4&cmd=3"
+    method: GET
+
+
+
 mqtt:
   sensor:
     # Anzahl verbundener Clients
@@ -131,6 +143,76 @@ input_datetime:
 # 3) Automation – merkt sich den letzten MQTT-Empfang
 ###############################################################################
 automation:
+  - id: reboot_slzb_on_mqtt_loss
+    alias: "System: SLZB Reboot bei Verbindungsverlust (core_ha_mqtt_monitor_mqtt)"
+    description: "Startet den Zigbee-Coordinator neu, wenn die Bridge-Verbindung wegbricht. dies ist meist der Fall nach backups und so"
+    mode: single
+    trigger:
+      # - platform: state
+      #  entity_id: binary_sensor.zigbee2mqtt_bridge_connection_state
+      #  from: "on"
+      #  to: "off"
+      #  for:
+      #    seconds: 20
+        # Wir entfernen 'from' und 'to' und nutzen ein Template als Trigger
+        # oder wir triggern auf JEDEN Statuswechsel weg von 'on'
+      - platform: template
+        value_template: "{{ not is_state('binary_sensor.zigbee2mqtt_bridge_connection_state', 'on') }}"
+        for:
+          seconds: 20
+
+    condition: [] # Wir führen das immer aus, wenn die Bedingung erfüllt ist
+    action:
+      # 1. Den Reboot-Befehl an den SLZB senden
+      - service: rest_command.reboot_slzb_coordinator
+      
+      # 2. Optional: Eine Benachrichtigung an dich, damit du bescheid weißt
+      # - service: notify.mobile_app_dein_handy
+      #   data:
+      #     title: "Zigbee-Fehler erkannt"
+      #     message: "Verbindung zum SLZB verloren. Automatischer Neustart wurde eingeleitet."
+          
+      # 3. Kurz warten, bis der SLZB wieder hochgefahren ist (ca. 30 Sek)
+      - delay: "00:00:30"
+      
+      # 4. Zigbee2MQTT neu starten (falls es als Add-on läuft)
+      # - service: hassio.addon_restart
+      #   data:
+      #     addon: core_zigbee2mqtt
+
+
+
+automation:
+  - id: reboot_slzb_on_mqtt_loss
+    alias: "System: SLZB Reboot & Watchdog (core_ha_mqtt_monitor_mqtt)"
+    description: "Rebootet SLZB bei Verlust und prüft alle 5 Min nach, falls immer noch offline."
+    mode: single
+    trigger:
+      # 1. Sofort-Trigger bei Statuswechsel weg von 'on'
+      - platform: template
+        value_template: "{{ not is_state('binary_sensor.zigbee2mqtt_bridge_connection_state', 'on') }}"
+        for:
+          seconds: 20      
+      # 2. Zeit-Trigger: Alle 5 Minuten (Watchdog)
+      - platform: time_pattern
+        minutes: "/5"
+        
+    condition:
+      # Bevor die Action startet: Prüfen, ob der Status IMMER NOCH ungleich 'on' ist
+      # Dies verhindert den Reboot alle 5 Min, wenn eigentlich alles läuft.
+      - condition: template
+        value_template: "{{ not is_state('binary_sensor.zigbee2mqtt_bridge_connection_state', 'on') }}"
+
+    action:
+      # 1. Benachrichtigung (Optional, aber hilfreich zur Diagnose)
+      - service: notify.persistent_notification
+        data:
+          title: "SLZB Watchdog"
+          message: "Verbindung steht auf {{ states('binary_sensor.zigbee2mqtt_bridge_connection_state') }}. Neustart wird eingeleitet."
+      # 2. Den Reboot-Befehl an den SLZB senden
+      - service: rest_command.reboot_slzb_coordinator
+      
+
   - id: emqx_mqtt_heartbeat_received
     alias: "EMQX MQTT Heartbeat Received (core_ha_mqtt_monitor_mqtt)"
     mode: single

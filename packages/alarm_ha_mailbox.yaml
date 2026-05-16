@@ -1,0 +1,138 @@
+#
+#
+#
+# template Alarm Template
+# https://www.home-assistant.io/integrations/alarm_control_panel.template/
+#
+#
+# Wenn dies neu ist muss HA neu gestartet werden damit die entity_id erkannt wird.
+#
+
+template:
+  - binary_sensor:
+      - name: "Briefkasten Post vorhanden"
+        unique_id: briefkasten_post_vorhanden
+        state: "{{ is_state('input_select.briefkasten_inhalt', 'Brief erhalten') or is_state('input_select.briefkasten_inhalt', 'Paket erhalten') }}"
+        icon: >
+          {% if is_state('input_select.briefkasten_inhalt', 'Leer') %} mdi:mailbox-outline
+          {% else %} mdi:mailbox-up {% endif %}
+
+# Helfer zum Speichern des genauen Typs
+input_select:
+  briefkasten_inhalt:
+    name: "Briefkasten Detail-Status"
+    options:
+      - "Leer"
+      - "Brief erhalten"
+      - "Paket erhalten"
+    initial: "Leer"
+
+input_datetime:
+    briefkasten_letzte_leerung:
+      name: "Letzte Leerung Briefkasten"
+      has_date: true
+      has_time: true
+
+
+##########################################################################################
+##
+##  Manipulate lights ............. by usto 
+##
+##########################################################################################
+automation:
+  - id: alarm_ha_mailbox_smart
+    alias: "Briefkasten: Detektion Schlitz/Box (Manueller Reset) (alarm_ha_mailbox)"
+    mode: parallel # Erlaubt gleichzeitige Verarbeitung
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.aqaravib001_vibration
+        to: "on"
+        id: "schlitz"
+      - platform: state
+        entity_id: binary_sensor.aqarat1001_contact
+        to: "off"
+        id: "tuer_auf"
+    action:
+      - choose:
+          # FEHLERBEHEBUNG: trigger.id statt trigger_id
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.id == 'schlitz' }}"
+            sequence:
+              - service: input_select.select_option
+                target:
+                  entity_id: input_select.briefkasten_inhalt
+                data:
+                  option: "Brief erhalten"
+              - service: script.notify_dispatch
+                data:
+                  prio: "L"
+                  title: "Post da! 📩"
+                  message: "Brief durch den Schlitz eingeworfen."
+
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.id == 'tuer_auf' }}"
+            sequence:
+              - service: input_select.select_option
+                target:
+                  entity_id: input_select.briefkasten_inhalt
+                data:
+                  option: "Paket erhalten"
+              - service: script.notify_dispatch
+                data:
+                  prio: "L"
+                  title: "Paket da! 📦"
+                  message: "Die Frontbox wurde geöffnet."
+
+
+
+
+# markdown card for Lovelace (optional, kann auch in einem separaten Dashboard genutzt werden)
+# type: vertical-stack
+# cards:
+#   - type: markdown
+#     content: |
+#       ## 📬 Briefkasten Status
+#       {% if is_state('input_select.briefkasten_inhalt', 'Brief erhalten') %}
+#         ### <font color="#f1c40f">✉️ Ein Brief wartet auf dich</font>
+#         Der Schlitz wurde benutzt.
+#       {% elif is_state('input_select.briefkasten_inhalt', 'Paket erhalten') %}
+#         ### <font color="#e67e22">📦 Ein Paket wurde geliefert</font>
+#         Die große Box wurde (per PTT) geöffnet.
+#       {% else %}
+#         ### <font color="#2ecc71">✅ Briefkasten ist leer</font>
+#         Zuletzt geleert: {{ states('input_datetime.briefkasten_letzte_leerung') }}
+#       {% endif %}
+#       --- Status-Detail: **{{ states('input_select.briefkasten_inhalt') }}**
+#   - type: button
+#     name: Briefkasten als GELEERT markieren
+#     icon: mdi:check-bold
+#     tap_action:
+#       action: call-service
+#       service: input_select.select_option
+#       target:
+#         entity_id: input_select.briefkasten_inhalt
+#       data:
+#         option: Leer
+#     hold_action:
+#       action: call-service
+#       service: input_datetime.set_datetime
+#       target:
+#         entity_id: input_datetime.briefkasten_letzte_leerung
+#       data:
+#         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+#   - type: logbook
+#     entities:
+#       - input_select.briefkasten_inhalt
+#     hours_to_show: 192
+#     title: Briefkasten Historie
+
+
+
+## ---------------------------------------------------------------------------------------
+##
+## Security Stuff END
+##
+## ---------------------------------------------------------------------------------------
+

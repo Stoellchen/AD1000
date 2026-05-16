@@ -72,40 +72,49 @@ input_boolean:
 
 input_select:
   room_mode_wohnzimmer:
-    name: Room Mode Wohnzimmer
+    name: Wohnzimmer
+    options: [normal, quiet, silent]
+  room_mode_esszimmer:
+    name: Esszimmer
     options: [normal, quiet, silent]
   room_mode_kueche:
-    name: Room Mode Wohnzimmer
-    options: [normal, quiet, silent]
-  room_mode_schlafzimmer_1:
-    name: Room Mode Schlafzimmer Master
-    options: [normal, quiet, silent]
-  room_mode_schlafzimmer_2:
-    name: Room Mode Schlafzimmer 2
-    options: [normal, quiet, silent]
-  room_mode_schlafzimmer_3:
-    name: Room Mode Schlafzimmer 3
-    options: [normal, quiet, silent]
-  room_mode_schlafzimmer_4:
-    name: Room Mode Schlafzimmer 4
-    options: [normal, quiet, silent]
-  room_mode_eingangbereich:
-    name: Room Mode Eingangsbereich
-    options: [normal, quiet, silent]
-  room_mode_terasse:
-    name: Room Mode Terasse
-    options: [normal, quiet, silent]
-  room_mode_schwimmbad:
-    name: Room Mode Schwimmbar
+    name: Küche
     options: [normal, quiet, silent]
   room_mode_buero:
-    name: Room Mode Büro
+    name: Büro
     options: [normal, quiet, silent]
-  room_mode_keller:
-    name: Room Mode Keller
+  room_mode_korridor:
+    name: Korridor
     options: [normal, quiet, silent]
-  room_mode_werkstatt:
-    name: Room Mode Werkstatt
+
+  room_mode_schlafzimmer:
+    name: Schlafzimmer Master
+    options: [normal, quiet, silent]
+  room_mode_schlafzimmer_2:
+    name: Schlafzimmer 2
+    options: [normal, quiet, silent]
+  room_mode_schlafzimmer_3:
+    name: Schlafzimmer 3
+    options: [normal, quiet, silent]
+  room_mode_schlafzimmer_4:
+    name: Schlafzimmer 4
+    options: [normal, quiet, silent]
+
+  room_mode_garage:
+    name: Garage
+    options: [normal, quiet, silent]
+  room_mode_eingangbereich:
+    name: Eingangsbereich
+    options: [normal, quiet, silent]
+
+  room_mode_sitzplatz:
+    name: Sitzplatz
+    options: [normal, quiet, silent]
+  room_mode_schwimmbad:
+    name: Schwimmbad
+    options: [normal, quiet, silent]
+  room_mode_garten:
+    name: Garten
     options: [normal, quiet, silent]
     
 
@@ -275,8 +284,6 @@ automation:
           duration: 5
           transparency: 0%
           color: red
-
-
 
 
 script:
@@ -1079,4 +1086,128 @@ script:
               artist: "{{ small_text }}"
               images:
                 - url: "{{ picture_url }}"
+
+
+
+#  type: custom:auto-entities
+#  card:
+#    type: entities
+#    title: 🏠 Raum-Steuerung
+#  filter:
+#    template: >
+#      {% set ns = namespace(rows=[]) %}
+#  
+#      {# Wir sortieren die Liste der Entitäten hier direkt nach dem Namen
+#      (friendly_name) #}
+#  
+#      {% for state in states.input_select 
+#         | selectattr('entity_id', 'search', 'room_mode_') 
+#         | sort(attribute='attributes.friendly_name') %}
+#         
+#        {% set id = state.entity_id.split('room_mode_')[1] %}
+#        
+#        {% set ns.rows = ns.rows + [{
+#          "type": "custom:fold-entity-row",
+#          "head": {
+#            "type": "custom:multiple-entity-row",
+#            "entity": state.entity_id,
+#            "name": state.attributes.friendly_name | replace('Room Mode ', '') | replace('Modus ', ''),
+#            "icon": "mdi:star-settings",
+#            "show_state": false,
+#            "entities": [
+#              {
+#                "entity": "input_boolean.motion_eval_enabled_" ~ id,
+#                "name": "Motion",
+#                "toggle": true
+#              },
+#              {
+#                "entity": "input_boolean.manual_timer_enabled_" ~ id,
+#                "name": "Timer",
+#                "toggle": true
+#              }
+#            ]
+#          },
+#          "entities": [
+#            {
+#              "entity": "input_boolean.motion_eval_enabled_" ~ id,
+#              "name": "Bewegungssensor aktiv",
+#              "icon": "mdi:motion-sensor"
+#            },
+#            {
+#              "entity": "input_boolean.manual_timer_enabled_" ~ id,
+#              "name": "Timer aktiv",
+#              "icon": "mdi:timer-outline"
+#            },
+#            {
+#              "entity": state.entity_id,
+#              "name": "Modus wählen:",
+#              "icon": "mdi:speaker-message"
+#            }
+#          ]
+#        }] %}
+#      {% endfor %}
+#      {{ ns.rows }}
+#  
+#  
+#  
+#  type: custom:auto-entities
+#  card:
+#    type: vertical-stack
+#  card_param: cards
+#  filter:
+#    include:
+#      - entity_id: input_select.room_mode_*
+#        options:
+#          type: custom:mushroom-select-card
+#          layout: horizontal
+#          option_display: segmented
+#          secondary_info: none
+#          icon_type: none
+#          card_mod:
+#            style: |
+#              ha-card {
+#                background: none;
+#                border-bottom: 1px solid rgba(255,255,255,0.1);
+#                border-radius: 0;
+#                padding: 5px 0;
+#              }
+#    exclude: []
+#  sort:
+#    method: friendly_name
+#    ignore_case: true
+#  
+#  
+#  
+#  type: custom:auto-entities
+#  card:
+#    type: entities
+#    title: On heisst kein Trigger!!
+#  filter:
+#    include:
+#      - options: {}
+#        entity_id: input_boolean.motion_eval_enabled_*
+#        sort:
+#          method: friendly_name
+#          ignore_case: true
+#    exclude: []
+#  
+#  
+#  type: custom:auto-entities
+#  card:
+#    type: entities
+#    title: On heisst kein timer!!
+#  filter:
+#    include:
+#      - options: {}
+#        entity_id: input_boolean.manual_timer_enabled_*
+#        sort:
+#          method: friendly_name
+#          ignore_case: true
+#    exclude: []
+#  
+#  
+#  
+#  
+#  
+#  
 

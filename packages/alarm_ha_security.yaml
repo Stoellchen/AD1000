@@ -1,0 +1,269 @@
+#
+#
+#
+# template Alarm Template
+# https://www.home-assistant.io/integrations/alarm_control_panel.template/
+#
+#
+# Wenn dies neu ist muss HA neu gestartet werden damit die entity_id erkannt wird.
+#
+
+
+template:
+  - binary_sensor:
+      - name: "All Security Binary Sensors"
+        unique_id: all_security_binary_sensors
+        device_class: safety
+        state: >
+          {% set security_devices = label_devices('security_closed') + 
+                                   label_devices('security_closed_24h') + 
+                                   label_devices('security_vibration') %}
+          {% set entities = security_devices | map('device_entities') | sum(start=[]) | select('match', 'binary_sensor') | list %}
+          {{ entities | expand | selectattr('state', 'eq', 'on') | list | count > 0 }}
+        attributes:
+          security_entities: >
+            {% set security_devices = label_devices('security_closed') + 
+                                     label_devices('security_closed_24h') + 
+                                     label_devices('security_vibration') %}
+            {{ security_devices | map('device_entities') | sum(start=[]) | select('match', 'binary_sensor') | list }}
+
+
+##########################################################################################
+##
+##  Manipulate lights ............. by usto 
+##
+##########################################################################################
+automation:
+  - id: alarm_security_device_label_trigger
+    alias: "Security: Label-basierte Alarm Auslösung (alarm_ha_security)"
+    mode: parallel
+    # Wir triggern auf das Event 'state_changed'
+    trigger:
+      - platform: state
+        entity_id:
+          # Hier füllst du deine Sensoren einmalig ab
+          - binary_sensor.aqarat1001_contact
+          - binary_sensor.aqarat1002_contact
+          - binary_sensor.aqarat1003_contact
+          - binary_sensor.aqarat1004_contact
+          - binary_sensor.aqarat1005_contact
+#          - binary_sensor.aqarat1006_contact
+#          - binary_sensor.aqarat1007_contact
+#          - binary_sensor.aqarat1008_contact
+#          - binary_sensor.aqarat1009_contact
+#          - binary_sensor.aqarat1010_contact
+#          - binary_sensor.aqarat1011_contact
+#          - binary_sensor.aqarat1012_contact
+#          - binary_sensor.aqarat1013_contact
+#          - binary_sensor.aqarat1014_contact
+#          - binary_sensor.aqarat1015_contact
+#          - binary_sensor.aqarat1016_contact
+#          - binary_sensor.aqarat1017_contact
+#          - binary_sensor.aqarat1018_contact
+#          - binary_sensor.aqarat1019_contact
+#          - binary_sensor.aqarat1020_contact
+#          - binary_sensor.aqarat1021_contact
+#          - binary_sensor.aqarat1022_contact
+#          - binary_sensor.aqarat1023_contact
+#          - binary_sensor.aqarat1024_contact
+#          - binary_sensor.aqarat1025_contact
+          - binary_sensor.aqaravib001_vibration
+          - binary_sensor.aqaravib002_vibration
+          - binary_sensor.aqaravib003_vibration
+          - binary_sensor.aqaravib004_vibration
+          - binary_sensor.aqaravib005_vibration
+#          - binary_sensor.aqaravib006_vibration
+#          - binary_sensor.aqaravib007_vibration
+#          - binary_sensor.aqaravib008_vibration
+#          - binary_sensor.aqaravib009_vibration
+#          - binary_sensor.aqaravib010_vibration
+#          - binary_sensor.aqaravib011_vibration
+#          - binary_sensor.aqaravib012_vibration
+#          - binary_sensor.aqaravib013_vibration
+#          - binary_sensor.aqaravib014_vibration
+#          - binary_sensor.aqaravib015_vibration
+#          - binary_sensor.aqaravib016_vibration
+#          - binary_sensor.aqaravib017_vibration
+#          - binary_sensor.aqaravib018_vibration
+#          - binary_sensor.aqaravib019_vibration
+#          - binary_sensor.aqaravib020_vibration
+#          - binary_sensor.aqaravib021_vibration
+#          - binary_sensor.aqaravib022_vibration
+#          - binary_sensor.aqaravib023_vibration
+#          - binary_sensor.aqaravib024_vibration
+#          - binary_sensor.aqaravib025_vibration
+          - binary_sensor.thirdr1001_occupancy
+          - binary_sensor.thirdr1002_occupancy
+          - binary_sensor.thirdr1003_occupancy
+          - binary_sensor.thirdr1004_occupancy
+          - binary_sensor.thirdr1005_occupancy
+          - binary_sensor.thirdr1006_occupancy
+          - binary_sensor.thirdr1007_occupancy
+          - binary_sensor.thirdr1009_occupancy
+          - binary_sensor.thirdr3001_occupancy
+          - binary_sensor.thirdr3002_occupancy
+          - binary_sensor.thirdr3003_occupancy
+          - binary_sensor.thirdr3004_occupancy
+          - binary_sensor.thirdr3005_occupancy
+          # ... einfach alle sicherheitsrelevanten Sensoren hier rein - werden aber ueber labels gefiltert
+        to: "on"
+    condition:
+      # 1. Bedingung: Ist die Alarmanlage überhaupt scharf geschaltet?
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: alarm_control_panel.my_alarm # Ersetze dies durch deine echte Alarm-ID
+            state: "armed_away"
+          - condition: state
+            entity_id: alarm_control_panel.my_alarm # Ersetze dies durch deine echte Alarm-ID
+            state: "armed_home"
+          - condition: state
+            entity_id: alarm_control_panel.my_alarm # Ersetze dies durch deine echte Alarm-ID
+            state: "armed_vacation"
+      
+      # 2. Bedingung: Gehört der Sensor zu unserer Sicherheits-Liste?
+      - condition: template
+        value_template: >
+          {% set security_list = state_attr('binary_sensor.all_security_binary_sensors', 'security_entities') or [] %}
+          {{ trigger.entity_id in security_list }}
+
+    action:
+      - service: script.notify_dispatch
+        data:
+          prio: "H"
+          title: "ALARM AUSGELÖST!"
+          message: >
+            {% set dev_id = device_id(trigger.entity_id) %}
+            {% if dev_id in label_devices('security_vibration') %}
+              Vibration detektiert an: {{ state_attr(trigger.entity_id, 'friendly_name') }} ({{ area_name(trigger.entity_id) }})!
+            {% else %}
+              Die Tür/Fenster {{ state_attr(trigger.entity_id, 'friendly_name') }} ({{ area_name(trigger.entity_id) }}) wurde geöffnet!
+            {% endif %}
+      - service: script.turn_on
+        target:
+          entity_id: script.alarm_security_alarm_triggered
+
+##########################################################################################
+##  Sicherheits-Check Skript (Preflight)
+##  Prüft Geräte-Labels: security_closed, security_closed_24h, security_vibration
+##########################################################################################
+
+script:
+  alarm_ha_security_preflight_check:
+    alias: "Sicherheits-Check vor Verlassen (alarm_ha_security)"
+    description: "Prüft ob alle Türen zu, Sensoren erreichbar und Batterien voll sind inklusive Bereichsangabe."
+    fields:
+      duration_long:
+        description: "Ist die Abwesenheit länger als 24h? (true/false)"
+        example: "true"
+    sequence:
+      - variables:
+          # 1. Geräte sammeln
+          dev_closed: "{{ label_devices('security_closed') }}"
+          dev_24h: "{{ label_devices('security_closed_24h') if duration_long == 'true' else [] }}"
+          dev_vibra: "{{ label_devices('security_vibration') }}"
+          
+          # 2. Entitäten extrahieren
+          check_entities: >
+            {{ (dev_closed + dev_24h) | map('device_entities') | sum(start=[]) 
+               | select('match', 'binary_sensor') | list }}
+          
+          all_security_entities: >
+            {{ (dev_closed + dev_24h + dev_vibra) | map('device_entities') | sum(start=[]) 
+               | select('match', 'binary_sensor') | list }}
+
+          # 3. Listen mit Bereichsnamen über For-Schleifen erstellen
+          open_sensors: >
+            {% set ns = namespace(items=[]) %}
+            {% for entity in check_entities | select('is_state', 'on') %}
+              {% set ns.items = ns.items + [ state_attr(entity, 'friendly_name') ~ ' (' ~ (area_name(entity) or 'Kein Bereich') ~ ')' ] %}
+            {% endfor %}
+            {{ ns.items }}
+          
+          dead_sensors: >
+            {% set ns = namespace(items=[]) %}
+            {% for entity in all_security_entities | select('is_state', 'unavailable') %}
+              {% set ns.items = ns.items + [ state_attr(entity, 'friendly_name') ~ ' (' ~ (area_name(entity) or 'Kein Bereich') ~ ')' ] %}
+            {% endfor %}
+            {{ ns.items }}
+          
+          low_battery: >
+            {% set ns = namespace(items=[]) %}
+            {% if duration_long == 'true' %}
+              {% for entity in all_security_entities | expand | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery', 'lt', 20) %}
+                {% set ns.items = ns.items + [ entity.name ~ ' (' ~ (area_name(entity.entity_id) or 'Kein Bereich') ~ ')' ] %}
+              {% endfor %}
+            {% endif %}
+            {{ ns.items }}
+
+          all_issues: "{{ open_sensors + dead_sensors + low_battery }}"
+
+      - if:
+          - condition: template
+            value_template: "{{ all_issues | count > 0 }}"
+        then:
+          - service: script.notify_dispatch
+            data:
+              prio: "H"
+              title: "Sicherheits-Check fehlgeschlagen ❌"
+              message: >
+                Bitte prüfen: {{ all_issues | join(', ') }}. 
+                Abwesenheit geplant für: {{ 'Länger als 24h' if duration_long == 'true' else 'Kurztrip' }}.
+        else:
+          - service: script.notify_dispatch
+            data:
+              prio: "L"
+              title: "Sicherheits-Check OK ✅"
+              message: "Alle überwachten Bereiche sind gesichert. Gute Reise!"
+
+##########################################################################################
+##  Passende Dashboard-Karte (Lovelace)
+##########################################################################################
+
+# 
+# type: markdown
+# content: >
+#   ## 🛡️ Sicherheits-Status
+# 
+#   {% set dev_closed = label_devices('security_closed') %} {% set dev_24h =
+#   label_devices('security_closed_24h') %} {% set dev_vib =
+#   label_devices('security_vibration') %}
+# 
+#   {% set all_entities = (dev_closed + dev_24h + dev_vib) |
+#   map('device_entities') | sum(start=[]) | select('match', 'binary_sensor') |
+#   list %}
+# 
+#   {% set ns = namespace(found=false) %}
+# 
+#   ### 🚨 Warnungen (Offen / Offline) {% for entity in all_entities %}
+#     {% set dev_id = device_id(entity) %}
+#     {# 1. Prüfung auf OFFEN (nur für Kontakt-Labels) #}
+#     {% if is_state(entity, 'on') and (dev_id in dev_closed or dev_id in dev_24h) %}
+#   - 🔴 **{{ state_attr(entity, 'friendly_name') }}**: OFFEN ({{
+#   area_name(entity) or 'Kein Bereich' }})
+#       {% set ns.found = true %}
+#     
+#     {# 2. Prüfung auf NICHT ERREICHBAR #}
+#     {% elif is_state(entity, 'unavailable') %}
+#   - ⚪ **{{ state_attr(entity, 'friendly_name') }}**: OFFLINE ({{
+#   area_name(entity) or 'Kein Bereich' }})
+#       {% set ns.found = true %}
+#     {% endif %}
+#   {% endfor %}
+# 
+#   {% if not ns.found %} ✅ Alle Sensoren sind zu und online. {% endif %}
+# 
+#   --- ### 🔋 Batterie-Check {% set battery_issues = all_entities | expand |
+#   selectattr('attributes.battery', 'defined') | selectattr('attributes.battery',
+#   'lt', 25) | list %} {% for item in battery_issues %} - 🪫 **{{ item.name }}**:
+#   {{ item.attributes.battery }}% ({{ area_name(item.entity_id) or 'Kein Bereich'
+#   }}) {% else %} ✅ Batterien OK. {% endfor %}
+# 
+
+
+## ---------------------------------------------------------------------------------------
+##
+## Security Stuff END
+##
+## ---------------------------------------------------------------------------------------
+

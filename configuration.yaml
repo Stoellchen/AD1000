@@ -47,7 +47,8 @@ python_script:
 pyscript:
   allow_all_imports: true
   hass_is_global: true
-
+  # Setzt das Log-Level für Pyscript-Skripte auf 'error' oder info oder debug
+  loglevel: error
 
 
 # Location Sharing with google maps https://www.home-assistant.io/integrations/google_maps/

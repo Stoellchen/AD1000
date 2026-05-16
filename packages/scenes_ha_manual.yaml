@@ -1,0 +1,1381 @@
+scene:
+- id: 'esszimmer_100_kaltes_licht'
+  name: Esszimmer 100 Kaltes Licht
+  entities:
+    light.e1:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e1
+      supported_features: 44
+      state: 'on'
+    light.e2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e2
+      supported_features: 44
+      state: 'on'
+    light.e3:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e3
+      supported_features: 44
+      state: 'on'
+    light.e4:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e4
+      supported_features: 44
+      state: 'on'
+  metadata: {}
+- id: 'esszimmer_75_kaltes_licht'
+  name: Esszimmer 75 Kaltes Licht
+  entities:
+    light.e1:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 191
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e1
+      supported_features: 44
+      state: 'on'
+    light.e2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 191
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e2
+      supported_features: 44
+      state: 'on'
+    light.e3:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 191
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e3
+      supported_features: 44
+      state: 'on'
+    light.e4:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 191
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e4
+      supported_features: 44
+      state: 'on'
+  metadata: {}
+- id: 'esszimmer_50_kaltes_licht'
+  name: Esszimmer 50 Kaltes Licht
+  entities:
+    light.e1:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 128
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e1
+      supported_features: 44
+      state: 'on'
+    light.e2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 128
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e2
+      supported_features: 44
+      state: 'on'
+    light.e3:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 128
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e3
+      supported_features: 44
+      state: 'on'
+    light.e4:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 128
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e4
+      supported_features: 44
+      state: 'on'
+  metadata: {}
+- id: 'esszimmer_25_kaltes_licht'
+  name: Esszimmer 25 Kaltes Licht
+  entities:
+    light.e1:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 64
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e1
+      supported_features: 44
+      state: 'on'
+    light.e2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 64
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e2
+      supported_features: 44
+      state: 'on'
+    light.e3:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 64
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e3
+      supported_features: 44
+      state: 'on'
+    light.e4:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 64
+      color_temp_kelvin: 6535
+      rgb_color:
+      - 255
+      - 255
+      - 255
+      friendly_name: e4
+      supported_features: 44
+      state: 'on'
+  metadata: {}
+
+- id: 'esszimmer_100_warmes_licht'
+  name: Esszimmer 100 Warmes Licht
+  entities:
+    light.e1:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e1
+      supported_features: 44
+      state: 'on'
+    light.e2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e2
+      supported_features: 44
+      state: 'on'
+    light.e3:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e3
+      supported_features: 44
+      state: 'on'
+    light.e4:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e4
+      supported_features: 44
+      state: 'on'
+  metadata: {}
+- id: 'esszimmer_75_warmes_licht'
+  name: Esszimmer 75 Warmes Licht
+  entities:
+    light.e1:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 192
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e1
+      supported_features: 44
+      state: 'on'
+    light.e2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 192
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e2
+      supported_features: 44
+      state: 'on'
+    light.e3:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 192
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e3
+      supported_features: 44
+      state: 'on'
+    light.e4:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 192
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e4
+      supported_features: 44
+      state: 'on'
+  metadata: {}
+
+- id: 'esszimmer_50_warmes_licht'
+  name: Esszimmer 50 Warmes Licht
+  entities:
+    light.e1:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 128
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e1
+      supported_features: 44
+      state: 'on'
+    light.e2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 128
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e2
+      supported_features: 44
+      state: 'on'
+    light.e3:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 128
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e3
+      supported_features: 44
+      state: 'on'
+    light.e4:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 128
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e4
+      supported_features: 44
+      state: 'on'
+  metadata: {}
+- id: 'esszimmer_25_warmes_licht'
+  name: Esszimmer 25 Warmes Licht
+  entities:
+    light.e1:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 64
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e1
+      supported_features: 44
+      state: 'on'
+    light.e2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 64
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e2
+      supported_features: 44
+      state: 'on'
+    light.e3:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 64
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e3
+      supported_features: 44
+      state: 'on'
+    light.e4:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      effect:
+      color_mode: color_temp
+      brightness: 64
+      color_temp_kelvin: 2000
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      friendly_name: e4
+      supported_features: 44
+      state: 'on'
+  metadata: {}
+
+
+- id: 'wohnzimmer_scene_2s'
+  name: wohnzimmer_scene_2s
+  entities:
+    light.w2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6666
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      - colorloop
+      - stop_colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode: color_temp
+      brightness: 112
+      color_temp_kelvin: 2000
+      hs_color:
+      - 30.601
+      - 94.547
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      xy_color:
+      - 0.598
+      - 0.383
+      friendly_name: w2
+      supported_features: 44
+      state: 'on'
+    light.sideboard_kerze_links:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: hs
+      brightness: 191
+      color_temp_kelvin:
+      hs_color:
+      - 245
+      - 88
+      rgb_color:
+      - 49
+      - 31
+      - 255
+      xy_color:
+      - 0.149
+      - 0.053
+      friendly_name: Sideboard Kerze Links
+      supported_features: 0
+      state: 'on'
+    light.sideboard_kerze_rechts:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: hs
+      brightness: 128
+      color_temp_kelvin:
+      hs_color:
+      - 238
+      - 89
+      rgb_color:
+      - 28
+      - 36
+      - 255
+      xy_color:
+      - 0.141
+      - 0.051
+      friendly_name: Sideboard Kerze Rechts
+      supported_features: 0
+      state: 'on'
+    light.sideboard_rechts:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      - xy
+      color_mode: xy
+      brightness: 80
+      color_temp_kelvin:
+      hs_color:
+      - 353.128
+      - 89.02
+      rgb_color:
+      - 255
+      - 28
+      - 54
+      xy_color:
+      - 0.675
+      - 0.293
+      mode: normal
+      dynamics: none
+      friendly_name: Sideboard Rechts
+      supported_features: 40
+      state: 'on'
+    light.wand:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - candle
+      - fireplace
+      - colorloop
+      - sunset
+      - sunrise
+      - sparkle
+      - opal
+      - glisten
+      - underwater
+      - cosmos
+      - sunbeam
+      - enchant
+      - none
+      - finish_effect
+      - stop_effect
+      - stop_hue_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode: xy
+      brightness: 10
+      color_temp_kelvin:
+      hs_color:
+      - 29.739
+      - 90.196
+      rgb_color:
+      - 255
+      - 139
+      - 25
+      xy_color:
+      - 0.595
+      - 0.383
+      icon: mdi:led-strip-variant
+      friendly_name: Wand
+      supported_features: 44
+      state: 'on'
+    select.wand_effect:
+      options:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - candle
+      - fireplace
+      - colorloop
+      - sunset
+      - sunrise
+      - sparkle
+      - opal
+      - glisten
+      - underwater
+      - cosmos
+      - sunbeam
+      - enchant
+      - none
+      - finish_effect
+      - stop_effect
+      - stop_hue_effect
+      icon: mdi:palette
+      friendly_name: Wand Effect
+      state: unknown
+    number.wand_effect_speed:
+      min: 0
+      max: 1
+      step: 0.01
+      mode: auto
+      friendly_name: Wand Effect speed
+      state: unknown
+    text.wand_effect_color:
+      mode: text
+      min: 0
+      max: 255
+      pattern:
+      assumed_state: true
+      friendly_name: Wand Effect color
+      state: unknown
+  metadata: {}
+
+- id: 'wohnzimmer_scene_2d'
+  name: wohnzimmer_scene_2d
+  entities:
+    light.w2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6666
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      - colorloop
+      - stop_colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode: color_temp
+      brightness: 51
+      color_temp_kelvin: 2000
+      hs_color:
+      - 30.601
+      - 94.547
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      xy_color:
+      - 0.598
+      - 0.383
+      friendly_name: w2
+      supported_features: 44
+      state: 'on'
+    light.sideboard_kerze_links:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: hs
+      brightness: 191
+      color_temp_kelvin:
+      hs_color:
+      - 219
+      - 50.2
+      rgb_color:
+      - 127
+      - 172
+      - 255
+      xy_color:
+      - 0.208
+      - 0.217
+      friendly_name: Sideboard Kerze Links
+      supported_features: 0
+      state: 'on'
+    light.sideboard_kerze_rechts:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: hs
+      brightness: 128
+      color_temp_kelvin:
+      hs_color:
+      - 219
+      - 50.2
+      rgb_color:
+      - 127
+      - 172
+      - 255
+      xy_color:
+      - 0.208
+      - 0.217
+      friendly_name: Sideboard Kerze Rechts
+      supported_features: 0
+      state: 'on'
+    light.sideboard_rechts:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      - xy
+      color_mode: xy
+      brightness: 80
+      color_temp_kelvin:
+      hs_color:
+      - 32.75
+      - 94.118
+      rgb_color:
+      - 255
+      - 146
+      - 15
+      xy_color:
+      - 0.5879
+      - 0.392
+      mode: normal
+      dynamics: none
+      friendly_name: Sideboard Rechts
+      supported_features: 40
+      state: 'on'
+    light.wand:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - candle
+      - fireplace
+      - colorloop
+      - sunset
+      - sunrise
+      - sparkle
+      - opal
+      - glisten
+      - underwater
+      - cosmos
+      - sunbeam
+      - enchant
+      - none
+      - finish_effect
+      - stop_effect
+      - stop_hue_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode: color_temp
+      brightness: 26
+      color_temp_kelvin: 2754
+      hs_color:
+      - 28.281
+      - 64.025
+      rgb_color:
+      - 255
+      - 169
+      - 92
+      xy_color:
+      - 0.519
+      - 0.387
+      icon: mdi:led-strip-variant
+      friendly_name: Wand
+      supported_features: 44
+      state: 'on'
+    select.wand_effect:
+      options:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - candle
+      - fireplace
+      - colorloop
+      - sunset
+      - sunrise
+      - sparkle
+      - opal
+      - glisten
+      - underwater
+      - cosmos
+      - sunbeam
+      - enchant
+      - none
+      - finish_effect
+      - stop_effect
+      - stop_hue_effect
+      icon: mdi:palette
+      friendly_name: Wand Effect
+      state: unknown
+    number.wand_effect_speed:
+      min: 0
+      max: 1
+      step: 0.01
+      mode: auto
+      friendly_name: Wand Effect speed
+      state: unknown
+    text.wand_effect_color:
+      mode: text
+      min: 0
+      max: 255
+      pattern:
+      assumed_state: true
+      friendly_name: Wand Effect color
+      state: unknown
+  metadata: {}
+
+
+- id: 'wohnzimmer_scene_2h'
+  name: wohnzimmer_scene_2h
+  entities:
+    light.w2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6666
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      - colorloop
+      - stop_colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode:
+      brightness:
+      color_temp_kelvin:
+      hs_color:
+      rgb_color:
+      xy_color:
+      friendly_name: w2
+      supported_features: 44
+      state: 'off'
+    light.sideboard_kerze_links:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: color_temp
+      brightness: 161
+      color_temp_kelvin: 2000
+      hs_color:
+      - 30.601
+      - 94.547
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      xy_color:
+      - 0.598
+      - 0.383
+      friendly_name: Sideboard Kerze Links
+      supported_features: 0
+      state: 'on'
+    light.sideboard_kerze_rechts:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: color_temp
+      brightness: 161
+      color_temp_kelvin: 2000
+      hs_color:
+      - 30.601
+      - 94.547
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      xy_color:
+      - 0.598
+      - 0.383
+      friendly_name: Sideboard Kerze Rechts
+      supported_features: 0
+      state: 'on'
+    light.sideboard_rechts:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      supported_color_modes:
+      - color_temp
+      - xy
+      color_mode:
+      brightness:
+      color_temp_kelvin:
+      hs_color:
+      rgb_color:
+      xy_color:
+      mode: normal
+      dynamics: none
+      friendly_name: Sideboard Rechts
+      supported_features: 40
+      state: 'off'
+    light.wand:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - candle
+      - fireplace
+      - colorloop
+      - sunset
+      - sunrise
+      - sparkle
+      - opal
+      - glisten
+      - underwater
+      - cosmos
+      - sunbeam
+      - enchant
+      - none
+      - finish_effect
+      - stop_effect
+      - stop_hue_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode: color_temp
+      brightness: 5
+      color_temp_kelvin: 2717
+      hs_color:
+      - 28.358
+      - 65.183
+      rgb_color:
+      - 255
+      - 167
+      - 89
+      xy_color:
+      - 0.524
+      - 0.387
+      icon: mdi:led-strip-variant
+      friendly_name: Wand
+      supported_features: 44
+      state: 'on'
+    select.wand_effect:
+      options:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - candle
+      - fireplace
+      - colorloop
+      - sunset
+      - sunrise
+      - sparkle
+      - opal
+      - glisten
+      - underwater
+      - cosmos
+      - sunbeam
+      - enchant
+      - none
+      - finish_effect
+      - stop_effect
+      - stop_hue_effect
+      icon: mdi:palette
+      friendly_name: Wand Effect
+      state: unknown
+    number.wand_effect_speed:
+      min: 0
+      max: 1
+      step: 0.01
+      mode: auto
+      friendly_name: Wand Effect speed
+      state: unknown
+    text.wand_effect_color:
+      mode: text
+      min: 0
+      max: 255
+      pattern:
+      assumed_state: true
+      friendly_name: Wand Effect color
+      state: unknown
+    light.w4:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6666
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      - colorloop
+      - stop_colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode:
+      brightness:
+      color_temp_kelvin:
+      hs_color:
+      rgb_color:
+      xy_color:
+      friendly_name: w4
+      supported_features: 44
+      state: 'off'
+    light.w3:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6666
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      - colorloop
+      - stop_colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode: color_temp
+      brightness: 5
+      color_temp_kelvin: 2000
+      hs_color:
+      - 30.601
+      - 94.547
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      xy_color:
+      - 0.598
+      - 0.383
+      friendly_name: w3
+      supported_features: 44
+      state: 'on'
+  metadata: {}
+
+
+- id: 'wohnzimmer_full_bright'
+  name: wohnzimmer_full_bright
+  entities:
+    light.w1:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6666
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      - colorloop
+      - stop_colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6666
+      hs_color:
+      - 300
+      - 2.084
+      rgb_color:
+      - 255
+      - 250
+      - 255
+      xy_color:
+      - 0.325
+      - 0.324
+      friendly_name: w1
+      supported_features: 44
+      state: 'on'
+    light.w2:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6666
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      - colorloop
+      - stop_colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6666
+      hs_color:
+      - 300
+      - 2.084
+      rgb_color:
+      - 255
+      - 250
+      - 255
+      xy_color:
+      - 0.325
+      - 0.324
+      friendly_name: w2
+      supported_features: 44
+      state: 'on'
+    light.w3:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6666
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      - colorloop
+      - stop_colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode: color_temp
+      brightness: 5
+      color_temp_kelvin: 2159
+      hs_color:
+      - 29.947
+      - 86.532
+      rgb_color:
+      - 255
+      - 144
+      - 34
+      xy_color:
+      - 0.583
+      - 0.387
+      friendly_name: w3
+      supported_features: 44
+      state: 'on'
+    light.w4:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6666
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      - colorloop
+      - stop_colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6666
+      hs_color:
+      - 300
+      - 2.084
+      rgb_color:
+      - 255
+      - 250
+      - 255
+      xy_color:
+      - 0.325
+      - 0.324
+      friendly_name: w4
+      supported_features: 44
+      state: 'on'
+    light.wand:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - candle
+      - fireplace
+      - colorloop
+      - sunset
+      - sunrise
+      - sparkle
+      - opal
+      - glisten
+      - underwater
+      - cosmos
+      - sunbeam
+      - enchant
+      - none
+      - finish_effect
+      - stop_effect
+      - stop_hue_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect:
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6535
+      hs_color:
+      - 54.768
+      - 1.6
+      rgb_color:
+      - 255
+      - 255
+      - 251
+      xy_color:
+      - 0.325
+      - 0.333
+      icon: mdi:led-strip-variant
+      friendly_name: Wand
+      supported_features: 44
+      state: 'on'
+    select.wand_effect:
+      options:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - candle
+      - fireplace
+      - colorloop
+      - sunset
+      - sunrise
+      - sparkle
+      - opal
+      - glisten
+      - underwater
+      - cosmos
+      - sunbeam
+      - enchant
+      - none
+      - finish_effect
+      - stop_effect
+      - stop_hue_effect
+      icon: mdi:palette
+      friendly_name: Wand Effect
+      state: unknown
+    number.wand_effect_speed:
+      min: 0
+      max: 1
+      step: 0.01
+      mode: auto
+      friendly_name: Wand Effect speed
+      state: unknown
+    text.wand_effect_color:
+      mode: text
+      min: 0
+      max: 255
+      pattern:
+      assumed_state: true
+      friendly_name: Wand Effect color
+      state: unknown
+  metadata: {}

@@ -216,6 +216,7 @@ def _get_source_devices_old2():
     return {}
 
 
+
 def _get_source_devices():
     """
     Read devices from sensor.device_power_normalized.attributes.devices

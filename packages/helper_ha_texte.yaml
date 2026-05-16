@@ -1,0 +1,60 @@
+##########################################################################################
+##
+##  helper_ha_texte.yaml
+##
+##########################################################################################
+#
+# Einbinden in lovelace mittels Markdown-Card:
+#
+#  <details> <summary>🔋 Batterie-Referenzliste</summary>  
+#        
+#  {{ state_attr('sensor.central_battery_infos', 'list') }}
+#
+#  </details>
+
+
+
+template:
+  - sensor:
+      - name: central_battery_infos
+        unique_id: central_battery_infos
+#        description: "Battery information of all devices in one list (helper_ha_batteries)" klappt nicht
+        state: "OK"
+        attributes:
+          list: |
+            | Typ | Batterie |
+            | :--- | :--- |
+            | 🔘 Moes 4 Gang | CR2430 |
+            | 💧 Moes Water | CR2032 |
+            | 🪟 Aqara Door | CR1632 |
+            | 📳 Aqara Vibra | CR2032 |
+            | 🧊 Aqara Cube | CR2450 |
+            | 🪟 Third Reality | 3x AA |
+            | 💧 Netatmo | 2x AAA |
+
+            💡 **Tipp**: Die CR2032 sind am wichtigsten für dein Lager.
+
+
+  - sensor:
+      - name: central_moes4gang_infos
+        unique_id: central_moes4gang_infos
+#        description: "Battery information of all devices in one list (helper_ha_batteries)" klappt nicht
+        state: "OK"
+        attributes:
+          list: |
+            | Klick | Aktion |
+            | :--- | :--- |
+            | **1_single** | Licht im Bereich/Raum ein- oder ausschalten (mit Circadian und Timer) |
+            | **1_double** | Licht einschalten mit Szene "Full Bright" |
+            | **1_long** | - noch nicht verwendet - |
+            | **2_single** | Licht im Bereich einschalten mit Szene ..._2s |
+            | **2_double** | Licht im Bereich einschalten mit Szene ..._2d |
+            | **2_long** | Licht im Bereich einschalten mit Szene ..._2h |
+            | **3_single** | - noch nicht verwendet - |
+            | **3_double** | - noch nicht verwendet - |
+            | **3_long** | - noch nicht verwendet - |
+            | **4_single** | Motion Erkennung für diesen Bereich ein- oder ausschalten |
+            | **4_double** | Timer für lichtabschaltung ein- oder ausschalten |
+            | **4_long** | Sprachausgabe switchen von Normal -> Silent -> Quiet |
+
+            💡 **Tipp**: long-Press: Warten bis das Licht beim Schalter aus geht (5 Sekunden). Jeder Bereich sollte einen eigenen Taster haben.

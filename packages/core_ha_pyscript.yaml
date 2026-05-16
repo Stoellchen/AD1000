@@ -9,6 +9,7 @@
 #
 # muss über HACS geladen werden
 #
+#pyscript: muss im configuration.yaml definiert sein, damit es funktioniert
 #pyscript:
 #  allow_all_imports: true
 #  hass_is_global: true

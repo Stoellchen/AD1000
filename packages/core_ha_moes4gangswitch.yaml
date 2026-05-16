@@ -1,0 +1,198 @@
+###############################################################################
+# core_ha_moes4gangswitch.yaml
+#
+# Zentrale für globale Schalter / Optionen für die Beleuchtungssteuerung.
+#
+# Wichtig:
+#   - Keine Zeitlogik hier
+#   - Kein Sonnenstand hier
+#   - Nur Schalter / Flags
+###############################################################################
+
+# Taste	Funktion	Aktion
+# Taste 1	Hauptlicht	1_single: Licht an/aus (Toggle)
+# Taste 2	Ambiente / Szenen	2_single: Indirektes Licht (LED-Strips/Stehlampen)
+# Taste 3	Alles Aus (Gute Nacht)	3_single: Alle Lichter im Raum aus
+# Taste 4	Spezial-Funktion	4_single: Alarm-Status oder Rolladen-Steuerung
+
+# 1-single licht ein mit circadian - oder eben ALLE lichter in dem bereich aus
+# 1-double ganz hell - ohne circadian - das geht über scene.    --> scene.esszimmer_full_bright
+# 2-single eine bestimmte scene starten - name wäre dann esszimmer_scene_2s   --> scene.esszimmer_scene_2s
+# 2-double eine andere bestimmte scene starten - name wäre dann esszimmer_scene_2d   --> scene.esszimmer_scene_2d
+# 2-hold eine dritte bestimmte scene starten - name wäre dann esszimmer_scene_2h   --> scene.esszimmer_scene_2h
+
+# Die schalter sind dynamisch nach bereich - also z.B. input_boolean.motion_eval_enabled_esszimmer
+# definiert sind sie in core_ha_lights.yaml - damit sie auch im Template-Editor auftauchen und von AppDaemon ausgewertet werden können - dort steuert der Schalter dann die Motion Detection für den jeweiligen Bereich an oder aus
+# als auch für silent in core_ha_notify_settings.yaml - damit man damit die Benachrichtigungen für den jeweiligen Bereich stummschalten kann - z
+
+###############################################################################
+# Globaler Schalter für optionale Blue-Hour-Modulation (systemweit)
+###############################################################################
+
+
+
+
+automation:
+  - id: core_ha_moes4gangswitch
+    alias: "Core ha moes4gang switch mqtt actions (core_ha_moes4gangswitch)"
+    mode: single
+    trigger:
+      - trigger: mqtt
+        options:
+          topic: zigbee2mqtt/Moes4GS001
+      - trigger: mqtt
+        options:
+          topic: zigbee2mqtt/Moes4GS002
+      - trigger: mqtt
+        options:
+          topic: zigbee2mqtt/Moes4GS003
+      - trigger: mqtt
+        options:
+          topic: zigbee2mqtt/Moes4GS004
+      - trigger: mqtt
+        options:
+          topic: zigbee2mqtt/Moes4GS005
+      - trigger: mqtt
+        options:
+          topic: zigbee2mqtt/Moes4GS006
+      - trigger: mqtt
+        options:
+          topic: zigbee2mqtt/Moes4GS007
+      - trigger: mqtt
+        options:
+          topic: zigbee2mqtt/Moes4GS008
+      - trigger: mqtt
+        options:
+          topic: zigbee2mqtt/Moes4GS009
+      - trigger: mqtt
+        options:
+          topic: zigbee2mqtt/Moes4GS010
+    condition:
+      # Wir prüfen nur, ob überhaupt ein 'action' Feld da ist
+      - condition: template
+        value_template: "{{ trigger.payload_json.action is defined }}"
+    action:
+      - variables:
+          # Wir holen den Gerätenamen aus dem Topic (z.B. Moes4GS001)
+          device_name: "{{ trigger.topic.split('/')[1] }}"
+          # Wir finden die Area-ID exakt so wie im Template-Editor
+          area_name: >
+            {% set entity = states.sensor | selectattr('entity_id', 'search', device_name | lower) | map(attribute='entity_id') | first %}
+            {{ area_id(entity) }}
+          # 3. Die Lichter finden, deren GERÄT das Label 'LIGHT_CIRCADIAN' hat
+          circadian_lights: >
+            {% set labeled_devs = label_devices('LIGHT_CIRCADIAN') %}
+            {% set lights = namespace(items=[]) %}
+            {% for e in area_entities(area_name) if e.startswith('light.') %}
+              {% if device_id(e) in labeled_devs %}
+                {% set lights.items = lights.items + [e] %}
+              {% endif %}
+            {% endfor %}
+            {{ lights.items }}
+          # nur lichter in dem bereich die das label 'LIGHT' haben - damit werden z.B. die LED-Strips oder Stehlampen in der Szene nicht mit einbezogen
+          # lichter von switches oder plugs werden hier nicht mit einbezogen, da sie ja kein 'light.' im entity_id haben - das ist so
+          lights: >
+            {% set labeled_devs = label_devices('LIGHT') %}
+            {% set lights = namespace(items=[]) %}
+            {% for e in area_entities(area_name) if e.startswith('light.') %}
+              {# PRÜFUNG 1: Gehört das Licht zu einem gelabelten Gerät? #}
+              {# PRÜFUNG 2: Ist es KEIN Router oder Switch? (Sicherheitsnetz) #}
+              {% if device_id(e) in labeled_devs 
+                 and 'router' not in e.lower() 
+                 and 'switch' not in e.lower() %}
+                {% set lights.items = lights.items + [e] %}
+              {% endif %}
+            {% endfor %}
+            {{ lights.items }}
+
+          motion_switch: "input_boolean.motion_eval_enabled_{{ area_name }}"
+          timer_switch: "input_boolean.manual_timer_enabled_{{ area_name }}"
+          silent_mode_select: "input_select.room_mode_{{ area_name }}"
+
+      - choose:
+          # --- TASTE 1 SINGLE: Toggle (Circadian Label AN oder BEREICH AUS) ---
+          - conditions: "{{ trigger.payload_json.action == '1_single' }}"
+            sequence:
+              - if:
+                  # Prüfen, ob eines der Circadian-Lichter an ist
+                  condition: template
+                  value_template: "{{ expand(lights) | selectattr('state','eq','on') | list | length > 0 }}"
+                then:
+                  - service: light.turn_off
+                    target:
+                      entity_id: "{{ lights }}"
+                else:
+                  - service: light.turn_on
+                    target:
+                      entity_id: "{{ lights }}"
+
+          # --- TASTE 1 DOUBLE: Szene Full Bright (Dynamisch nach Area) ---
+          - conditions: "{{ trigger.payload_json.action == '1_double' }}"
+            sequence:
+              - service: scene.turn_on
+                target:
+                  entity_id: "scene.{{ area_name }}_full_bright"
+
+          # --- TASTE 2 SINGLE: Szene Full Bright (Dynamisch nach Area) ---
+          - conditions: "{{ trigger.payload_json.action == '2_single' }}"
+            sequence:
+              - service: scene.turn_on
+                target:
+                  entity_id: "scene.{{ area_name }}_scene_2s"
+          # --- TASTE 2 DOUBLE: Szene Full Bright (Dynamisch nach Area) ---
+          - conditions: "{{ trigger.payload_json.action == '2_double' }}"
+            sequence:
+              - service: scene.turn_on
+                target:
+                  entity_id: "scene.{{ area_name }}_scene_2d"
+          # --- TASTE 2 HOLD: Szene Full Bright (Dynamisch nach Area) ---
+          - conditions: "{{ trigger.payload_json.action == '2_hold' }}"
+            sequence:
+              - service: scene.turn_on
+                target:
+                  entity_id: "scene.{{ area_name }}_scene_2h"
+
+
+          # --- TASTE 4 SINGLE: Motion Detection Toggle ---
+          - conditions: "{{ trigger.payload_json.action == '4_single' }}"
+            sequence:
+              - if:
+                  - condition: template
+                    value_template: "{{ states(motion_switch) != 'unknown' }}"
+                then:
+                  - service: input_boolean.toggle
+                    target:
+                      entity_id: "{{ motion_switch }}"
+
+          # --- TASTE 4 DOUBLE: Manual Timer Toggle ---
+          - conditions: "{{ trigger.payload_json.action == '4_double' }}"
+            sequence:
+              - if:
+                  - condition: template
+                    value_template: "{{ states(timer_switch) != 'unknown' }}"
+                then:
+                  - service: input_boolean.toggle
+                    target:
+                      entity_id: "{{ timer_switch }}"
+
+          # --- TASTE 4 HOLD: Silent Mode Rotation [normal, quiet, silent] ---
+          - conditions: "{{ trigger.payload_json.action == '4_hold' }}"
+            sequence:
+              - if:
+                  - condition: template
+                    value_template: "{{ states(silent_mode_select) != 'unknown' }}"
+                then:
+                  - service: input_select.select_next
+                    target:
+                      entity_id: "{{ silent_mode_select }}"
+                  
+                  # Optional: Eine kurze Benachrichtigung, welcher Modus jetzt aktiv ist
+                  - service: script.notify_dispatch
+                    data:
+                      prio: "L"
+                      title: "Modus geändert: {{ area_name | capitalize }}"
+                      message: "Der Bereich ist nun im Modus: {{ states(silent_mode_select) }}"
+
+
+
+###############################################################################

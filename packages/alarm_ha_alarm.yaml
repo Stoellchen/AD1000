@@ -98,6 +98,10 @@ group:
     entities:
       - sensor.ms1_bewegung
 
+  alarm_status_light:       #  wird automatisch mit entites gefüllt welche ein bestimmtes label haben
+    name: "Alarm Status Lights (Dynamic - label alarm_status_light) (alarm_ha_presence_simulation)"
+    entities:
+      - sensor.dummy
 
 
 ##########################################################################################
@@ -189,6 +193,28 @@ automation:
             {% endfor %}
             {{ ns.list }}
 
+      #
+      # ------------------------------------------------------------------
+      # alarm LIGHT group
+      # ------------------------------------------------------------------
+      #
+      - service: group.set
+        data:
+          object_id: alarm_status_light
+          entities: >
+            {% set ns = namespace(list=[]) %}
+              {# 1. Finde alle Devices, die das Label 'ALARM_STATUS_LIGHT' haben #}
+              {% for dev_id in label_devices('ALARM_STATUS_LIGHT') %}
+                {# 2. Hole alle Entities dieses Devices #}
+                {% for ent_id in device_entities(dev_id) %}
+                  {# 3. Filtere nur Lichter heraus, die nicht 'unavailable' sind #}
+                  {% if ent_id.startswith('light.') %}
+                    {% set ns.list = ns.list + [ent_id] %}
+                  {% endif %}
+                {% endfor %}
+              {% endfor %}
+              {{ ns.list }}
+
 
   - id: 'alarm_arming'
     alias: "ALARM arming (alarm_ha_alarm)"
@@ -212,7 +238,14 @@ automation:
           title: "Alarmanlage arming"
           message: >
             ALARM! Die Alarmanlage ist im status arming um {{ states('sensor.time') }}
-            
+
+      - service: script.alarm_flash_status_lights_transition
+        data:
+          color_1: "green"
+          color_2: "orange"
+          flash_count: 10  # Signalisiert für 30 Sekunden den Übergang
+
+
   - id: 'alarm_presence_somebody_is_coming_home_disarmed'
     alias: "ALARM presence somebody is coming home diasrmed (alarm_ha_alarm)"
     description: ''
@@ -244,6 +277,10 @@ automation:
         data: {}
         target:
           entity_id: script.alarm_turn_presence_simulation_off
+      - service: script.alarm_flash_status_lights
+        data:
+          color: "green"
+          flash_count: 10
 
   - id: 'alarm_presence_somebody_is_leaving_armed'
     alias: "ALARM presence somebody is leaving armed (alarm_ha_alarm)"
@@ -280,6 +317,10 @@ automation:
         data: {}
         target:
           entity_id: script.alarm_turn_presence_simulation_on
+      - service: script.alarm_flash_status_lights
+        data:
+          color: "red"
+          flash_count: 10
 
   - id: 'alarm_send_notification_when_alarm_triggered'
     alias: "ALARM send notification when alarm triggered (alarm_ha_alarm)"
@@ -288,20 +329,32 @@ automation:
         entity_id: alarm_control_panel.my_alarm
         to: 'triggered'
     action:
-      - service: script.turn_on
-        entity_id: script.alarm_security_alarm_triggered
-      - service: light.turn_on
-        data:
-          brightness_pct: 100
-          color_name: 'red'
-        entity_id: light.alarm
+      # 1. Zuerst die Benachrichtigung / Sprachausgabe abschicken
       - service: script.notify_dispatch
         data:
           prio: H
           title: "Alarmanlage ausgelöst"
           message: >
-            ALARM! Der Alarm wurde duch den Sensor {{ input_text.alarm_trigger_sensor }} im Raum   {{ input_text.alarm_trigger_room }} ausgelöst um {{ states('sensor.time') }}
-
+            ALARM! Der Alarm wurde durch den Sensor {{ states('input_text.alarm_trigger_sensor') }} 
+            im Raum {{ states('input_text.alarm_trigger_room') }} ausgelöst um {{ states('sensor.time') }}
+      # 2. Kurze Pause (z.B. 5 Sekunden), damit man die Ansage hören kann
+      - delay:
+          seconds: 20
+      # 3. Und zum Schluss das Haupt-Alarm-Script (Sirenen etc.) starten
+      - service: script.turn_on
+        target:
+          entity_id: script.alarm_security_alarm_triggered
+      # 4. Jetzt erst das Licht einschalten
+      # - service: light.turn_on
+      #  data:
+      #    brightness_pct: 100
+      #    color_name: 'red'
+      #  target:
+      #    entity_id: light.alarm
+      - service: script.alarm_flash_status_lights
+        data:
+          color: "red"
+          flash_count: 20
 
 
   - id: alarm_trigger_with_grouped_sensors
@@ -376,17 +429,22 @@ automation:
         entity_id: alarm_control_panel.my_alarm
         to: 'pending'
     action:
-      - service: light.turn_on
-        data:
-          brightness_pct: 100
-          color_name: 'orange'
-        entity_id: light.alarm
+      # - service: light.turn_on
+      #  data:
+      #    brightness_pct: 100
+      #    color_name: 'orange'
+      #  entity_id: light.alarm
       - service: script.notify_dispatch
         data:
           prio: L
           title: "Alarmanlage pending"
           message: >
             ALARM! Die Alarmanlage ist im status pending seit {{ states('sensor.time') }}
+      - service: script.alarm_flash_status_lights_transition
+        data:
+          color_1: "orange"
+          color_2: "red"
+          flash_count: 10  # Signalisiert für 30 Sekunden den Übergang
 
 
   - id: alarm_send_notification_when_alarm_is_disarmed
@@ -413,6 +471,11 @@ automation:
         data: {}
         target:
           entity_id: script.alarm_turn_presence_simulation_off
+      - service: script.alarm_flash_status_lights_transition
+        data:
+          color_1: "red"
+          color_2: "green"
+          flash_count: 10  # Signalisiert für 30 Sekunden den Übergang
 
 
   - id: alarm_send_notification_when_alarm_is_armed_in_away_mode
@@ -467,6 +530,11 @@ automation:
                   title: "Alarmanlage armed home"
                   message: >
                     Die Alarmanlage ist scharf (home) seit {{ states('sensor.time') }}
+              - service: script.alarm_flash_status_lights_transition
+                data:
+                  color_1: "orange"
+                  color_2: "red"
+                  flash_count: 10  # Signalisiert für 30 Sekunden den Übergang
 
           # ----------------------------
           # NIGHT
@@ -483,6 +551,11 @@ automation:
                   title: "Alarmanlage armed night"
                   message: >
                     Die Alarmanlage ist scharf (Nachtmodus) seit {{ states('sensor.time') }}
+              - service: script.alarm_flash_status_lights_transition
+                data:
+                  color_1: "orange"
+                  color_2: "red"
+                  flash_count: 10  # Signalisiert für 30 Sekunden den Übergang
 
           # ----------------------------
           # VACATION
@@ -499,6 +572,11 @@ automation:
                   title: "Alarmanlage armed vacation"
                   message: >
                     Die Alarmanlage ist scharf (Urlaubsmodus) seit {{ states('sensor.time') }}
+              - service: script.alarm_flash_status_lights_transition
+                data:
+                  color_1: "orange"
+                  color_2: "red"
+                  flash_count: 10  # Signalisiert für 30 Sekunden den Übergang
 
           # ----------------------------
           # CUSTOM BYPASS
@@ -515,6 +593,11 @@ automation:
                   title: "Alarmanlage armed custom bypass"
                   message: >
                     Die Alarmanlage ist scharf (Benutzerdefinierter Modus) seit {{ states('sensor.time') }}
+              - service: script.alarm_flash_status_lights_transition
+                data:
+                  color_1: "orange"
+                  color_2: "red"
+                  flash_count: 10  # Signalisiert für 30 Sekunden den Übergang
 
 
 
@@ -579,6 +662,12 @@ automation:
         data: {}
         target:
           entity_id: script.alarm_turn_presence_simulation_on
+      - service: script.alarm_flash_status_lights_transition
+        data:
+          color_1: "orange"
+          color_2: "red"
+          flash_count: 4  # Signalisiert für 30 Sekunden den Übergang
+
 
 #
 #
@@ -645,6 +734,7 @@ script:
           ALARM! Die Alarmanlage ist scharf Status: zu Hause seit {{ states('sensor.time') }}
         mp3: "http://ad1000.main.arpa:8123/local/mp3/two dogs barking - 30 sec - 128k.mp3"
 
+    - delay: '15'
     - service: script.turn_on
       data:
         variables:
@@ -652,15 +742,23 @@ script:
           media: two dogs barking - 30 sec - 64k.mp3
           speakers: media_player.schlafzimmer
       entity_id: script.play_song_media_speakers
-    - delay: '5'
+    - delay: '15'
     - scene: scene.alarm_alles_hell
-    - service: script.turn_on
+    - service: script.notify_dispatch
       data:
-        variables:
-          volume: 0.3
-          media: Stoellchen - Alarm - 15 Sekunden Countdown - 120s - 64k.mp3
-          speakers: media_player.stereo,media_player.schlafzimmer
-      entity_id: script.play_song_media_speakers
+        prio: A
+        title: "Alarmanlage armed zu Hause"
+        message: >
+          ALARM! Die Polizei ist kontaktiert {{ states('sensor.time') }}
+        mp3: "http://ad1000.main.arpa:8123/local/mp3/Stoellchen - Alarm - 15 Sekunden Countdown - 120s - 64k.mp3"
+
+#    - service: script.turn_on
+#      data:
+#        variables:
+#          volume: 0.7
+#          media: Stoellchen - Alarm - 15 Sekunden Countdown - 120s - 64k.mp3
+#          speakers: media_player.info_3
+#      entity_id: script.play_song_media_speakers
     mode: restart
 
 
@@ -709,7 +807,7 @@ script:
 #### Security presence BEGIN
 #############################################################################################
   alarm_presence_away:
-    alias: "Alarm Presence AWAY"
+    alias: "Alarm Presence AWAY (alarm_ha_alarm)"
     sequence:
       - service: input_select.select_option
         data:
@@ -717,7 +815,7 @@ script:
           option: away
 
   alarm_presence_armed_home:
-    alias: "Alarm Presence ARMED HOME"
+    alias: "Alarm Presence ARMED HOME (alarm_ha_alarm)"
     sequence:
       - service: input_select.select_option
         data:
@@ -725,7 +823,7 @@ script:
           option: armed_home
 
   alarm_presence_night:
-    alias: "Alarm Presence NIGHT"
+    alias: "Alarm Presence NIGHT (alarm_ha_alarm)"
     sequence:
       - service: input_select.select_option
         data:
@@ -733,7 +831,7 @@ script:
           option: night
 
   alarm_presence_vacation:
-    alias: "Alarm Presence VACATION"
+    alias: "Alarm Presence VACATION (alarm_ha_alarm)"
     sequence:
       - service: input_select.select_option
         data:
@@ -741,7 +839,7 @@ script:
           option: vacation
 
   alarm_presence_custom_bypass:
-    alias: "Alarm Presence CUSTOM BY PASS"
+    alias: "Alarm Presence CUSTOM BY PASS (alarm_ha_alarm)"
     sequence:
       - service: input_select.select_option
         data:
@@ -749,12 +847,112 @@ script:
           option: custom_by_pass
 
   alarm_presence_off:
-    alias: "Alarm Presence OFF"
+    alias: "Alarm Presence OFF (alarm_ha_alarm)"
     sequence:
       - service: input_select.select_option
         data:
           entity_id: input_select.presence_simulation_profile
           option: off
+
+
+  alarm_flash_status_lights:
+    alias: "Alarm Status-Blinken (alarm_ha_alarm)"
+    description: "Blinkt basierend auf dem Sonnenstand (Nachts dunkel, Tags hell)"
+    mode: restart  # <--- Bricht laufende Instanz ab und startet neu
+    fields:
+      color:
+        description: "Farbe (red, green, orange)"
+        example: "red"
+      flash_count:
+        description: "Anzahl der Blink-Zyklen"
+        example: 5
+    sequence:
+      - variables:
+          # 1. Helligkeit über Sonnen-Elevation bestimmen
+          # Elevation < 0 bedeutet Sonne ist unter dem Horizont (Nacht/Dämmerung)
+          sun_elevation: "{{ state_attr('sun.sun', 'elevation') | float(0) }}"
+          target_brightness: >
+            {% if sun_elevation < 0 %} 5 {% else %} 100 {% endif %}
+          
+          # 2. Ziel-Entitäten aus der dynamischen Gruppe
+          target_entities: "{{ state_attr('group.alarm_status_light', 'entity_id') }}"
+          
+          # 3. Standardwert für Zyklen
+          final_count: "{{ flash_count | default(3) | int }}"
+
+      - repeat:
+          count: "{{ final_count }}"
+          sequence:
+            - service: light.turn_on
+              data:
+                color_name: "{{ color }}"
+                brightness_pct: "{{ target_brightness }}"
+              target:
+                entity_id: "{{ target_entities }}"
+            - delay: "00:00:01"
+            - service: light.turn_off
+              target:
+                entity_id: "{{ target_entities }}"
+            - delay: "00:00:01"
+            
+      # Finaler Check: Sicherstellen, dass alles aus ist
+      - service: light.turn_off
+        target:
+          entity_id: "{{ target_entities }}"
+
+
+  alarm_flash_status_lights_transition:
+    alias: "Alarm Status-Übergang (alarm_ha_alarm)"
+    description: "Wechselblinklicht zwischen zwei Farben für Statusübergänge"
+    mode: restart  # <--- Bricht laufende Instanz ab und startet neu
+    fields:
+      color_1:
+        description: "Erste Farbe (z.B. green oder orange)"
+        example: "green"
+      color_2:
+        description: "Zweite Farbe (z.B. red)"
+        example: "red"
+      flash_count:
+        description: "Anzahl der Wechsel-Zyklen (1 Zyklus = 3 Sekunden)"
+        example: 5
+    sequence:
+      - variables:
+          # 1. Helligkeit über Sonnen-Elevation bestimmen (Tag 100%, Nacht 5%)
+          sun_elevation: "{{ state_attr('sun.sun', 'elevation') | float(0) }}"
+          target_brightness: >
+            {% if sun_elevation < 0 %} 5 {% else %} 100 {% endif %}
+          
+          # 2. Ziel-Entitäten aus der dynamischen Gruppe
+          target_entities: "{{ state_attr('group.alarm_status_light', 'entity_id') }}"
+          
+          # 3. Standardwert für Zyklen
+          final_count: "{{ flash_count | default(3) | int }}"
+
+      - repeat:
+          count: "{{ final_count }}"
+          sequence:
+            # Farbe 1 für 2 Sekunden einschalten
+            - service: light.turn_on
+              data:
+                color_name: "{{ color_1 }}"
+                brightness_pct: "{{ target_brightness }}"
+              target:
+                entity_id: "{{ target_entities }}"
+            - delay: "00:00:02"
+
+            # Farbe 2 für 1 Sekunde einschalten
+            - service: light.turn_on
+              data:
+                color_name: "{{ color_2 }}"
+                brightness_pct: "{{ target_brightness }}"
+              target:
+                entity_id: "{{ target_entities }}"
+            - delay: "00:00:01"
+            
+      # Finaler Check: Sicherstellen, dass nach dem Ablauf alles aus ist
+      - service: light.turn_off
+        target:
+          entity_id: "{{ target_entities }}"
 
 ## ---------------------------------------------------------------------------------------
 ##

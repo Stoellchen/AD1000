@@ -1,0 +1,59 @@
+###############################################################################
+#
+# Circdadian Override Input Booleans
+# Diese Input Booleans werden von Szenen oder manuellen Aktionen aktiviert, um die circadiane Anpassung für einen bestimmten Raum temporär zu deaktivieren.
+# Beispiel: Wenn eine Szene "Abendstimmung Wohnzimmer" aktiviert wird, könnte sie den entsprechenden Override-Boolean für das Wohnzimmer einschalten, damit die circadiane Anpassung dort für die Dauer der Szene deaktiviert ist.
+# Sobald die Szene oder der manuelle Override endet, wird der Override-Boolean zurückgesetzt, damit die circadiane Anpassung wieder normal funktioniert.
+# Diese Logik wird in brain_lights_engine.py implementiert, wo bei Szenenaktivierung die entsprechenden Override-Boolean gesetzt und bei manueller Lichtsteuerung zurückgesetzt werden. 
+#
+###############################################################################
+# 
+## -----------------------------------------------------------------------------------------------------------------
+
+
+input_boolean:
+  # Schlafzimmer (1-4)
+  override_circadian_schlafzimmer:
+    name: "Override Circadian Schlafzimmer"
+    icon: mdi:lightbulb-off
+  override_circadian_schlafzimmer_2:
+    name: "Override Circadian Schlafzimmer 2"
+    icon: mdi:lightbulb-off
+  override_circadian_schlafzimmer_3:
+    name: "Override Circadian Schlafzimmer 3"
+    icon: mdi:lightbulb-off
+  override_circadian_schlafzimmer_4:
+    name: "Override Circadian Schlafzimmer 4"
+    icon: mdi:lightbulb-off
+
+  # Hauptbereiche
+  override_circadian_kueche:
+    name: "Override Circadian Küche"
+    icon: mdi:lightbulb-off
+  override_circadian_korridor:
+    name: "Override Circadian Korridor"
+    icon: mdi:lightbulb-off
+  override_circadian_wohnzimmer:
+    name: "Override Circadian Wohnzimmer"
+    icon: mdi:lightbulb-off
+  override_circadian_esszimmer:
+    name: "Override Circadian Esszimmer"
+    icon: mdi:lightbulb-off
+  override_circadian_buero:
+    name: "Override Circadian Büro"
+    icon: mdi:lightbulb-off
+
+  # Spezialbereiche & Außen
+  override_circadian_grange:
+    name: "Override Circadian Grange"
+    icon: mdi:lightbulb-off
+  override_circadian_weinkeller:
+    name: "Override Circadian Weinkeller"
+    icon: mdi:lightbulb-off
+  override_circadian_pool:
+    name: "Override Circadian Pool"
+    icon: mdi:lightbulb-off
+  override_circadian_sitzplatz:
+    name: "Override Circadian Sitzplatz"
+    icon: mdi:lightbulb-off
+

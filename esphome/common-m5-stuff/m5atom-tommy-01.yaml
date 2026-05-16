@@ -1,0 +1,139 @@
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+
+
+esp32:
+  board: m5stack-atom
+  framework:
+    type: esp-idf
+    version: 5.5.1
+    sdkconfig_options:
+      CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM: '128'
+      CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM: '128'
+      CONFIG_ESP_WIFI_CSI_ENABLED: y
+      CONFIG_ESP_WIFI_AMPDU_TX_ENABLED: n
+      CONFIG_ESP_WIFI_AMPDU_RX_ENABLED: n
+      CONFIG_ESP_WIFI_STA_DISCONNECTED_PM_ENABLE: n
+      CONFIG_PM_ENABLE: n
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: '30'
+  variant: ESP32
+
+
+# Enable logging
+# logger:
+
+# Package to find devices if not labeled
+# packages:
+#   identify: !include ./m5-identify-me.yaml
+#   # identify: !include common-m5-stuff/m5-identify-me.yaml
+#   # bleadvertise: !include ./m5atom-ble-advertise-01.yaml       # - klemmt zusammen mit dem scanner - allenfalls später weitermachen.
+#   beacon: !include ./m5atom-ble-beacon-01.yaml                # sendet nur ein beacon - ibeacon sieht es und bermuda ebenfalls
+#   position: !include ./m5atom-ble-position-01.yaml
+
+
+# Enable Home Assistant API
+api:
+  encryption:
+#    key: "tEBGrpth5CDdrDidl4Ur1gFNoSOWIg0aeUmV/1s5wmg="
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_encrpytion_key 
+
+wifi:
+  # ssid: !secret wifi_ssid
+  # password: !secret wifi_password
+  # ssid: ReseauTemplier2
+  # password: K5Zt53rT&4428
+  fast_connect: !secret wifi2_fast_connect
+  # power_save_mode: !secret wifi2_power_save_mode
+  networks:
+  - ssid: !secret wifi2_ssid
+    password: !secret wifi2_password
+    priority: !secret wifi2_priority
+  - ssid: !secret wifi2_ssid_2
+    password: !secret wifi2_password_2
+    priority: !secret wifi2_priority_2
+  - ssid: !secret wifi2_ssid_3
+    password: !secret wifi2_password_3
+    priority: !secret wifi2_priority_3
+  - ssid: !secret wifi2_ssid_4
+    password: !secret wifi2_password_4
+    priority: !secret wifi2_priority_4
+  - ssid: !secret wifi2_ssid_5
+    password: !secret wifi2_password_5
+    priority: !secret wifi2_priority_5
+  domain: !secret wifi2_domain
+  power_save_mode: NONE
+  # For mesh networks, you must specify the BSSID (requires using the networks list):
+  # networks:
+  # - ssid: "YourNetworkName"
+  #   bssid: "AA:BB:CC:DD:EE:FF"  # Router MAC address (must be uppercase)
+  #   password: "yourpassword"
+  
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${short_name} Fallback Hotspot"
+    password: !secret ap_password
+
+
+
+captive_portal:
+
+time:
+  - platform: homeassistant
+    id: esptime
+
+bluetooth_proxy:
+  active: true
+
+
+text_sensor:
+  - platform: version
+    hide_timestamp: true
+    name: "ESPHome Version"
+    entity_category: diagnostic
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      icon: mdi:wifi
+      entity_category: diagnostic
+    ssid:
+      name: "Connected SSID"
+      icon: mdi:wifi-strength-2
+      entity_category: diagnostic
+
+
+
+
+# interval:
+##   - interval: 1s
+##     then:
+##       - lambda: |-
+##           auto now = id(esptime).now();
+## 
+##           int h = now.hour;
+##           int m = now.minute;
+##           int s = now.second;
+## 
+##           if (m % 60 == 0 && s == 0) {
+##             id(led_blink_script).execute(100,4, 1000, 1000, 77, 255, 77);
+##           }
+##           else if (m % 30 == 0 && s == 0) {
+##             id(led_blink_script).execute(100,2, 2000, 2000, 0, 230, 0);
+##           }
+##           else if (m % 15 == 0 && s == 0) {
+##             id(led_blink_script).execute(100,2, 1000, 1000, 0, 179, 0);
+##           }
+##           else if (m % 5 == 0 && s == 0) {
+##             id(led_blink_script).execute(100,1, 300, 300, 0, 128, 0);
+##           }
+##           else if (m % 1 == 0 && s == 0) {
+##             id(led_blink_script).execute(100,1, 150, 150, 0, 77, 0);
+##           }
+## 
+## 

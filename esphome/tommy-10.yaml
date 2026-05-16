@@ -1,0 +1,26 @@
+substitutions:
+  name: tommy-10
+  friendly_name: TOMMY-10
+  short_name: TOMMY-10
+# 
+# 
+  ble_beacon_uuid: "a73c5d5e-4af8-463e-9e45-c4b50133fa12"     # bei allen geräten gleich
+  ble_beacon_major: "1"                                       # mal so behalten auf 1
+  ble_beacon_minor: "10"                                       #### muss pro device anders sein!!!!
+# 
+# 
+# 
+# ## rest is for all m5-atom-lite BLE the same as in the base-file
+packages:
+  common: !include common-m5-stuff/m5atom-tommy-01.yaml
+# 
+
+external_components:
+  - source: github://tommy-sense/esphome
+    components: [ sensor_tommy ]
+    refresh: 5min
+
+sensor_tommy:
+  # Optional: Manual Discovery details
+  # instance_ip: "192.168.x.x"
+  # udp_relay_port: 8547
