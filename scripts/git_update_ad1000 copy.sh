@@ -78,42 +78,26 @@ git config --global user.email "homeassistantgithub-reg@zwooky.com"
 # ---------- Commit message ----------
 MSG="${1:-Minor Edit}"
 
-# ---------- Intelligent Changes & Push Check ----------
-# Aktualisiere die Remote-Informationen im Hintergrund, um exakt vergleichen zu können
-git fetch origin main >> "$LOG" 2>&1 || echo "[$NOW] Notice: Fetch failed, using local tracking branch status" >> "$LOG"
-
-LOCAL_CHANGES=$(git status --porcelain)
-PENDING_COMMITS=$(git log origin/main..main --oneline 2>/dev/null || echo "")
-
-if [ -z "$LOCAL_CHANGES" ] && [ -z "$PENDING_COMMITS" ]; then
-  echo "[$NOW] No local changes and no pending commits – nothing to do" >> "$LOG"
+# ---------- Changes check ----------
+if [ -z "$(git status --porcelain)" ]; then
+  echo "[$NOW] No changes detected – nothing to commit" >> "$LOG"
   exit 0
 fi
 
-# Fall 1: Keine neuen Dateiänderungen, aber alte Commits müssen noch zu GitHub geschoben werden
-if [ -z "$LOCAL_CHANGES" ] && [ -n "$PENDING_COMMITS" ]; then
-  echo "[$NOW] No new file changes, but found pending commits waiting for upload." >> "$LOG"
-  echo "[$NOW] Commits to push:" >> "$LOG"
-  echo "$PENDING_COMMITS" >> "$LOG"
-  echo "[$NOW] Executing git push origin main..." >> "$LOG"
-  ssh-agent bash -c "ssh-add $SSH_KEY; git push origin main" >> "$LOG" 2>&1
-  echo "[$NOW] Git Update finished successfully (Push only)" >> "$LOG"
-  exit 0
-fi
-
-# Fall 2: Es gibt neue Änderungen -> Den normalen Ablauf (Add, Commit, Push) durchziehen
-echo "[$NOW] New local changes detected. Starting full Commit & Push sequence." >> "$LOG"
-
+# ---------- Git add / commit ----------
 echo "[$NOW] git add ." >> "$LOG"
 git add . >> "$LOG" 2>&1
 
 echo "[$NOW] git commit -m \"$MSG\"" >> "$LOG"
 git commit -m "$MSG" >> "$LOG" 2>&1
 
+# ---------- Git push (EXPLICIT SSH!) ----------
 echo "[$NOW] git push origin main" >> "$LOG"
-ssh-agent bash -c "ssh-add $SSH_KEY; git push origin main" >> "$LOG" 2>&1
 
-echo "[$NOW] Git Update finished successfully (Full sync)" >> "$LOG"
+GIT_SSH_COMMAND="/usr/bin/ssh \
+  -i $SSH_KEY \
+  -o UserKnownHostsFile=$KNOWN_HOSTS \
+  -o StrictHostKeyChecking=yes" \
+git push origin main >> "$LOG" 2>&1
 
-
-
+echo "[$NOW] Git Update finished successfully" >> "$LOG"
