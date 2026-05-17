@@ -42,4 +42,7 @@ config/**/*.txt
 #Exclude tts
 tts/*
 
-
+#keine Movies hochladen
+www/_service/*.mov
+*.mov
+www/_service/*.mov

@@ -96,7 +96,9 @@ if [ -z "$LOCAL_CHANGES" ] && [ -n "$PENDING_COMMITS" ]; then
   echo "[$NOW] Commits to push:" >> "$LOG"
   echo "$PENDING_COMMITS" >> "$LOG"
   echo "[$NOW] Executing git push origin main..." >> "$LOG"
-  ssh-agent bash -c "ssh-add $SSH_KEY; git push origin main" >> "$LOG" 2>&1
+  # ssh-agent bash -c "ssh-add $SSH_KEY; git push origin main" >> "$LOG" 2>&1
+  export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=15 -i $SSH_KEY"
+  git push origin main >> "$LOG" 2>&1
   echo "[$NOW] Git Update finished successfully (Push only)" >> "$LOG"
   exit 0
 fi
@@ -111,7 +113,9 @@ echo "[$NOW] git commit -m \"$MSG\"" >> "$LOG"
 git commit -m "$MSG" >> "$LOG" 2>&1
 
 echo "[$NOW] git push origin main" >> "$LOG"
-ssh-agent bash -c "ssh-add $SSH_KEY; git push origin main" >> "$LOG" 2>&1
+# ssh-agent bash -c "ssh-add $SSH_KEY; git push origin main" >> "$LOG" 2>&1
+export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=15 -i $SSH_KEY"
+git push origin main >> "$LOG" 2>&1
 
 echo "[$NOW] Git Update finished successfully (Full sync)" >> "$LOG"
 
