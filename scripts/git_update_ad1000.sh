@@ -103,6 +103,7 @@ if [ -z "$LOCAL_CHANGES" ] && [ -n "$PENDING_COMMITS" ]; then
   exit 0
 fi
 
+
 # Fall 2: Es gibt neue Änderungen -> Den normalen Ablauf (Add, Commit, Push) durchziehen
 echo "[$NOW] New local changes detected. Starting full Commit & Push sequence." >> "$LOG"
 
