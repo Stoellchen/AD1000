@@ -79,11 +79,7 @@ git config --global user.email "homeassistantgithub-reg@zwooky.com"
 MSG="${1:-Minor Edit}"
 
 # ---------- Intelligent Changes & Push Check ----------
-# Wir definieren den SSH-Befehl einmal global für alle folgenden Git-Aktionen.
-# StrictHostKeyChecking=no verhindert den "Host key verification failed"-Fehler über Lovelace!
-export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=15 -i $SSH_KEY"
-
-echo "[$NOW] Fetching latest status from GitHub..." >> "$LOG"
+# Aktualisiere die Remote-Informationen im Hintergrund, um exakt vergleichen zu können
 git fetch origin main >> "$LOG" 2>&1 || echo "[$NOW] Notice: Fetch failed, using local tracking branch status" >> "$LOG"
 
 LOCAL_CHANGES=$(git status --porcelain)
@@ -97,11 +93,16 @@ fi
 # Fall 1: Keine neuen Dateiänderungen, aber alte Commits müssen noch zu GitHub geschoben werden
 if [ -z "$LOCAL_CHANGES" ] && [ -n "$PENDING_COMMITS" ]; then
   echo "[$NOW] No new file changes, but found pending commits waiting for upload." >> "$LOG"
+  echo "[$NOW] Commits to push:" >> "$LOG"
+  echo "$PENDING_COMMITS" >> "$LOG"
   echo "[$NOW] Executing git push origin main..." >> "$LOG"
+  # ssh-agent bash -c "ssh-add $SSH_KEY; git push origin main" >> "$LOG" 2>&1
+  export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=15 -i $SSH_KEY"
   git push origin main >> "$LOG" 2>&1
   echo "[$NOW] Git Update finished successfully (Push only)" >> "$LOG"
   exit 0
 fi
+
 
 # Fall 2: Es gibt neue Änderungen -> Den normalen Ablauf (Add, Commit, Push) durchziehen
 echo "[$NOW] New local changes detected. Starting full Commit & Push sequence." >> "$LOG"
@@ -113,7 +114,11 @@ echo "[$NOW] git commit -m \"$MSG\"" >> "$LOG"
 git commit -m "$MSG" >> "$LOG" 2>&1
 
 echo "[$NOW] git push origin main" >> "$LOG"
+# ssh-agent bash -c "ssh-add $SSH_KEY; git push origin main" >> "$LOG" 2>&1
+export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=15 -i $SSH_KEY"
 git push origin main >> "$LOG" 2>&1
 
 echo "[$NOW] Git Update finished successfully (Full sync)" >> "$LOG"
+
+
 
