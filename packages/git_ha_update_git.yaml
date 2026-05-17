@@ -20,6 +20,35 @@ input_text:
     initial: "Manual update via Lovelace"
 
 
+automation:
+- id: git_weekly_backup_ad1000
+  alias: "Git: Wöchentliches Backup AD1000 (git_ha_update_git)"
+  description: "Triggert jeden Montag morgen um 08:30 Uhr ein automatisches Git-Backup"
+  trigger:
+    - platform: time
+      at: "08:30:00"
+  condition:
+    # ❌ Falsch war: platform: time
+    #  Richtig ist: condition: time
+    - condition: time
+      weekday:
+        - mon
+  action:
+    # 1. Setze die Commit-Nachricht inklusive Datum und Uhrzeit
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.git_commit_message
+      data:
+        value: >-
+          Automatisches wöchentliches Backup - {{ now().strftime('%Y%m%d %H:%M') }}
+        
+    # 2. Warte einen kurzen Moment, damit der Zustand sicher in HA geschrieben ist
+    - delay: "00:00:02"
+    
+    # 3. Rufe dein bestehendes Git-Skript auf
+    - service: script.git_update_ad1000
+  mode: single
+
 script:
   git_update_ad1000:
     alias: "Git Update AD1000 (git_ha_update_git)"
