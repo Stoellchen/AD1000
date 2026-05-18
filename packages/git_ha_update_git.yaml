@@ -40,7 +40,9 @@ automation:
         entity_id: input_text.git_commit_message
       data:
         value: >-
-          Automatisches wöchentliches Backup - {{ now().strftime('%Y%m%d %H:%M') }}
+          Automatisches wöchentliches Backup
+#        value: >-
+#          Automatisches wöchentliches Backup - {{ now().strftime('%Y%m%d %H:%M') }}
         
     # 2. Warte einen kurzen Moment, damit der Zustand sicher in HA geschrieben ist
     - delay: "00:00:02"

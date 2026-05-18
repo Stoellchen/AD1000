@@ -98,3 +98,10 @@ g.floorplan-long-click> :not(text):hover,
   filter: gray;
 }
 
+
+
+[id^="sensor.presence.thirdr"] {
+  opacity: 0.5;
+}
+
+
