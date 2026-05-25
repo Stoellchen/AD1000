@@ -116,62 +116,71 @@ g.floorplan-long-click> :not(text):hover,
 }
 .LADENVIBRA, .FENSTERVIBRA {
   fill: transparent !important; /* Unsichtbar, wenn keine Erschütterung vorliegt */
+  /* fill: blue !important; */  /* Nur zum Testen! */
   stroke: transparent !important;
 }
 
-
 /* ==========================================================================
-   2. NORMAL-ZUSTÄNDE (Grün, wenn der Zustand "off" ist)
+   1. RUHE-ZUSTÄNDE (Grün, wenn alles geschlossen/ruhig ("off") ist)
    ========================================================================== */
 
-/* Wenn der äußere Laden geschlossen ist */
-[data-laden-state="off"] .LADEN {
-  fill: #2ecc71 !important; /* Schönes, klares Grün */
+/* Vibrationssensoren im Ruhezustand auf Grün setzen */
+[data-laden-vibe="off"] .LADENVIBRA,
+[data-laden-vibration="off"] .LADENVIBRA,
+[data-fenster-vibe="off"] .FENSTERVIBRA,
+[data-fenster-vibration="off"] .FENSTERVIBRA {
+  fill: #2ecc71 !important;   
   stroke: #2ecc71 !important;
 }
 
-/* Wenn das innere Fenster geschlossen ist */
+/* Laden und Fenster im geschlossenen Zustand auf Grün setzen */
+[data-laden-state="off"] .LADEN,
 [data-fenster-state="off"] .FENSTER {
-  fill: #2ecc71 !important; /* Dasselbe Grün */
+  fill: #2ecc71 !important;   
   stroke: #2ecc71 !important;
 }
 
-/* Bei den Vibrationssensoren: Wenn du willst, dass sie im Ruhezustand 
-   auch grün sind (statt unsichtbar), nimm diesen Block: */
-[data-laden-vibe="off"] .LADENVIBRA {
-  fill: #2ecc71 !important; 
-  stroke: #2ecc71 !important;
-}
-[data-fenster-vibe="off"] .FENSTERVIBRA {
-  fill: #2ecc71 !important;
-  stroke: #2ecc71 !important;
-}
 
 /* ==========================================================================
-   3. ALARM-ZUSTÄNDE (Greifen, sobald ein Zustand auf "on" springt)
+   2. ALARM-ZUSTÄNDE (Farbe ändert sich, sobald ein Zustand auf "on" springt)
    ========================================================================== */
 
-/* Wenn der äußere Laden geöffnet wird */
+/* WENN EINE ERSCHÜTTERUNG ERKANNT WIRD -> Orange */
+[data-laden-vibe="on"] .LADENVIBRA,
+[data-laden-vibration="on"] .LADENVIBRA,
+[data-fenster-vibe="on"] .FENSTERVIBRA,
+[data-fenster-vibration="on"] .FENSTERVIBRA {
+  fill: #ffa500 !important;   /* 💡 Hier korrigiert auf ORANGE für den Vibrations-Alarm! */
+  stroke: #ffa500 !important;
+}
+
+/* WENN DER LADEN OFFEN IST -> Blau (oder Rot, je nach Wunsch) */
 [data-laden-state="on"] .LADEN {
-  fill: #ff4d4d !important; /* Blau für offenen Laden */
-  stroke: #ff4d4d !important;
+  fill: #4a90e2 !important;   /* Blau signalisiert "Laden geöffnet" */
+  stroke: #4a90e2 !important;
 }
 
-/* Wenn das innere Fenster geöffnet wird */
+/* WENN DAS FENSTER OFFEN IST -> Knalliges Rot */
 [data-fenster-state="on"] .FENSTER {
-  fill: #ff4d4d !important; /* Rot für offenes Fenster */
+  fill: #ff4d4d !important;   /* Rot signalisiert "Achtung, Fenster offen!" */
   stroke: #ff4d4d !important;
 }
 
-/* Wenn der äußere Vibrationssensor anschlägt */
-[data-laden-vibe="on"] .LADENVIBRA {
-  fill: #ffa500 !important; /* Orange für Erschütterung Außen */
-  stroke: #ffa500 !important;
+
+/* Laden geöffnet -> Blau */
+[id^="window"].laden-on .LADEN {
+  fill: #4a90e2 !important;
 }
 
-/* Wenn der innere Vibrationssensor anschlägt */
-[data-fenster-vibe="on"] .FENSTERVIBRA {
-  fill: #ffa500 !important; /* Orange für Erschütterung Innen */
-  stroke: #ffa500 !important;
+/* Fenster geöffnet -> Rot */
+[id^="window"].fenster-on .FENSTER {
+  fill: #ff4d4d !important;
 }
+
+/* Äußere Erschütterung -> Orange */
+[id^="window"].vibe-on .LADENVIBRA {
+  fill: #ffa500 !important;
+}
+
+
 

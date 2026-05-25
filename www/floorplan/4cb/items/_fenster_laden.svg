@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg1" width="210mm" height="297mm" inkscape:version="1.4.3 (0d15f75, 2025-12-25)" sodipodi:docname="_fenster_laden.svg" version="1.1" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd">
+ <sodipodi:namedview id="namedview1" bordercolor="#999999" borderopacity="1" inkscape:current-layer="g7" inkscape:cx="408.04336" inkscape:cy="523.13251" inkscape:deskcolor="#d1d1d1" inkscape:document-units="mm" inkscape:pagecheckerboard="0" inkscape:pageopacity="0" inkscape:showpageshadow="2" inkscape:window-height="795" inkscape:window-maximized="0" inkscape:window-width="1486" inkscape:window-x="0" inkscape:window-y="44" inkscape:zoom="0.66904655" pagecolor="#ffffff"/>
+ <defs id="defs1">
+  <inkscape:path-effect id="path-effect5" method="auto" apply_no_radius="true" apply_with_radius="true" chamfer_steps="1" effect="fillet_chamfer" flexible="false" hide_knots="false" is_visible="true" lpeversion="1" mode="F" nodesatellites_param="F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1" only_selected="false" radius="0" unit="px" use_knot_distance="true"/>
+ </defs>
+ <g id="layer1" inkscape:groupmode="layer" inkscape:label="Layer 1">
+  <g id="g7">
+   <path id="LADEN" class="Laden" d="m186.07 67.922 0.11493 155.73-153.66 0.22986 0.34478-155.96h39.305l0.34478 153.89 73.553-0.11493 0.45971-153.66z" style="fill-opacity:.2338;fill:#07aafb;stroke-width:0" inkscape:label="LADEN"/>
+   <path id="FENSTER" class="Fenster" d="m72.492 67.761 0.58583 153.78 72.935 0.19527 0.19528-153.68z" style="fill-opacity:.2338;fill:#92fb07;stroke-width:0" inkscape:label="FENSTER"/>
+   <path id="LADENvibra" class="LadenVibra" d="m70.428 70.159 0.25988 12.994-36.73 0.25988 0.08663-13.86 150.21 0.17325 0.25988 13.514-36.817 0.17325 0.17326-13.427z" style="fill-opacity:.2338;fill:#07fb07;stroke-width:0" inkscape:label="LADENvibra"/>
+   <rect id="FENSTERvibra" class="FensterVibra" x="72.644" y="70.182" width="73.459" height="12.888" style="fill-opacity:.2338;fill:#07fb07;stroke-opacity:0" inkscape:label="FENSTERvibra"/>
+  </g>
+ </g>
+</svg>
