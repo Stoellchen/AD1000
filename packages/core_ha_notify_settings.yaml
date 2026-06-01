@@ -699,16 +699,16 @@ script:
 
 
                 # sendet an den langen und kurzen Dienst, damit sowohl die alten notify.sony Aufrufe in der Gruppe funktionieren, als auch die neuen, langen Dienste, die den Raum korrekt zuordnen können.
-                - continue_on_error: true
-                  service: "{{ tv_service_long }}"
-                  data:
-                    title: "{{ title }}"
-                    message: "{{ message }}"
-                    data:
-                      fontsize: "{{ fontsize }}"
-                      position: "{{ position }}"
-                      duration: "{{ duration }}"
-                      color: "{{ color }}"
+#                - continue_on_error: true
+#                  service: "{{ tv_service_long }}"
+#                  data:
+#                    title: "{{ title }}"
+#                    message: "{{ message }}"
+#                    data:
+#                      fontsize: "{{ fontsize }}"
+#                      position: "{{ position }}"
+#                      duration: "{{ duration }}"
+#                      color: "{{ color }}"
                 - continue_on_error: true
                   service: "{{ tv_service_short }}"
                   data:

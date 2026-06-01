@@ -34,7 +34,7 @@
 
 automation:
   - id: weather_lightning_notifiacation_france
-    alias: 'Weather Lightning Notification France (weather_ha_lightning)'
+    alias: 'Weather Lightning Notification France (notify_ha_lightning)'
     mode: single
     trigger:
       - platform: state
@@ -52,7 +52,7 @@ automation:
             "Blitz wurden in der Nähe erkannt in {{(states('sensor.france_lightning_counter') | int ) | round (1, 'floor')}} Kilometer Entfernung vom Haus.  Aufpassen wenn Ihr draussen seid."
 
   - id: weather_lightning_notifiacation_switzerland
-    alias: 'Weather Lightning Notification Switzerland (weather_ha_lightning)'
+    alias: 'Weather Lightning Notification Switzerland (notify_ha_lightning)'
     mode: single
     trigger:
       - platform: state
@@ -65,6 +65,6 @@ automation:
       - service: script.notify_dispatch
         data:
           prio: M
-          title: "Blitzortung!"
+          title: "Blitzortung Schweiz!"
           message: >
             "Blitz wurden in der Nähe erkannt in {{(states('sensor.switzerland_lightning_counter') | int ) | round (1, 'floor')}} Kilometer Entfernung vom Haus.  Aufpassen wenn Ihr draussen seid."

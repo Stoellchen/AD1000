@@ -23,6 +23,22 @@ entity_globs:
 ## selektiert start ------------------------------------------------------------------
   - sensor.*distance_to_ble_*
   - sensor.backup_state
+  - sensor.flightradar24* # Flightradar erzeugt gigantische Datenmengen!
+  # --- Hier die Rauten entfernt für Geräte, die extrem viel "Spam" senden:
+#  - sensor.vacuum_*
+#  - automation.vacuum_*
+#  - switch.echo_* 
+#  - select.echo_* 
+#  - media_player.echo_* 
+#  - binary_sensor.echo_* 
+#  - switch.ble_* 
+#  - select.ble_* 
+#  - sensor.ble_* # BLE-Sensoren senden oft sekündlich Daten!
+#  - number.ble_* 
+#  - switch.atom_* 
+#  - sensor.m5dial_* # Schützt vor dem M5Dial-Spam aus deinem Log-Fehler!
+  
+
 ## selektiert end --------------------------------------------------------------------
 ## übernommen von beispiel setup
 #  - sensor.vacuum_*

@@ -15,6 +15,13 @@
 # entities list (Optional)
 # The list of entity ids to be included in the recordings.
 
+
+# Du löschst aus der recorder_history_include.yaml unter domains: den Eintrag - sensor und - automation heraus.
+# Der Effekt: Jetzt werden nur noch genau die Sensoren aufgezeichnet, die du unten drunter bei 
+# entity_globs (Energie, Netatmo, etc.) explizit erlaubt hast. Alle anderen Sensoren im Haus 
+# belasten deine Postgres-Datenbank sekündlich überhaupt nicht mehr.
+#
+
 domains:
   - light
   - switch
@@ -39,9 +46,9 @@ domains:
   - zone
   - weather           # weather 
 entity_globs:
-  - sensor.vacuum_*
-  - automation.vacuum_*
-  - sensor.flightradar24*
+  #  - sensor.vacuum_*
+  #  - automation.vacuum_*
+  #  - sensor.flightradar24*
   - sensor.vmplex001
   # ---energy start -----------------
   - sensor.energy_*

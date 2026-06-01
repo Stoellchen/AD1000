@@ -10,7 +10,7 @@
 ## eingebunden werden, damit die Aufzeichnung funktioniert !!!! !!!!  
 ## recorder:
   db_url: !secret recorder_db_url
-  purge_keep_days: 40           # default 10 - Specify the number of history days to keep in recorder database after a purge.
+  purge_keep_days: 10           # default 10 - Specify the number of history days to keep in recorder database after a purge.
   commit_interval: 5            # default 1 - Number of seconds between commits to the database. How often (in seconds) the events and state changes 
                                 # are committed to the database. The default of 5 allows events to be committed almost right away without trashing the
                                 # disk when an event storm happens. Increasing this will reduce disk I/O and may prolong disk (SD card) lifetime with the 
@@ -21,6 +21,6 @@
   auto_purge: true              # default true  clean up old data 
   auto_repack: true             # default true compact the database
 
-  include: !include history_include.yaml
-  exclude: !include history_exclude.yaml
+  include: !include recorder_history_include.yaml
+  exclude: !include recorder_history_exclude.yaml
 

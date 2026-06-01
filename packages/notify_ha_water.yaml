@@ -1,0 +1,63 @@
+###############################################################################
+# notify_ha_water.yaml
+#
+###############################################################################
+
+automation:
+  - id: vigieau_restriction_notification_cazaugitat
+    alias: 'VigiEau Restriction Notification Cazaugitat (notify_ha_water)'
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.vigieau_cazaugitat_alimentation_en_eau_potable_alert_level_in_cazaugitat
+    condition:
+      - condition: template
+        value_template: "{{ trigger.to_state.state not in [ 'unknown', 'unavailable', 'Niveau de restriction non défini'] }}"
+    action:
+      - service: script.notify_dispatch
+        data:
+          # 1. DYNAMISCHE PRIORITÄT (I, L, M, H)
+          prio: >-
+            {% set s = trigger.to_state.state %}
+            {% if s == 'Pas de restrictions' %} I
+            {% elif s == 'Vigilance' %} I
+            {% elif s == 'Alerte' %} H
+            {% elif s == 'Alerte renforcée' or s == 'Crise' %} A
+            {% else %} M
+            {% endif %}
+
+          # 2. DYNAMISCHE FARBE (Für dein TV/Dashboard-Skript)
+          color: >-
+            {% set s = trigger.to_state.state %}
+            {% if s == 'Pas de restrictions' %} green
+            {% elif s == 'Vigilance' %} yellow
+            {% elif s == 'Alerte' %} orange
+            {% elif s == 'Alerte renforcée' %} red
+            {% elif s == 'Crise' %} darkred
+            {% else %} amber
+            {% endif %}
+          
+          # 3. DYNAMISCHER TITEL
+          title: >-
+            {% set s = trigger.to_state.state %}
+            {% if s == 'Pas de restrictions' %} Entwarnung: Wassersituation Cazaugitat (Alles IO)
+            {% elif s == 'Vigilance' %} VigiEau: Vorwarnstufe aktiv (Cazaugitat)
+            {% else %} ALERT: Wassereinschränkung Cazaugitat!
+            {% endif %}
+          
+          # 4. DYNAMISCHE NACHRICHT (Maßgeschneidert auf jede Stufe)
+          message: >-
+            {% set s = trigger.to_state.state %}
+            {% if s == 'Pas de restrictions' %}
+              Große Entwarnung! Die VigiEau-Warnstufe wurde aufgehoben. Es gelten keinerlei Einschränkungen mehr. Der Pool darf wieder ganz normal genutzt werden!
+            {% elif s == 'Vigilance' %}
+              Die Warnstufe steht auf 'Vigilance' (Wachsamkeit). Aktuell gibt es noch keine harten Verbote für den Pool, aber wir sind angehalten, freiwillig Wasser zu sparen.
+            {% elif s == 'Alerte' %}
+              Achtung (Stufe Alerte): Erste gesetzliche Einschränkungen sind aktiv! Bitte prüfe sofort die erlaubten Uhrzeiten für das Nachfüllen des Pools.
+            {% elif s == 'Alerte renforcée' %}
+              Achtung (Stufe Alerte renforcée): Verschärfte Alarmstufe! Das Befüllen oder Nachfüllen von privaten Pools ist jetzt stark eingeschränkt oder verboten. Bitte lokale Erlasse prüfen!
+            {% elif s == 'Crise' %}
+              NOTSTAND (Stufe Crise): Höchste Alarmstufe! Die Wassernutzung ist komplett für den privaten Gebrauch gesperrt. Das Nachfüllen oder Befüllen des Pools ist ABSOLUT VERBOTEN!
+            {% else %}
+              Achtung: Die VigiEau-Warnstufe hat sich unerwartet auf '{{ s }}' geändert. Bitte Status manuell prüfen!
+            {% endif %}

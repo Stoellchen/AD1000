@@ -1,0 +1,63 @@
+###############################################################################
+# notify_ha_rte_power.yaml
+#
+###############################################################################
+
+automation:
+  - id: ecowatt_netz_notification_cazaugitat
+    alias: 'EcoWatt Netz-Benachrichtigung (notify_ha_rte_power)'
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.rte_ecowatt_level_today  # Falls deine Entität anders heißt, hier anpassen
+    condition:
+      # 1. Systemfehler abfangen
+      - condition: template
+        value_template: "{{ trigger.to_state.state not in ['unknown', 'unavailable', 'inconnu'] }}"
+      # 2. DER FIX: Nur auslösen, wenn sich der echte TEXT-ZUSTAND geändert hat!
+      - condition: template
+        value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
+    action:
+      - action: script.notify_dispatch
+        data:
+          # 1. DYNAMISCHE PRIORITÄT (I, L, M, H, A)
+          # Vert = Info (I), Orange = Medium (M), Rouge = ALERT (A)
+          prio: >-
+            {% set s = trigger.to_state.state %}
+            {% if s == 'Vert' %} I
+            {% elif s == 'Orange' %} M
+            {% elif s == 'Rouge' %} A
+            {% else %} L
+            {% endif %}
+
+          # 2. DYNAMISCHE FARBE
+          color: >-
+            {% set s = trigger.to_state.state %}
+            {% if s == 'Vert' %} green
+            {% elif s == 'Orange' %} orange
+            {% elif s == 'Rouge' %} red
+            {% else %} amber
+            {% endif %}
+          
+          # 3. DYNAMISCHER TITEL
+          title: >-
+            {% set s = trigger.to_state.state %}
+            {% if s == 'Vert' %} Entwarnung: Stromnetz Frankreich stabil
+            {% elif s == 'Orange' %} EcoWatt: Stromnetz angespannt (Orange)
+            {% elif s == 'Rouge' %} ALERT: Stromnetz überlastet (ROUGE)!
+            {% else %} EcoWatt Statusänderung
+            {% endif %}
+          
+          # 4. DYNAMISCHE NACHRICHT (Maßgeschneidert auf das französische Stromnetz)
+          message: >-
+            {% set s = trigger.to_state.state %}
+            {% if s == 'Vert' %}
+              Alles im grünen Bereich. Das französische Stromnetz läuft stabil. Es sind keine Energiesparmaßnahmen oder Abschaltungen erforderlich.
+            {% elif s == 'Orange' %}
+              Das Stromnetz ist heute angespannt (Stufe Orange). Bitte nach Möglichkeit den Verbrauch reduzieren, um Spitzen abzufangen (Großgeräte wie Waschmaschinen erst abends nutzen).
+            {% elif s == 'Rouge' %}
+              CRITICAL ALERT: Das Stromnetz hat die höchste Alarmstufe (ROUGE) erreicht! Es drohen gezielte Abschaltungen, um das Netz stabil zu halten. Unkritische Server/VMs auf Proxmox sollten jetzt gedrosselt oder heruntergefahren werden!
+            {% else %}
+              Achtung: Der EcoWatt-Status hat sich unerwartet auf '{{ s }}' geändert. Bitte manuell prüfen.
+            {% endif %}
+
