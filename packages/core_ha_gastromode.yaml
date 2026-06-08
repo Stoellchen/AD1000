@@ -175,6 +175,7 @@ automation:
                     - choose:
                         # ----------------------------------------------------------------
                         # WEICHE A: REINER RADIO STREAM (Bleibt unverändert)
+                        # https://www.radio-browser.info/history/f7afd469-77b0-4950-b17e-ff82eaa291d8
                         # ----------------------------------------------------------------
                         - conditions:
                             - condition: template
@@ -185,7 +186,7 @@ automation:
                                   {% if now().hour >= 22 or now().hour < 6 %} https://radio4.vip-radios.fm:18054/stream-128kmp3-BuddhaBeach
                                   {% elif gaeste_status == 'Nur wir' %} https://chmedia.streamabc.net/79-r24-mp3-192-6659699
                                   {% elif gaeste_status == 'Schweizer Gäste' %} http://livestreaming-node-4.srg-ssr.ch/srgssr/rsp/mp3/128
-                                  {% elif gaeste_status == 'Französische Gäste' %} http://rcf.streamakaci.com/rcf33.mp3
+                                  {% elif gaeste_status == 'Französische Gäste' %} https://icecast.radiofrance.fr/fbchansonfrancaise-hifi.aac
                                   {% else %} https://0nlineradio.stream13.radiohost.de/lounge-hotel-lounge {% endif %}
                             
                             - service: media_player.play_media
@@ -205,6 +206,52 @@ automation:
                                       entity_id: "{{ ziel_speaker }}"
                                     data:
                                       volume_level: "{{ (0.1 + (repeat.index * ((ziel_volume - 0.1) / 20))) | round(2) if (ziel_volume - 0.1) > 0 else ziel_volume }}"
+
+                            # 2. DER RADIO-WÄCHTER: Hält die Automation aktiv, bis der Raum leer ist (oder 60 Min um sind)
+                            - repeat:
+                                until:
+                                  - condition: template
+                                    value_template: >-
+                                      {# 720 Durchläufe à 5 Sekunden = 3600 Sekunden = 60 Minuten #}
+                                      {{ is_state(ausloeser_entity, 'off') or repeat.index >= 2 }}
+                                sequence:
+                                  - delay: "00:00:05"
+
+                            - variables:
+                                start_volume_fadeout: "{{ state_attr(ziel_speaker, 'volume_level') | default(0.35) | float }}"
+
+                            - repeat:
+                                count: 30
+                                sequence:
+                                  - choose:
+                                      - conditions:
+                                          - condition: template
+                                            value_template: "{{ is_state(ausloeser_entity, 'on') }}"
+                                        sequence:
+                                          - stop: "Fade-out abgebrochen, Raum wieder besetzt."
+                                  
+                                  - delay: "00:00:01"
+                                  - service: media_player.volume_set
+                                    target:
+                                      entity_id: "{{ ziel_speaker }}"
+                                    data:
+                                      volume_level: >-
+                                        {% set schritt = repeat.index %}
+                                        {% set aktuelle_stufe = start_volume_fadeout - (schritt * (start_volume_fadeout / 30)) %}
+                                        {% if aktuelle_stufe > 0.05 %}
+                                          {{ aktuelle_stufe | round(2) }}
+                                        {% else %}
+                                          0.01
+                                        {% endif %}
+
+                            # ERST HIERNACH (wenn das repeat beendet ist) wird gestoppt und ausgeschaltet!
+                            - service: media_player.media_stop
+                              target:
+                                entity_id: "{{ ziel_speaker }}"
+                            - delay: "00:00:01"
+                            - service: media_player.turn_off
+                              target:
+                                entity_id: "{{ ziel_speaker }}"
 
                         # ----------------------------------------------------------------
                         # WEICHE B: DYNAMISCHE MP3-PLAYLIST (MINIMAL 4 SONGS)

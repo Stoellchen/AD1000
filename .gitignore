@@ -42,6 +42,10 @@ config/**/*.txt
 #Exclude tts
 tts/*
 
+#Exclude gastromode
+config/www/mp3/_gastromode/*.mp3
+
+
 #keine Movies hochladen
 www/_service/*.mov
 *.mov
