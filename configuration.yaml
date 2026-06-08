@@ -32,6 +32,7 @@ homeassistant:
 #    - /usr/var/dumping-ground
     - /tmp
     - /config
+    - /config/www/mp3/_gastromode
 
 # https://www.home-assistant.io/integrations/python_script
 # please see in configs/packages/usto_set_pyscript_enable.yaml  -  needs to be here .....

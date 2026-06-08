@@ -165,141 +165,83 @@ automation:
                           {% elif gaeste_status == 'Französische Gäste' %} french
                           {% else %} mixed {% endif %}
 
-                    # INITIALISIERUNG: Google Nest leise (0.1) einschalten
+                        # 2a. Zufälligen Song direkt aus dem HA-Ordner-Sensor ziehen!
+                        # SCHRITT 2: Zufälligen Song aus dem nativen HA-Ordner-Sensor ziehen
+                    - variables:
+                        zufalls_song: >-
+                          {% set sensor_id = 'sensor.' ~ ordner %}
+                          {% set songs = state_attr(sensor_id, 'file_list') %}
+                          {% if songs is not none and songs | length > 0 %}
+                            {# Splittet den Pfad am / und nimmt das letzte Element (= der reine Dateiname) #}
+                            {% set voller_pfad = songs | random %}
+                            {{ voller_pfad.split('/') | last }}
+                          {% else %}
+                            none
+                          {% endif %}
+
+                        #2b. Alternativ: Zufälligen Song per Shell-Befehl ziehen (falls du den Ordner-Sensor nicht nutzen möchtest)
+                        # zufalls_song: >-
+                        #  {% set kommando = 'ls /config/www/mp3/_gastromode/' ~ ordner ~ ' | grep .mp3 | shuf -n 1' %}
+                        #  {{ shell_command_output(kommando) | trim }}
+
+                        # 3. Wenn MP3 gewählt ist: Zufälligen Song aus dem Ordner picken
+                    - variables:
+                        media_url: >
+                          {% if audio_quelle == 'Lokale MP3-Ordner' and zufalls_song != '' %}
+                            http://10.231.9.100:8123/local/mp3/_gastromode/{{ ordner }}/{{ zufalls_song | urlencode }}
+                          {% else %}
+                            {# Standard Radio-Streams falls 'Radio Stream' aktiv #}
+                            {% if now().hour >= 22 or now().hour < 6 %} https://radio4.vip-radios.fm:18054/stream-128kmp3-BuddhaBeach
+                            {% elif gaeste_status == 'Nur wir' %} https://chmedia.streamabc.net/79-r24-mp3-192-6659699
+                            {% elif gaeste_status == 'Schweizer Gäste' %} http://livestreaming-node-4.srg-ssr.ch/srgssr/rsp/mp3/128
+                            {% elif gaeste_status == 'Französische Gäste' %} http://rcf.streamakaci.com/rcf33.mp3
+                            {% else %} https://0nlineradio.stream13.radiohost.de/lounge-hotel-lounge {% endif %}
+                          {% endif %}
+
+                    # ========================================================================
+                    # DEBUG-BLOCK: Zeigt dir das Ergebnis im HA-Dashboard an
+                    # ========================================================================
+                    - service: notify.persistent_notification
+                      data:
+                        title: "🔍 GASTRO-MODE DEBUG"
+                        message: >-
+                          Ausgewählte Quelle: {{ audio_quelle }}
+                          Gewählter Ordner: {{ ordner }}
+                          Gewählte  Datei: {{ zufalls_song }}
+                          
+                          Generierte URL urlencode:
+                          {{ media_url }}
+
                     - service: media_player.volume_set
                       target:
                         entity_id: "{{ ziel_speaker }}"
                       data:
-                        volume_level: 0.05
+                        volume_level: 0.1
 
-                    - choose:
-                        # ----------------------------------------------------------------
-                        # WEICHE A: REINER RADIO STREAM (Bleibt unverändert)
-                        # ----------------------------------------------------------------
-                        - conditions:
-                            - condition: template
-                              value_template: "{{ audio_quelle == 'Radio Stream' }}"
-                          sequence:
-                            - variables:
-                                radio_url: >
-                                  {% if now().hour >= 22 or now().hour < 6 %} https://radio4.vip-radios.fm:18054/stream-128kmp3-BuddhaBeach
-                                  {% elif gaeste_status == 'Nur wir' %} https://chmedia.streamabc.net/79-r24-mp3-192-6659699
-                                  {% elif gaeste_status == 'Schweizer Gäste' %} http://livestreaming-node-4.srg-ssr.ch/srgssr/rsp/mp3/128
-                                  {% elif gaeste_status == 'Französische Gäste' %} http://rcf.streamakaci.com/rcf33.mp3
-                                  {% else %} https://0nlineradio.stream13.radiohost.de/lounge-hotel-lounge {% endif %}
-                            
-                            - service: media_player.play_media
-                              target:
-                                entity_id: "{{ ziel_speaker }}"
-                              data:
-                                media_content_id: "{{ radio_url }}"
-                                media_content_type: "music"
+                    - service: media_player.play_media
+                      target:
+                        entity_id: "{{ ziel_speaker }}"
+                      data:
+                        media_content_id: "{{ media_url }}"
+                        media_content_type: "music"
 
-                            # Normales 20-Sekunden Fade-In für Radio
-                            - repeat:
-                                count: 20
-                                sequence:
-                                  - delay: "00:00:01"
-                                  - service: media_player.volume_set
-                                    target:
-                                      entity_id: "{{ ziel_speaker }}"
-                                    data:
-                                      volume_level: "{{ (0.1 + (repeat.index * ((ziel_volume - 0.1) / 20))) | round(2) if (ziel_volume - 0.1) > 0 else ziel_volume }}"
-
-                        # ----------------------------------------------------------------
-                        # WEICHE B: DYNAMISCHE MP3-PLAYLIST (MINIMAL 4 SONGS)
-                        # ----------------------------------------------------------------
-                        - conditions:
-                            - condition: template
-                              value_template: "{{ audio_quelle == 'Lokale MP3-Ordner' }}"
-                          sequence:
-                            # Wir starten eine Schleife, die solange läuft, bis MINDESTENS 4 Songs gespielt wurden 
-                            # UND der Bewegungsmelder wieder komplett auf "off" steht.
-                            - repeat:
-                                until:
-                                  - condition: template
-                                    value_template: "{{ repeat.index >= 6 or is_state(ausloeser_entity, 'off') }}"
-                                sequence:
-                                  # 1. Neuen Zufallssong ermitteln
-                                  - variables:
-                                      sensor_id: "sensor.{{ ordner }}"
-                                      songs: "{{ state_attr(sensor_id, 'file_list') }}"
-                                      zufalls_song: >-
-                                        {% if songs is not none and songs | length > 0 %}
-                                          {{ (songs | random).split('/') | last }}
-                                        {% else %}
-                                          none
-                                        {% endif %}
-                                      media_url: "http://10.231.9.100:8123/local/mp3/_gastromode/{{ ordner }}/{{ zufalls_song | urlencode }}"
-
-                                  # Abbrechen, falls der Ordner leer sein sollte
-                                  - condition: template
-                                    value_template: "{{ zufalls_song != 'none' }}"
-
-                                  # 2. Song abspielen
-                                  - service: media_player.play_media
-                                    target:
-                                      entity_id: "{{ ziel_speaker }}"
-                                    data:
-                                      media_content_id: "{{ media_url }}"
-                                      media_content_type: "music"
-
-                                  # 3. Nur beim ALLERERSTEN Song der Playlist machen wir das langsame Fade-In
-                                  - choose:
-                                      - conditions:
-                                          - condition: template
-                                            value_template: "{{ repeat.index == 1 }}"
-                                        sequence:
-                                          - repeat:
-                                              count: 20
-                                              sequence:
-                                                - delay: "00:00:01"
-                                                - service: media_player.volume_set
-                                                  target:
-                                                    entity_id: "{{ ziel_speaker }}"
-                                                  data:
-                                                    volume_level: >-
-                                                      {% set schritt = repeat.index %}
-                                                      {% set start_vol = 0.1 %}
-                                                      {% set differenz = ziel_volume - start_vol %}
-                                                      {% if differenz > 0 %}
-                                                        {{ (start_vol + (schritt * (differenz / 20))) | round(2) }}
-                                                      {% else %}
-                                                        {{ ziel_volume }}
-                                                      {% endif %}
-
-                                    # Bei Song 2, 3 und 4 bleibt die Lautstärke einfach direkt auf dem Ziel-Level
-                                    default:
-                                      - service: media_player.volume_set
-                                        target:
-                                          entity_id: "{{ ziel_speaker }}"
-                                        data:
-                                          volume_level: "{{ ziel_volume }}"
-
-
-                                  # 4. DER INTELLIGENTE SCHLEIFEN-WÄCHTER (Ersetzt das alte delay)
-                                  # Wir berechnen die maximale Wartezeit (Songdauer - 2s, gedeckelt auf 360s)
-                                  - variables:
-                                      max_wartezeit: >-
-                                        {% set dur = state_attr(ziel_speaker, 'media_duration') | float(0) %}
-                                        {% if dur > 5 %}
-                                          {{ [dur - 2, 360] | min | int }}
-                                        {% else %}
-                                          180
-                                        {% endif %}
-                                  # Diese Schleife läuft alle 5 Sekunden durch, bis entweder die Zeit um ist 
-                                  # ODER der Bewegungsmelder auf 'off' springt.
-                                  - repeat:
-                                      until:
-                                        - condition: template
-                                          value_template: >-
-                                            {# Berechnet die bisherige Wartezeit (5 Sekunden pro Durchlauf) #}
-                                            {% set vergangene_zeit = repeat.index * 5 %}
-                                            {{ vergangene_zeit >= max_wartezeit or is_state(ausloeser_entity, 'off') }}
-                                      sequence:
-                                        - delay: "00:00:05"
-
-
+                    - repeat:
+                        count: 20
+                        sequence:
+                          - delay: "00:00:01"
+                          - service: media_player.volume_set
+                            target:
+                              entity_id: "{{ ziel_speaker }}"
+                            data:
+                              volume_level: >-
+                                {% set schritt = repeat.index %}
+                                {% set start_vol = 0.1 %}
+                                {% set differenz = ziel_volume - start_vol %}
+                                {% if differenz > 0 %}
+                                  {{ (start_vol + (schritt * (differenz / 20))) | round(2) }}
+                                {% else %}
+                                  {{ ziel_volume }}
+                                {% endif %}
 
         # ========================================================================
         # SZENARIO B: SENSOR SCHALTET AUF "OFF" (RAUM LEER)

@@ -170,7 +170,7 @@ automation:
                       target:
                         entity_id: "{{ ziel_speaker }}"
                       data:
-                        volume_level: 0.05
+                        volume_level: 0.1
 
                     - choose:
                         # ----------------------------------------------------------------
@@ -218,7 +218,7 @@ automation:
                             - repeat:
                                 until:
                                   - condition: template
-                                    value_template: "{{ repeat.index >= 6 or is_state(ausloeser_entity, 'off') }}"
+                                    value_template: "{{ repeat.index > 6 and is_state(ausloeser_entity, 'off') }}"
                                 sequence:
                                   # 1. Neuen Zufallssong ermitteln
                                   - variables:
@@ -276,30 +276,18 @@ automation:
                                         data:
                                           volume_level: "{{ ziel_volume }}"
 
-
-                                  # 4. DER INTELLIGENTE SCHLEIFEN-WÄCHTER (Ersetzt das alte delay)
-                                  # Wir berechnen die maximale Wartezeit (Songdauer - 2s, gedeckelt auf 360s)
-                                  - variables:
-                                      max_wartezeit: >-
-                                        {% set dur = state_attr(ziel_speaker, 'media_duration') | float(0) %}
-                                        {% if dur > 5 %}
-                                          {{ [dur - 2, 360] | min | int }}
-                                        {% else %}
-                                          180
-                                        {% endif %}
-                                  # Diese Schleife läuft alle 5 Sekunden durch, bis entweder die Zeit um ist 
-                                  # ODER der Bewegungsmelder auf 'off' springt.
-                                  - repeat:
-                                      until:
-                                        - condition: template
-                                          value_template: >-
-                                            {# Berechnet die bisherige Wartezeit (5 Sekunden pro Durchlauf) #}
-                                            {% set vergangene_zeit = repeat.index * 5 %}
-                                            {{ vergangene_zeit >= max_wartezeit or is_state(ausloeser_entity, 'off') }}
-                                      sequence:
-                                        - delay: "00:00:05"
-
-
+                                  # 4. DER DYNAMISCHE PLAYLIST-WÄCHTER:
+                                  # Wir warten, bis die aktuelle Position die Gesamtlänge des Songs erreicht hat (minus 2 Sekunden für den Übergang).
+                                  - delay: >-
+                                      {% set dur = state_attr(ziel_speaker, 'media_duration') | float(0) %}
+                                      {% if dur > 5 %}
+                                        {# Nimmt die Dauer, zieht 2 Sekunden ab und begrenzt auf maximal 360 Sekunden #}
+                                        {% set wartezeit = [dur - 2, 360] | min | int %}
+                                        {{ wartezeit }}
+                                      {% else %}
+                                        {# Fallback, falls Google die Dauer im ersten Moment nicht liefert #}
+                                        180
+                                      {% endif %}
 
         # ========================================================================
         # SZENARIO B: SENSOR SCHALTET AUF "OFF" (RAUM LEER)
