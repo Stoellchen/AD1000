@@ -1,24 +1,28 @@
-"""
-diagnostics.py - ccessed through Settings → Devices & Services → person_location → Download Diagnostics.
+"""diagnostics.py - accessed through Settings → Devices & Services → person_location → Download Diagnostics.
 
 Diagnostics output is a sanitized JSON document containing configuration metadata, provider information,
 and recent runtime state. Sensitive values such as API keys are automatically redacted.
 """
 
+# pyright: reportMissingImports=false
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+
+    from . import PersonLocationIntegration
 import logging
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+# from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from .const import (
-    DATA_ATTRIBUTES,
-    DATA_CONFIGURATION,
+    CONF_FOLLOW_PERSON_INTEGRATION,
     DATA_INTEGRATION,
     DOMAIN,
-    PERSON_LOCATION_INTEGRATION,
     REDACT_KEYS,
 )
 
@@ -40,7 +44,7 @@ def _redact(data: dict) -> dict:
     return redacted
 
 
-def get_effective_log_level_name(logger) -> str:
+def get_effective_log_level_name(logger: logging.Logger) -> str:
     """Get the effective logging level name."""
     level = logger.getEffectiveLevel()
     mapping = logging.getLevelNamesMapping()
@@ -58,7 +62,7 @@ async def async_get_config_entry_diagnostics(
     entry: ConfigEntry,
 ) -> dict:
     """Return diagnostics for a config entry."""
-    data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
+    # data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
 
     #
     # --- Registries ---------------------------------------------------------
@@ -68,6 +72,7 @@ async def async_get_config_entry_diagnostics(
 
     entities = []
     devices = []
+    trigger_entities = []
 
     for entity_id, entity_entry in ent_reg.entities.items():
         if entity_entry.config_entry_id == entry.entry_id:
@@ -77,24 +82,39 @@ async def async_get_config_entry_diagnostics(
                 "platform": entity_entry.platform,
                 "device_id": entity_entry.device_id,
             }
+            state_obj = hass.states.get(entity_id)
+            if state_obj:
+                entity_dict["state"] = state_obj.state
+                entity_dict["last_changed"] = state_obj.last_changed.isoformat()
+                entity_dict["last_updated"] = state_obj.last_updated.isoformat()
             if entity_id.startswith("switch.api_provider"):
-                state_obj = hass.states.get(entity_id)
-                enabled = "Enabled" if state_obj.state == "on" else "Disabled"
-                success_count = state_obj.attributes.get("success_count", 0)
-                error_count = state_obj.attributes.get("error_count", 0)
-                entity_dict["status"] = (
-                    f"{enabled} | Successful: {success_count} | Errors: {error_count}"
-                )
-                last_error = state_obj.attributes.get("last_error")
-                if last_error:
-                    entity_dict["last_error"] = last_error
+                if state_obj:
+                    enabled = "Enabled" if state_obj.state == "on" else "Disabled"
+                    success_count = state_obj.attributes.get("success_count", 0)
+                    error_count = state_obj.attributes.get("error_count", 0)
+                    entity_dict["status"] = (
+                        f"{enabled} | Successful: {success_count} | Errors: {error_count}"
+                    )
+                    last_error = state_obj.attributes.get("last_error")
+                    if last_error:
+                        entity_dict["last_error"] = last_error
+            elif entity_dict["unique_id"].endswith("_location_target"):
+                if state_obj:
+                    entity_dict["attributes"] = {
+                        "location_time": state_obj.attributes.get("location_time"),
+                        "latitude": state_obj.attributes.get("latitude"),
+                        "longitude": state_obj.attributes.get("longitude"),
+                        "reported_state": state_obj.attributes.get("reported_state"),
+                        "source": state_obj.attributes.get("source"),
+                        "zone": state_obj.attributes.get("zone"),
+                    }
             elif entity_id.startswith("camera."):
-                state_obj = hass.states.get(entity_id)
-                attributes = {
-                    "api_provider": state_obj.attributes["api_provider"],
-                    "key_used": state_obj.attributes["key_used"],
-                }
-                entity_dict["attributes"] = attributes
+                if state_obj:
+                    attributes = {
+                        "api_provider": state_obj.attributes.get("api_provider"),
+                        "key_used": state_obj.attributes.get("key_used"),
+                    }
+                    entity_dict["attributes"] = attributes
 
             entities.append(entity_dict)
 
@@ -108,6 +128,55 @@ async def async_get_config_entry_diagnostics(
                     "name": device_entry.name,
                     "model": device_entry.model,
                     "manufacturer": device_entry.manufacturer,
+                }
+            )
+
+    #
+    # --- Trigger Entities ---------------------------------------------------------
+    #
+
+    trigger_entities = []
+
+    # Convert existing devices dict → list of objects
+    for entity_id, person_name in entry.data.get("devices", {}).items():
+        state_obj = hass.states.get(entity_id)
+
+        trigger_entities.append(
+            {
+                "entity_id": entity_id,
+                "person_name": person_name,
+                "state": state_obj.state if state_obj else None,
+                "last_changed": state_obj.last_changed.isoformat()
+                if state_obj
+                else None,
+                "last_updated": state_obj.last_updated.isoformat()
+                if state_obj
+                else None,
+            }
+        )
+
+    # If following HA's built-in person integration, also include those entities as triggers
+    existing_ids = {item["entity_id"] for item in trigger_entities}
+
+    if CONF_FOLLOW_PERSON_INTEGRATION in entry.data:
+        for entity_id in hass.states.async_entity_ids("person"):
+            if entity_id in existing_ids:
+                continue
+
+            state_obj = hass.states.get(entity_id)
+            friendly = state_obj.attributes.get("friendly_name") if state_obj else None
+
+            trigger_entities.append(
+                {
+                    "entity_id": entity_id,
+                    "person_name": friendly or (state_obj.name if state_obj else None),
+                    "state": state_obj.state if state_obj else None,
+                    "last_changed": state_obj.last_changed.isoformat()
+                    if state_obj
+                    else None,
+                    "last_updated": state_obj.last_updated.isoformat()
+                    if state_obj
+                    else None,
                 }
             )
 
@@ -161,17 +230,14 @@ async def async_get_config_entry_diagnostics(
             }
     """
 
-    pli: PERSON_LOCATION_INTEGRATION = hass.data[DOMAIN][DATA_INTEGRATION]
+    pli: PersonLocationIntegration = hass.data[DOMAIN][DATA_INTEGRATION]
     pli_dict = pli.__dict__.copy()
+    # pli_dict = copy.deepcopy(pli.__dict__)  # make a deep copy to avoid mutating the original
     pli_dict.pop("hass")
-    pli_dict.pop("DATA_CONFIGURATION")
+    # pli_dict.pop(DATA_CONFIGURATION)
     pli_dict.pop("configuration")
 
     # attributes: dict = hass.data[DOMAIN][DATA_ATTRIBUTES]
-
-    logging_effective_level = logging.getLevelNamesMapping().get(
-        _LOGGER.getEffectiveLevel(), "UNKNOWN"
-    )
 
     #
     # --- Final diagnostics structure ----------------------------------------
@@ -192,6 +258,7 @@ async def async_get_config_entry_diagnostics(
         },
         "entities": entities,
         "devices": devices,
+        "trigger_entities": trigger_entities,
         "logging": {
             "effective_level": get_effective_log_level_name(_LOGGER),
         },

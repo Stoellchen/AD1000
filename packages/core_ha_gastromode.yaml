@@ -1,0 +1,2076 @@
+##########################################################################################
+##
+##  Info to display ............. by usto
+##
+##########################################################################################
+
+
+
+##
+## this must be checked in every send to mobile .....
+##
+input_boolean:
+## 
+##  Initial should not be set the have the same value after a restart than before
+##
+  notify_sms:
+    name: SMS messages
+    initial: on
+
+  notify_mobile_prio_alert:
+    name: Mobile priority messages HIGH
+    initial: on
+  notify_mobile_prio_high:
+    name: Mobile priority messages ALERT
+    initial: on
+  notify_mobile_prio_medium:
+    name: Mobile priority messages Medium
+    initial: on
+  notify_mobile_prio_low:
+    name: Mobile priority messages Low
+    initial: on
+
+  notify_tv_prio_alert:
+    name: TV priority messages ALERT
+    initial: on
+  notify_tv_prio_high:
+    name: TV priority messages HIGH
+    initial: on
+  notify_tv_prio_medium:
+    name: TV priority messages Medium
+    initial: on
+  notify_tv_prio_low:
+    name: TV priority messages Low
+    initial: on
+
+  notify_tts_dnd:
+    name: "TTS Do Not Disturb"
+    icon: mdi:volume-off
+
+  notify_tts_prio_alert:
+    name: TTS priority messages ALERT
+    initial: on
+  notify_tts_prio_high:
+    name: TTS priority messages HIGH
+    initial: on
+  notify_tts_prio_medium:
+    name: TTS priority messages Medium
+    initial: on
+  notify_tts_prio_low:
+    name: TTS priority messages Low
+    initial: on
+
+  notify_display_prio_alert:
+    name: Display priority messages ALERT
+    initial: on
+  notify_display_prio_high:
+    name: Display priority messages HIGH
+    initial: on
+  notify_display_prio_medium:
+    name: Display priority messages Medium
+    initial: on
+  notify_display_prio_low:
+    name: Display priority messages Low
+    initial: on
+
+
+input_select:
+  room_mode_wohnzimmer:
+    name: Wohnzimmer
+    options: [normal, quiet, silent]
+  room_mode_esszimmer:
+    name: Esszimmer
+    options: [normal, quiet, silent]
+  room_mode_kueche:
+    name: Küche
+    options: [normal, quiet, silent]
+  room_mode_buero:
+    name: Büro
+    options: [normal, quiet, silent]
+  room_mode_korridor:
+    name: Korridor
+    options: [normal, quiet, silent]
+
+  room_mode_schlafzimmer:
+    name: Schlafzimmer Master
+    options: [normal, quiet, silent]
+  room_mode_schlafzimmer_2:
+    name: Schlafzimmer 2
+    options: [normal, quiet, silent]
+  room_mode_schlafzimmer_3:
+    name: Schlafzimmer 3
+    options: [normal, quiet, silent]
+  room_mode_schlafzimmer_4:
+    name: Schlafzimmer 4
+    options: [normal, quiet, silent]
+
+  room_mode_garage:
+    name: Garage
+    options: [normal, quiet, silent]
+  room_mode_eingangbereich:
+    name: Eingangsbereich
+    options: [normal, quiet, silent]
+
+  room_mode_sitzplatz:
+    name: Sitzplatz
+    options: [normal, quiet, silent]
+  room_mode_schwimmbad:
+    name: Schwimmbad
+    options: [normal, quiet, silent]
+  room_mode_garten:
+    name: Garten
+    options: [normal, quiet, silent]
+    
+
+group:
+  tts_notify_speaker_alert:                               #  TTS output for notification messages
+    name: TTS notify Speaker
+#    icon: mdi:account-voice
+    entities:
+      - media_player.wohn_lautsprecher
+      - media_player.dusche
+      - media_player.schlafzimmer
+      - media_player.info_1                       #google nest    Info 1    - Esszimmer  
+      - media_player.info_2                       #google nest    Info 2    - Lager / Storage
+
+  tts_notify_speaker_high:                               #  TTS output for notification messages
+    name: TTS notify Speaker
+    icon: mdi:account-voice
+    entities:
+      - media_player.wohn_lautsprecher
+      - media_player.dusche
+      - media_player.schlafzimmer
+      - media_player.info_1                       #google nest    Info 1    - Esszimmer  
+      - media_player.info_2                       #google nest    Info 2    - Lager / Storage
+
+  tts_notify_speaker_medium:                               #  TTS output for notification messages
+    name: TTS notify Speaker
+    icon: mdi:account-voice
+    entities:
+      - media_player.wohn_lautsprecher
+      - media_player.info_1                       #google nest    Info 1    - Esszimmer  
+      - media_player.info_2                       #google nest    Info 2    - Lager / Storage
+
+  tts_notify_speaker_low:                               #  TTS output for notification messages
+    name: TTS notify Speaker
+    icon: mdi:account-voice
+    entities:
+      - media_player.wohn_lautsprecher
+      - media_player.info_1                       #google nest    Info 1    - Esszimmer  
+      - media_player.info_2                       #google nest    Info 2    - Lager / Storage
+
+
+  display_notify_alert:                               #  TTS output for notification messages
+    name: DISPLAY alert
+    icon: mdi:account-voice
+    entities:
+      - media_player.info_3                       #google nest    Info 3    - Wohnzimmer
+
+  display_notify_high:                               #  TTS output for notification messages
+    name: DISPLAY high
+    icon: mdi:account-voice
+    entities:
+      - media_player.info_3                       #google nest    Info 3    - Wohnzimmer
+
+  display_notify_medium:                               #  TTS output for notification messages
+    name: DISPLAY medium
+    icon: mdi:account-voice
+    entities:
+      - media_player.info_3                       #google nest    Info 3    - Wohnzimmer
+
+  display_notify_low:                               #  TTS output for notification messages
+    name: DISPLAY notify
+    icon: mdi:account-voice
+    entities:
+      - media_player.info_3                       #google nest    Info 3    - Wohnzimmer
+
+  tv_notify_alert:
+    name: TV notify ALERT
+    entities:
+      - notify.android_tv_fire_tv_sony_main_arpa
+      - notify.android_tv_fire_tv_googletv_main_arpa
+  tv_notify_high:
+    name: TV notify HIGH
+    entities:
+      - notify.android_tv_fire_tv_sony_main_arpa
+      - notify.android_tv_fire_tv_googletv_main_arpa
+  tv_notify_medium:
+    name: TV notify MEDIUM
+    entities:
+      - notify.android_tv_fire_tv_sony_main_arpa
+      - notify.android_tv_fire_tv_googletv_main_arpa
+  tv_notify_low:
+    name: TV notify LOW
+    entities:
+      - notify.android_tv_fire_tv_sony_main_arpa
+      - notify.android_tv_fire_tv_googletv_main_arpa
+
+notify:
+  # https://www.home-assistant.io/integrations/free_mobile
+  - name: free_sms_home
+    platform: free_mobile
+    username: !secret free_sms_gateway_username  # Die 8-stellige ID, mit der du dich bei Free einloggst
+    access_token: !secret free_sms_gateway_access_token  # Der Token aus Schritt 1
+
+
+#### müssen über integration neu angelegt werden
+#  - platform: nfandroidtv
+#    name: sony
+#    host: 10.23.38.31
+#    # host: sony.main.arpa
+#    duration: 20
+#    position: top-right
+#    color: amber
+#    fontsize: medium
+#  - platform: nfandroidtv
+#    name: googletv
+#    host: 10.23.38.33
+#    # host: googletv.main.arpa
+#    duration: 20
+#    position: top-right
+#    color: amber
+#    fontsize: medium
+
+# call with high
+  - name: ALL_MOBILE_DEVICES_PRIO_HIGH
+    platform: group
+    services:
+      - service: mobile_app_5t0ll
+# call with medium
+  - name: ALL_MOBILE_DEVICES_PRIO_MEDIUM
+    platform: group
+    services:
+      - service: mobile_app_5t0ll
+# call with low
+  - name: ALL_MOBILE_DEVICES_PRIO_LOW
+    platform: group
+    services:
+      - service: mobile_app_5t0ll
+
+
+
+
+automation:
+  ###################################################
+  ##  
+  ##  fontsize:       small, medium, larg 
+  ##  transparency:   0 , 25, 25, 100% 
+  ##  color:          red, green, blue, amber, cyan
+  ##  position:       bottom-right
+  ##                  top-right
+  ##                  bottom-left
+  ##                  top-left
+- id: test_notify_android
+  alias: 'TEST - Notify Android (core_ha_notify_settings)'
+  description: 'Send a message to the Display on TV'
+  trigger: []
+  condition: []
+  action:
+    ## war frueher sony und nicht android_tv_fire_tv
+    - service: notify.android_tv_fire_tv
+      data:
+        title: TEST Mitteilung GREEN 
+        message: >
+          Dies ist nur eine Testmitteilung. bitte nichts unternehmen!
+        data:
+          fontsize: small
+          position: bottom-right 
+          duration: 5
+          transparency: 75%
+          color: green
+    - delay: 00:00:02
+    - service: notify.android_tv_fire_tv
+      data:
+        title: TEST Mitteilung RED 
+        message: >
+          Dies ist nur eine Testmitteilung. bitte nichts unternehmen!
+        data:
+          fontsize: small
+          position: top-left 
+          duration: 5
+          transparency: 0%
+          color: red
+
+
+script:
+  notify_dispatch_test1:
+    alias: "Notify Dispatch TEST – TTS only (core_ha_notify_settings)"
+    description: >
+      Testet ausschließlich TTS.
+      Respektiert Prio-Schalter und DND.
+    sequence:
+      - service: script.notify_dispatch
+        data:
+          prio: M
+          only: tts
+          title: "test 1"
+          message: "Test eins. Das ist eine reine T T S Mitteilung."
+
+  notify_dispatch_test2:
+    alias: "Notify Dispatch TEST – Display only (core_ha_notify_settings)"
+    description: >
+      Testet nur Display / Google Hub / Cast.
+    sequence:
+      - service: script.notify_dispatch
+        data:
+          prio: M
+          only: display
+          title: "test 2"
+          message: "Test zwei. Display Benachrichtigung."
+
+  notify_dispatch_test3:
+    alias: "Notify Dispatch TEST – TV only (core_ha_notify_settings)"
+    description: >
+      Testet Android TV Notification.
+    sequence:
+      - service: script.notify_dispatch
+        data:
+          prio: M
+          only: tv
+          title: "test 3"
+          message: "Test drei. Nachricht nur auf dem Fernseher."
+
+  notify_dispatch_test4:
+    alias: "Notify Dispatch TEST – ALL channels (core_ha_notify_settings)"
+    description: >
+      Testet TTS + Display + TV gleichzeitig.
+    sequence:
+      - service: script.notify_dispatch
+        data:
+          prio: M
+          title: "test 4"
+          message: "Test vier. Diese Meldung geht an alle Ausgabekanäle."
+
+  notify_dispatch_test5:
+    alias: "Notify Dispatch TEST – ALL channels ALERT (core_ha_notify_settings)"
+    description: >
+      Testet TTS + Display + TV gleichzeitig.
+    sequence:
+      - service: script.notify_dispatch
+        data:
+          prio: A
+          title: "test 5"
+          message: "Test fünf. Diese Meldung geht an alle Ausgabekanäle."
+
+
+################################################################################
+## SCRIPT 1 – NOTIFY DISPATCH (SINGLE ENTRY POINT)
+##
+## EINZIGER Einstiegspunkt für alle Notifications
+##
+## Parameter:
+##   prio:    A | H | M | L
+##   title:   Text
+##   message: Text
+##   status:  ON | OFF        (nur für ALERT relevant)
+##   only:    Filter-String   (z. B. tvttsdisplay, tv,tts,display)
+##            Default = ALLES (tts + tv + display + mobile)
+##   size:    S | M | L       (optional, Default = M)
+################################################################################
+################################################################################
+## SCRIPT 1 – NOTIFY DISPATCH (SINGLE ENTRY POINT)
+################################################################################
+
+
+  notify_dispatch:
+    alias: "Notify DISPATCH – entry point (core_ha_notify_settings)"
+    mode: parallel
+
+    # ------------------------------------------------------------------------
+    # NEU: Felder für das UI/Skript-Eingabe definieren
+    # ------------------------------------------------------------------------
+    fields:
+      prio:
+        description: "Priorität (A, H, M, L)"
+        example: "H"
+      title:
+        description: "Titel der Nachricht"
+        example: "Titel der Nachricht"
+      message:
+        description: "Nachrichtentext"
+        example: "Inhalt der Nachricht"
+      status:
+        description: "Status (z.B. ON/OFF)"
+        example: "ON"
+      size:
+        description: "Schriftgröße (S, M, L)"
+        example: "M"
+      only:
+        description: "Medien-Filter (tts tv display mobile sms)"
+        example: "tts tv"
+      picture:
+        description: "Optional: Bild-URL"
+      video:
+        description: "Optional: Video-URL"
+      mp3:
+        description: "Optional: MP3-URL"
+      room:
+        description: "Optional: Ziel-Raum (z.B. Wohnzimmer, Garage). Wenn leer, gilt es überall."
+        example: "Wohnzimmer"
+
+    sequence:
+      # ------------------------------------------------------------------------
+      # Parameter normalisieren
+      # ------------------------------------------------------------------------
+      - variables:
+          prio: "{{ prio | upper }}"
+          title: "{{ title }}"
+          message: "{{ message }}"
+          status: "{{ status | default('') | upper }}"
+          size: "{{ size | default('M') | upper }}"
+
+          # Optional übergebene Medien
+          picture: "{{ picture | default('') }}"
+          video: "{{ video | default('') }}"
+          mp3: "{{ mp3 | default('') }}"
+
+          # Basis-URL für Fallback-Bilder
+          _media_base: "http://ad1000.main.arpa:8123/local/_service"
+
+
+          # ONLY = reiner Filterstring (tvttsdisplay etc.)
+          only: "{{ only | default('tts tv display mobile') | lower }}"
+
+          # --------------------------------------------------------------------
+          # NEU: Raum-Parameter normalisieren (Kleinbuchstaben, ohne Leerzeichen)
+          # Wenn kein Raum übergeben wird, setzen wir den Standard auf 'all'
+          # --------------------------------------------------------------------
+          # --------------------------------------------------------------------
+          # KORRIGIERT: Raum-Parameter als Liste aufbauen (enthält 'all' NUR wenn gewollt)
+          # --------------------------------------------------------------------
+          target_room: >-
+            {% set r = room | default('all') %}
+            {% if r in ['all', '', none, 'none'] %}
+              {{ ['all'] }}
+            {% elif r is string %}
+              {{ (r | lower | replace(' ', '')).split(',') }}
+            {% elif r is iterable %}
+              {{ r | map('lower') | map('trim') | list }}
+            {% else %}
+              {{ ['all'] }}
+            {% endif %}
+
+          # PRIO → Suffix für Entity-Namen
+          prio_name: >
+            {% if prio == 'A' %}alert
+            {% elif prio == 'H' %}high
+            {% elif prio == 'M' %}medium
+            {% else %}low
+            {% endif %}
+
+          # Media-Type bestimmen
+          media_type: >
+            {% if video | length > 0 %}
+              video
+            {% elif mp3 | length > 0 %}
+              mp3
+            {% elif picture | length > 0 %}
+              image
+            {% else %}
+              image
+            {% endif %}
+
+          # Finales Media (Priorität: Video > Picture > Fallback)
+          media_url: >
+            {% if video | length > 0 %}
+              {{ video }}
+            {% elif mp3 | length > 0 %}
+              {{ mp3 }}
+            {% elif picture | length > 0 %}
+              {{ picture }}
+            {% else %}
+              {{ _media_base ~ '/_notification_picture_' ~ prio_name ~ '.png' }}
+            {% endif %}
+
+          # media_url_png for video or message or mp3 (Priorität: Video > Picture > Fallback)
+          media_url_png: >
+            {{ _media_base ~ '/_notification_picture_' ~ prio_name ~ '.png' }}
+
+          # PRIO → Duration (zentral!)
+          duration: >
+            {% if prio == 'A' %}30
+            {% elif prio == 'H' %}20
+            {% elif prio == 'M' %}15
+            {% else %}8
+            {% endif %}
+
+          # PRIO → TTS Volume (zentral)
+          volume: >
+            {% if prio == 'A' %}0.75
+            {% elif prio == 'H' %}0.60
+            {% elif prio == 'M' %}0.45
+            {% else %}0.30
+            {% endif %}
+
+          # PRIO → Color (zentral!)
+          color: >
+            {% if prio == 'A' %}
+              {{ 'red' if status != 'ON' else 'green' }}
+            {% elif prio == 'H' %}
+              amber
+            {% elif prio == 'M' %}
+              amber
+            {% else %}
+              grey
+            {% endif %}
+
+          # PRIO → Color (zentral!)
+          fontsize: >
+            {% if size == 'S' %}small
+            {% elif size == 'L' %}large
+            {% else %}medium
+            {% endif %}
+
+          # PRIO → Position (zentral!)
+          position: >
+            {% if prio == 'A' %}
+              top-right
+            {% elif prio == 'H' %}
+              top-left
+            {% elif prio == 'M' %}
+              bottom-right
+            {% else %}
+              bottom-left
+            {% endif %}
+
+          # -------------------------------------------------
+          # Quiet Hours pro Prio
+          # -------------------------------------------------
+          quiet_from: >
+            {% if prio == 'H' %}22:00
+            {% elif prio == 'M' %}21:00
+            {% elif prio == 'L' %}20:00
+            {% else %}00:00
+            {% endif %}
+
+          quiet_to: >
+            {% if prio == 'H' %}07:00
+            {% elif prio == 'M' %}08:00
+            {% elif prio == 'L' %}09:00
+            {% else %}00:00
+            {% endif %}
+
+          # -------------------------------------------------
+          # Quiet-Hours aktiv?
+          # (über Mitternacht korrekt!)
+          # -------------------------------------------------
+          in_quiet_hours: >
+            {% if prio == 'A' %}
+              false
+            {% else %}
+              {% set now = now().strftime('%H:%M') %}
+              {% if quiet_from < quiet_to %}
+                {{ quiet_from <= now < quiet_to }}
+              {% else %}
+                {{ now >= quiet_from or now < quiet_to }}
+              {% endif %}
+            {% endif %}
+
+          # --------------------------------------------------------------------
+          # Finale Werte (nach Quiet-Hours!)
+          # --------------------------------------------------------------------
+          final_volume: >
+            {% if in_quiet_hours %}
+              {{ (volume * 0.6) | round(2) }}
+            {% else %}
+              {{ volume }}
+            {% endif %}
+
+          final_duration: >
+            {% if in_quiet_hours %}
+              {{ (duration * 0.5) | int }}
+            {% else %}
+              {{ duration }}
+            {% endif %}
+
+      # ------------------------------------------------------------------------
+      # ALERT → sofort
+      # ------------------------------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ prio == 'A' }}"
+        then:
+          - service: script.notify_dispatch_alert
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              status: "{{ status }}"
+              only: "{{ only }}"
+              room: "{{ target_room }}"
+              prio_name: "{{ prio_name }}"
+              duration: "{{ final_duration }}"
+              volume: "{{ final_volume }}"
+              position: "{{ position }}"
+              size: "{{ fontsize }}"
+              color: "{{ color }}"
+              media_type: "{{ media_type }}"
+              media_url: "{{ media_url }}"
+              media_url_png: "{{ media_url_png }}"  
+
+        else:
+          # --------------------------------------------------------------------
+          # H / M / L → queued
+          # --------------------------------------------------------------------
+          - service: script.notify_dispatch_normal
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              only: "{{ only }}"
+              room: "{{ target_room }}"
+              prio_name: "{{ prio_name }}"
+              duration: "{{ final_duration }}"
+              volume: "{{ final_volume }}"
+              position: "{{ position }}"
+              size: "{{ fontsize }}"
+              color: "{{ color }}"
+              media_type: "{{ media_type }}"
+              media_url: "{{ media_url }}"
+
+  ################################################################################
+  ## SCRIPT 2 – NOTIFY DISPATCH NORMAL (H / M / L)
+  ################################################################################
+  notify_dispatch_normal:
+    alias: "Notify DISPATCH NORMAL (H/M/L) (core_ha_notify_settings)"
+    mode: queued
+
+    sequence:
+      # ------------------------------------------------------------------------
+      # Ableitungen
+      # ------------------------------------------------------------------------
+      - variables:
+          only: "{{ only }}"
+          prio_name: "{{ prio_name }}"
+
+      # ------------------------------------------------------------------------
+      # TV (Weist den Raum über den zugehörigen Mediaplayer zu)
+      # ------------------------------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ 'tv' in only or 'all' in only }}"
+          - condition: template
+            value_template: >
+              {{ states('input_boolean.notify_tv_prio_' ~ prio_name) == 'on' }}
+        then:
+          - variables:
+              tv_entities: >
+                {{ state_attr('group.tv_notify_' ~ prio_name, 'entity_id') | default([], true) | list }}
+              target_room_filter: "{{ room }}"
+
+          - repeat:
+              for_each: "{{ tv_entities }}"
+              sequence:
+                - variables:
+                    current_item: "{{ repeat.item }}"
+                    # Hier wandeln wir "notify.android_tv_..." um in "media_player.android_tv_..."
+                    # Wenn du in Home Assistant eine Gruppe unter der Domäne group: anlegst (wie deine tv_notify_alert), 
+                    # wandelt Home Assistant die Entitäten darin intern nicht automatisch in die langen Dienstnamen um. 
+                    # Stattdessen versucht er, den Namen zu kürzen, oder greift auf alte Zuweisungen zurück. Wenn im Trace 
+                    # notify.sony herauskommt, versucht das Skript einen Dienst aufzurufen, den es gar nicht gibt, und bricht ab.
+                    # associated_media_player: "{{ tv_service | replace('notify.', 'media_player.') }}"
+                    # Jetzt holen wir den Raum vom Mediaplayer!
+                    # Extrahiert den reinen Namen (z.B. "sony" oder "googletv")
+                    device_pure_name: "{{ current_item | replace('notify.', '') }}"
+
+                    # Variante 1: Der direkte Kurzname aus der Gruppe
+                    tv_service_short: "{{ current_item }}"
+
+                    # HIER WIRD AUFGEBLASEN: Setzt den exakten, langen Dienstnamen zusammen
+                    # Ergebnis: notify.android_tv_fire_tv_sony_main_arpa
+                    tv_service_long: "notify.android_tv_fire_tv_{{ device_pure_name }}_main_arpa"
+
+                    # Setzt den zugehörigen Mediaplayer für die Raumsuche zusammen
+                    # Ergebnis: media_player.sony
+                    associated_media_player: "media_player.{{ device_pure_name }}"
+                    
+                    # Holt den Raum von diesem Mediaplayer (z.B. Wohnzimmer)
+                    device_room: "{{ area_name(associated_media_player) }}"
+                    
+                    room_mode: >
+                      {% if device_room %}
+                        {{ states('input_select.room_mode_' ~ device_room | lower | replace(' ', '_')) }}
+                      {% else %}
+                        normal
+                      {% endif %}
+                    
+                    room_match: >
+                      {{ target_room_filter == ['all'] or (device_room | lower | trim) in target_room_filter }}
+                    mode_allowed: >
+                      {{ room_mode == 'normal' or (room_mode == 'quiet' and prio_name == 'high') }}
+
+
+                # sendet an den langen und kurzen Dienst, damit sowohl die alten notify.sony Aufrufe in der Gruppe funktionieren, als auch die neuen, langen Dienste, die den Raum korrekt zuordnen können.
+#                - continue_on_error: true
+#                  service: "{{ tv_service_long }}"
+#                  data:
+#                    title: "{{ title }}"
+#                    message: "{{ message }}"
+#                    data:
+#                      fontsize: "{{ fontsize }}"
+#                      position: "{{ position }}"
+#                      duration: "{{ duration }}"
+#                      color: "{{ color }}"
+                - continue_on_error: true
+                  service: "{{ tv_service_short }}"
+                  data:
+                    title: "{{ title }}"
+                    message: "{{ message }}"
+                    data:
+                      fontsize: "{{ fontsize }}"
+                      position: "{{ position }}"
+                      duration: "{{ duration }}"
+                      color: "{{ color }}"
+
+
+
+      # ------------------------------------------------------------------------
+      # TV (über Gruppe!) OLD WORKING, da die Gruppe nicht mehr über die Prio-Input-Booleans gesteuert wird, sondern über separate Gruppen für jede Prio (alert, high, medium, low)
+      # ------------------------------------------------------------------------
+#      - if:
+#          - condition: template
+#            value_template: "{{ 'tv' in only }}"
+#          - condition: template
+#            value_template: >
+#              {{ states('input_boolean.notify_tv_prio_' ~ prio_name) == 'on' }}
+#        then:
+#          # - service: notify.group_tv_notify_{{ prio_name }}
+#          - service: notify.android_tv_fire_tv
+#            data:
+#              title: "{{ title }}"
+#              message: "{{ message }}"
+#              data:
+#                fontsize: "{{ fontsize }}"
+#                position: "{{ position }}"
+#                duration: "{{ duration }}"
+#                color: "{{ color }}"
+
+      # ------------------------------------------------------------------------
+      # DISPLAY (Room-Mode aware, pro Device)
+      # ------------------------------------------------------------------------
+      - if:
+          # Channel erlaubt?
+          - condition: template
+            value_template: "{{ 'display' in only or 'all' in only }}"
+
+          # Prio für Display erlaubt?
+          - condition: template
+            value_template: >
+              {{ states('input_boolean.notify_display_prio_' ~ prio_name) == 'on' }}
+
+        then:
+          # Alle Display-Devices aus der Gruppe holen
+          - variables:
+              display_entities: >
+                {{ state_attr('group.display_notify_' ~ prio_name, 'entity_id')
+                  | default([], true)
+                  | list }}
+              # Wir sichern den vom Hauptskript übergebenen Zielraum in einer eigenen Variable,
+              # da 'room' gleich innerhalb der Schleife für den Geräteraum überschrieben wird.
+              # target_room_filter: "{{ room | default('all') | lower | trim }}"
+              # Erstellt eine saubere Liste aus den übergebenen Räumen und fügt IMMER 'all' hinzu
+              # target_room_filter: >-
+              #  {% if room is string %}
+              #    {{ room | lower | replace(' ', '') | split(',') + ['all'] }}
+              #  {% elif room is iterable %}
+              #    {{ room | map('lower') | map('trim') | list + ['all'] }}
+              #  {% else %}
+              #    {{ ['all'] }}
+              #  {% endif %}
+              target_room_filter: "{{ room }}"
+
+          # Jedes Display einzeln prüfen
+          - repeat:
+              for_each: "{{ display_entities }}"
+              # for_each: "{{ state_attr( display_entities , 'entity_id') | default([], true) | list }}"
+              sequence:
+                - variables:
+                    display: "{{ repeat.item }}"
+                    device_room: "{{ area_name(display) }}"
+                    room_mode: >
+                      {% if device_room %}
+                        {{ states('input_select.room_mode_' ~ device_room | lower | replace(' ', '_')) }}
+                      {% else %}
+                        normal
+                      {% endif %}
+                    # Prüfen, ob der Raum zum Filter passt
+                    # room_match: >
+                    #  {{ target_room_filter == 'all' or target_room_filter == room | lower | trim }}
+                    # 1. Fall: Wenn die Liste EXAKT nur ['all'] ist (globaler Versand)
+                    # 2. Fall: Wenn der Raum des aktuellen Geräts in der Liste 'room' existiert
+                    room_match: >
+                      {{ target_room_filter == ['all'] or (device_room | lower | trim) in target_room_filter }}
+
+                    # Prüfen, ob der aktuelle Room-Mode die Prio erlaubt
+                    mode_allowed: >
+                      {{ room_mode == 'normal' or (room_mode == 'quiet' and prio_name == 'high') }}
+
+                # Nur ausführen, wenn der Raum filtermäßig passt UND der Modus es erlaubt
+                - if:
+                    - condition: template
+                      value_template: "{{ room_match and mode_allowed }}"
+                  then:
+                    # --------------------------------------------------------
+                    # Media-Ausgabe: Bild oder Video
+                    # --------------------------------------------------------
+                    - choose:
+                      # ===============================
+                      # VIDEO
+                      # ===============================
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ media_type == 'video' }}"
+
+                        sequence:
+                          - alias: "turn media player on"
+                            service: media_player.turn_on
+                            target:
+                              entity_id: "{{ display }}"
+                          - alias: "Play video on target media player"
+                            service: media_player.play_media
+                            target:
+                              entity_id: "{{ display }}"
+                            data:
+                              media_content_type: video
+                              media_content_id: "{{ media_url }}"
+                              extra:
+                                metadata:
+                                  metadataType: 1
+                                  title: "{{ title }}"
+                                  subtitle: "{{ message }}"
+                                  images:
+                                    - url: "{{ media_url_png }}"
+
+                      # ===============================
+                      # MP3
+                      # ===============================
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ media_type == 'mp3' }}"
+                        sequence:
+                          - alias: "turn media player on"
+                            service: media_player.turn_on
+                            target:
+                              entity_id: "{{ display }}"
+                          - alias: "Play mp3 on target media player"
+                            service: media_player.play_media
+                            target:
+                              entity_id: "{{ display }}"
+                            data:
+                              media_content_type: audio/mp3
+                              media_content_id: "{{ media_url }}"
+                              extra:
+                                metadata:
+                                  metadataType: 1
+                                  title: "{{ title }}"
+                                  subtitle: "{{ message }}"
+                                  images:
+                                    - url: "{{ media_url_png }}"
+
+                      # ===============================
+                      # IMAGE
+                      # ===============================
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ media_type == 'image' }}"
+                        sequence:
+                          - alias: "turn media player on"
+                            service: media_player.turn_on
+                            target:
+                              entity_id: "{{ display }}"
+                          - alias: "Call Google Home TTS screen with image"
+                            service: script.turn_on
+                            target:
+                              entity_id: script.notify_google_home_tts_screen
+                            data:
+                              variables:
+                                dummy_player: media_player.vlc_telnet
+                                target: "{{ display }}"
+                                large_text: "{{ title }}"
+                                small_text: "{{ message }}"
+                                picture_url: "{{ media_url }}"
+                          - alias: "Send the TTS service call to the dummy player"
+                            service: tts.cloud_say
+                            target: 
+                              entity_id: media_player.vlc_telnet
+                            data:
+                              message: "{{ title }}! {{ message }}"
+
+      # ------------------------------------------------------------------------
+      # TTS (über Gruppe, DND gilt - KORRIGIERT & FIXIERT)
+      # ------------------------------------------------------------------------
+      - if:
+          # Channel erlaubt?
+          - condition: template
+            value_template: "{{ 'tts' in only or 'all' in only }}"
+
+          # Prio für TTS erlaubt und DND aus?
+          - condition: template
+            value_template: >
+              {{
+                states('input_boolean.notify_tts_prio_' ~ prio_name) == 'on'
+                and states('input_boolean.notify_tts_dnd') != 'on'
+              }}
+        then:
+          - variables:
+              # Holt die einzelnen Entities aus der korrekten Gruppe
+              tts_entities: >
+                {{ state_attr('group.tts_notify_speaker_' ~ prio_name, 'entity_id')
+                  | default([], true)
+                  | list }}
+              target_room_filter: "{{ room }}"
+
+          - repeat:
+              for_each: "{{ tts_entities }}"
+              sequence:
+                # --------------------------------------------------------------
+                # Erst die Variablen für JEDES einzelne Gerät berechnen
+                # --------------------------------------------------------------
+                - variables:
+                    entity: "{{ repeat.item }}"
+                    device_room: "{{ area_name(entity) }}"
+                    room_mode: >
+                      {% if device_room %}
+                        {{ states('input_select.room_mode_' ~ device_room | lower | replace(' ', '_')) }}
+                      {% else %}
+                        normal
+                      {% endif %}
+                      
+                    # Abgleich gegen die aus dem Hauptskript übergebene 'room'-Liste
+                    room_match: >
+                      {{ target_room_filter == ['all'] or (device_room | lower | trim) in target_room_filter }}
+                      
+                    # Prüfen, ob der Raum-Modus die Prio zulässt
+                    mode_allowed: >
+                      {{ room_mode == 'normal' or (room_mode == 'quiet' and prio_name == 'high') }}
+
+                # --------------------------------------------------------------
+                # Erst JETZT wird geprüft, ob die Nachricht abgespielt werden darf!
+                # --------------------------------------------------------------
+                - if:
+                    - condition: template
+                      value_template: "{{ room_match and mode_allowed }}"
+                  then:
+                    - service: script.turn_on
+                      target:
+                        entity_id: script.notify_tts_speak
+                      data:
+                        variables:
+                          message: "{{ message }}"
+                          speakers: "{{ entity }}" # Übergibt exakt die geprüfte Entity
+                          volume: "{{ volume }}"
+                          language: "de-DE"
+
+
+
+################################################################################
+## SCRIPT 3 – NOTIFY DISPATCH ALERT
+################################################################################
+
+  notify_dispatch_alert:
+    alias: "Notify DISPATCH ALERT (core_ha_notify_settings)"
+    mode: restart
+
+    sequence:
+      # ------------------------------------------------------------------------
+      # Normale Queue stoppen
+      # ------------------------------------------------------------------------
+      - service: script.turn_off
+        target:
+          entity_id: script.notify_dispatch_normal
+
+      - variables:
+          only: "{{ only }}"
+          prio_name: "{{ prio_name }}"
+          color: "{{ 'green' if status == 'ON' else 'red' }}"
+
+      # ------------------------------------------------------------------------
+      # SMS ALERT
+      # ------------------------------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ 'sms' in only }}"
+          - condition: state
+            entity_id: input_boolean.notify_sms
+            state: "on"
+        then:
+          - service: notify.free_sms_home
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+
+      # ------------------------------------------------------------------------
+      # TV ALERT
+      # ------------------------------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ 'tv' in only }}"
+          - condition: state
+            entity_id: input_boolean.notify_tv_prio_alert
+            state: "on"
+        then:
+          # - service: notify.group_tv_notify_{{ prio_name }}
+          - service: notify.android_tv_fire_tv
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              data:
+                fontsize: large
+                position: top-left
+                duration: 20
+                color: "{{ color }}"
+
+
+      # ------------------------------------------------------------------------
+      # DISPLAY (Room-Mode aware, pro Device)
+      # ------------------------------------------------------------------------
+      - if:
+          # Channel erlaubt?
+          - condition: template
+            value_template: "{{ 'display' in only }}"
+
+          # Prio für Display erlaubt?
+          - condition: template
+            value_template: >
+              {{ states('input_boolean.notify_display_prio_' ~ prio_name) == 'on' }}
+        then:
+          # Jedes Display einzeln prüfen
+          # Alle Display-Devices aus der Gruppe holen
+          - variables:
+              # display_entities: >
+              #   {{ state_attr('group.display_notify_' ~ prio_name, 'entity_id') or [] }}
+              display_entities: >
+                {{ state_attr('group.display_notify_' ~ prio_name, 'entity_id')
+                  | default([], true)
+                  | list }}
+          - repeat:
+              for_each: "{{ display_entities }}"
+              # for_each: "{{ state_attr( display_entities , 'entity_id') | default([], true) | list }}"
+              sequence:
+                - variables:
+                    display: "{{ repeat.item }}"
+                    room: "{{ area_name(display) }}"
+                    room_mode: >
+                      {% if room %}
+                        {{ states('input_select.room_mode_' ~ room | lower | replace(' ', '_')) }}
+                      {% else %}
+                        normal
+                      {% endif %}
+                # --------------------------------------------------------
+                # Media-Ausgabe: Bild oder Video
+                # --------------------------------------------------------
+                - choose:
+                  # ===============================
+                  # VIDEO
+                  # ===============================
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ media_type == 'video' }}"
+                    sequence:
+                      - alias: "turn media player on"
+                        service: media_player.turn_on
+                        target:
+                          entity_id: media_player.info_3
+                      - alias: "Play video on target media player"
+                        service: media_player.play_media
+                        target:
+                          entity_id: media_player.info_3
+                        data:
+                          media_content_type: video
+                          media_content_id: "{{ media_url }}"
+                          extra:
+                            metadata:
+                              metadataType: 1
+                              title: "{{ title }}"
+                              subtitle: "{{ message }}"
+                              images:
+                                - url: "{{ media_url_png }}"    ## because we play the video
+
+
+                  # ===============================
+                  # MP3
+                  # ===============================
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ media_type == 'mp3' }}"
+                    sequence:
+                      - alias: "turn media player on"
+                        service: media_player.turn_on
+                        target:
+                          entity_id: media_player.info_3
+                      - alias: "Play mp3 on target media player"
+                        service: media_player.play_media
+                        target:
+                          entity_id: media_player.info_3
+                        data:
+                          media_content_type: audio/mp3
+                          media_content_id: "{{ media_url }}"
+                          extra:
+                            metadata:
+                              metadataType: 1
+                              title: "{{ title }}"
+                              subtitle: "{{ message }}"
+                              images:
+                                - url: "{{ media_url_png }}"    ## because we play the mp3
+
+                  # ===============================
+                  # IMAGE
+                  # ===============================
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ media_type == 'image' }}"
+                    sequence:
+                      - alias: "turn media player on"
+                        service: media_player.turn_on
+                        target:
+                          entity_id: media_player.info_3
+                      - alias: "Call Google Home TTS screen with image"
+                        service: script.turn_on
+                        target:
+                          entity_id: script.notify_google_home_tts_screen
+                        data:
+                          variables:
+                            dummy_player: media_player.vlc_telnet
+                            target: media_player.info_3
+                            large_text: "{{ title }}"
+                            small_text: "{{ message }}"
+                            picture_url: "{{ media_url }}"
+                      - alias: "Send the TTS service call to the dummy player"
+                        # service: tts.google_cloud_say
+                        service: tts.cloud_say
+                        target: 
+                          entity_id: media_player.vlc_telnet
+                        data:
+                          message: "{{ title }}! {{ message }}"
+
+
+      # ------------------------------------------------------------------------
+      # TTS ALERT (ignoriert DND!)
+      # ------------------------------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ 'tts' in only }}"
+          - condition: state
+            entity_id: input_boolean.notify_tts_prio_alert
+            state: "on"
+        then:
+        - service: script.turn_on
+          entity_id: script.notify_tts_speak
+          data:
+            variables:
+              volume: "{{ volume }}"
+              speakers: group.tts_notify_speaker_alert
+              language: "de-CH"
+              message:  "{{ message }}"
+
+
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+  notify_dispatch_working:
+    alias: "Notify DISPATCH – entry point (core_ha_notify_settings)"
+    mode: parallel
+
+    sequence:
+      # ------------------------------------------------------------------------
+      # Parameter normalisieren
+      # ------------------------------------------------------------------------
+      - variables:
+          prio: "{{ prio | upper }}"
+          title: "{{ title }}"
+          message: "{{ message }}"
+          status: "{{ status | default('') | upper }}"
+          size: "{{ size | default('M') | upper }}"
+
+          # Optional übergebene Medien
+          picture: "{{ picture | default('') }}"
+          video: "{{ video | default('') }}"
+          mp3: "{{ mp3 | default('') }}"
+
+          # Basis-URL für Fallback-Bilder
+          _media_base: "http://ad1000.main.arpa:8123/local/_service"
+
+
+          # ONLY = reiner Filterstring (tvttsdisplay etc.)
+          only: "{{ only | default('tts tv display mobile') | lower }}"
+
+          # PRIO → Suffix für Entity-Namen
+          prio_name: >
+            {% if prio == 'A' %}alert
+            {% elif prio == 'H' %}high
+            {% elif prio == 'M' %}medium
+            {% else %}low
+            {% endif %}
+
+          # Media-Type bestimmen
+          media_type: >
+            {% if video | length > 0 %}
+              video
+            {% elif mp3 | length > 0 %}
+              mp3
+            {% elif picture | length > 0 %}
+              image
+            {% else %}
+              image
+            {% endif %}
+
+          # Finales Media (Priorität: Video > Picture > Fallback)
+          media_url: >
+            {% if video | length > 0 %}
+              {{ video }}
+            {% elif mp3 | length > 0 %}
+              {{ mp3 }}
+            {% elif picture | length > 0 %}
+              {{ picture }}
+            {% else %}
+              {{ _media_base ~ '/_notification_picture_' ~ prio_name ~ '.png' }}
+            {% endif %}
+
+          # media_url_png for video or message or mp3 (Priorität: Video > Picture > Fallback)
+          media_url_png: >
+            {{ _media_base ~ '/_notification_picture_' ~ prio_name ~ '.png' }}
+
+          # PRIO → Duration (zentral!)
+          duration: >
+            {% if prio == 'A' %}30
+            {% elif prio == 'H' %}20
+            {% elif prio == 'M' %}15
+            {% else %}8
+            {% endif %}
+
+          # PRIO → TTS Volume (zentral)
+          volume: >
+            {% if prio == 'A' %}0.75
+            {% elif prio == 'H' %}0.60
+            {% elif prio == 'M' %}0.45
+            {% else %}0.30
+            {% endif %}
+
+          # PRIO → Color (zentral!)
+          color: >
+            {% if prio == 'A' %}
+              {{ 'red' if status != 'ON' else 'green' }}
+            {% elif prio == 'H' %}
+              amber
+            {% elif prio == 'M' %}
+              amber
+            {% else %}
+              grey
+            {% endif %}
+
+          # PRIO → Color (zentral!)
+          fontsize: >
+            {% if size == 'S' %}small
+            {% elif size == 'L' %}large
+            {% else %}medium
+            {% endif %}
+
+          # PRIO → Position (zentral!)
+          position: >
+            {% if prio == 'A' %}
+              top-right
+            {% elif prio == 'H' %}
+              top-left
+            {% elif prio == 'M' %}
+              bottom-right
+            {% else %}
+              bottom-left
+            {% endif %}
+
+          # -------------------------------------------------
+          # Quiet Hours pro Prio
+          # -------------------------------------------------
+          quiet_from: >
+            {% if prio == 'H' %}22:00
+            {% elif prio == 'M' %}21:00
+            {% elif prio == 'L' %}20:00
+            {% else %}00:00
+            {% endif %}
+
+          quiet_to: >
+            {% if prio == 'H' %}07:00
+            {% elif prio == 'M' %}08:00
+            {% elif prio == 'L' %}09:00
+            {% else %}00:00
+            {% endif %}
+
+          # -------------------------------------------------
+          # Quiet-Hours aktiv?
+          # (über Mitternacht korrekt!)
+          # -------------------------------------------------
+          in_quiet_hours: >
+            {% if prio == 'A' %}
+              false
+            {% else %}
+              {% set now = now().strftime('%H:%M') %}
+              {% if quiet_from < quiet_to %}
+                {{ quiet_from <= now < quiet_to }}
+              {% else %}
+                {{ now >= quiet_from or now < quiet_to }}
+              {% endif %}
+            {% endif %}
+
+          # --------------------------------------------------------------------
+          # Finale Werte (nach Quiet-Hours!)
+          # --------------------------------------------------------------------
+          final_volume: >
+            {% if in_quiet_hours %}
+              {{ (volume * 0.6) | round(2) }}
+            {% else %}
+              {{ volume }}
+            {% endif %}
+
+          final_duration: >
+            {% if in_quiet_hours %}
+              {{ (duration * 0.5) | int }}
+            {% else %}
+              {{ duration }}
+            {% endif %}
+
+      # ------------------------------------------------------------------------
+      # ALERT → sofort
+      # ------------------------------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ prio == 'A' }}"
+        then:
+          - service: script.notify_dispatch_alert
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              status: "{{ status }}"
+              only: "{{ only }}"
+              prio_name: "{{ prio_name }}"
+              duration: "{{ final_duration }}"
+              volume: "{{ final_volume }}"
+              position: "{{ position }}"
+              size: "{{ fontsize }}"
+              color: "{{ color }}"
+              media_type: "{{ media_type }}"
+              media_url: "{{ media_url }}"
+              media_url_png: "{{ media_url_png }}"  
+
+        else:
+          # --------------------------------------------------------------------
+          # H / M / L → queued
+          # --------------------------------------------------------------------
+          - service: script.notify_dispatch_normal
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              only: "{{ only }}"
+              prio_name: "{{ prio_name }}"
+              duration: "{{ final_duration }}"
+              volume: "{{ final_volume }}"
+              position: "{{ position }}"
+              size: "{{ fontsize }}"
+              color: "{{ color }}"
+              media_type: "{{ media_type }}"
+              media_url: "{{ media_url }}"
+
+################################################################################
+## SCRIPT 2 – NOTIFY DISPATCH NORMAL (H / M / L)
+################################################################################
+
+  notify_dispatch_normal_working:
+    alias: "Notify DISPATCH NORMAL (H/M/L) (core_ha_notify_settings)"
+    mode: queued
+
+    sequence:
+      # ------------------------------------------------------------------------
+      # Ableitungen
+      # ------------------------------------------------------------------------
+      - variables:
+          only: "{{ only }}"
+          prio_name: "{{ prio_name }}"
+
+      # ------------------------------------------------------------------------
+      # TV (über Gruppe!)
+      # ------------------------------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ 'tv' in only }}"
+          - condition: template
+            value_template: >
+              {{ states('input_boolean.notify_tv_prio_' ~ prio_name) == 'on' }}
+        then:
+          # - service: notify.group_tv_notify_{{ prio_name }}
+          - service: notify.android_tv_fire_tv
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              data:
+                fontsize: "{{ fontsize }}"
+                position: "{{ position }}"
+                duration: "{{ duration }}"
+                color: "{{ color }}"
+
+#      # ------------------------------------------------------------------------
+#      # DISPLAY (über Gruppe!)
+#      # ------------------------------------------------------------------------
+#      - if:
+#          - condition: template
+#            value_template: "{{ 'display' in only }}"
+#          - condition: template
+#            value_template: >
+#              {{ states('input_boolean.notify_display_prio_' ~ prio_name) == 'on' }}
+#        then:
+#          - service: notify.display_notify_{{ prio_name }}
+#            data:
+#              title: "{{ title }}"
+#              message: "{{ message }}"
+#              data:
+#                fontsize: "{{ fontsize }}"
+#                position: "{{ position }}"
+#                duration: "{{ duration }}"
+#                color: "{{ color }}"
+
+      # ------------------------------------------------------------------------
+      # DISPLAY (Room-Mode aware, pro Device)
+      # ------------------------------------------------------------------------
+      - if:
+          # Channel erlaubt?
+          - condition: template
+            value_template: "{{ 'display' in only }}"
+
+          # Prio für Display erlaubt?
+          - condition: template
+            value_template: >
+              {{ states('input_boolean.notify_display_prio_' ~ prio_name) == 'on' }}
+
+        then:
+          # Alle Display-Devices aus der Gruppe holen
+          - variables:
+              # display_entities: >
+              #   {{ state_attr('group.display_notify_' ~ prio_name, 'entity_id') or [] }}
+              display_entities: >
+                {{ state_attr('group.display_notify_' ~ prio_name, 'entity_id')
+                  | default([], true)
+                  | list }}
+
+          # Jedes Display einzeln prüfen
+          - repeat:
+              for_each: "{{ display_entities }}"
+              # for_each: "{{ state_attr( display_entities , 'entity_id') | default([], true) | list }}"
+              sequence:
+                - variables:
+                    display: "{{ repeat.item }}"
+                    room: "{{ area_name(display) }}"
+                    room_mode: >
+                      {% if room %}
+                        {{ states('input_select.room_mode_' ~ room | lower | replace(' ', '_')) }}
+                      {% else %}
+                        normal
+                      {% endif %}
+                # --------------------------------------------------------
+                # Media-Ausgabe: Bild oder Video
+                # --------------------------------------------------------
+                - choose:
+                  # ===============================
+                  # VIDEO
+                  # ===============================
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ media_type == 'video' }}"
+                    sequence:
+                      - alias: "turn media player on"
+                        service: media_player.turn_on
+                        target:
+                          entity_id: media_player.info_3
+                      - alias: "Play video on target media player"
+                        service: media_player.play_media
+                        target:
+                          entity_id: media_player.info_3
+                        data:
+                          media_content_type: video
+                          media_content_id: "{{ media_url }}"
+                          extra:
+                            metadata:
+                              metadataType: 1
+                              title: "{{ title }}"
+                              subtitle: "{{ message }}"
+                              images:
+                                - url: "{{ media_url_png }}"    ## because we play the video
+
+                  # ===============================
+                  # MP3
+                  # ===============================
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ media_type == 'mp3' }}"
+                    sequence:
+                      - alias: "turn media player on"
+                        service: media_player.turn_on
+                        target:
+                          entity_id: media_player.info_3
+                      - alias: "Play mp3 on target media player"
+                        service: media_player.play_media
+                        target:
+                          entity_id: media_player.info_3
+                        data:
+                          media_content_type: audio/mp3
+                          media_content_id: "{{ media_url }}"
+                          extra:
+                            metadata:
+                              metadataType: 1
+                              title: "{{ title }}"
+                              subtitle: "{{ message }}"
+                              images:
+                                - url: "{{ media_url_png }}"    ## because we play the video
+
+
+
+                  # ===============================
+                  # IMAGE
+                  # ===============================
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ media_type == 'image' }}"
+                    sequence:
+                      - alias: "turn media player on"
+                        service: media_player.turn_on
+                        target:
+                          entity_id: media_player.info_3
+                      - alias: "Call Google Home TTS screen with image"
+                        service: script.turn_on
+                        target:
+                          entity_id: script.notify_google_home_tts_screen
+                        data:
+                          variables:
+                            dummy_player: media_player.vlc_telnet
+                            target: media_player.info_3
+                            large_text: "{{ title }}"
+                            small_text: "{{ message }}"
+                            picture_url: "{{ media_url }}"
+                      - alias: "Send the TTS service call to the dummy player"
+                        # service: tts.google_cloud_say
+                        service: tts.cloud_say
+                        target: 
+                          entity_id: media_player.vlc_telnet
+                        data:
+                          message: "{{ title }}! {{ message }}"
+
+
+
+      # ------------------------------------------------------------------------
+      # TTS (über Gruppe, DND gilt)
+      # ------------------------------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ 'tts' in only }}"
+          - condition: template
+            value_template: >
+              {{
+                states('input_boolean.notify_tts_prio_' ~ prio_name) == 'on'
+                and states('input_boolean.notify_tts_dnd') != 'on'
+              }}
+        then:
+          - service: script.turn_on
+            entity_id: script.notify_tts_speak
+            data:
+              variables:
+                message: "{{ message }}"
+                speakers: "group.tts_notify_speaker_{{ prio_name }}"
+                volume: "{{ volume }}"
+                language: "de-DE"
+
+
+################################################################################
+## SCRIPT 3 – NOTIFY DISPATCH ALERT
+################################################################################
+
+  notify_dispatch_alert_working:
+    alias: "Notify DISPATCH ALERT (core_ha_notify_settings)"
+    mode: restart
+
+    sequence:
+      # ------------------------------------------------------------------------
+      # Normale Queue stoppen
+      # ------------------------------------------------------------------------
+      - service: script.turn_off
+        target:
+          entity_id: script.notify_dispatch_normal
+
+      - variables:
+          only: "{{ only }}"
+          prio_name: "{{ prio_name }}"
+          color: "{{ 'green' if status == 'ON' else 'red' }}"
+
+      # ------------------------------------------------------------------------
+      # SMS ALERT
+      # ------------------------------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ 'sms' in only }}"
+          - condition: state
+            entity_id: input_boolean.notify_sms
+            state: "on"
+        then:
+          - service: notify.free_sms_home
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+
+      # ------------------------------------------------------------------------
+      # TV ALERT
+      # ------------------------------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ 'tv' in only }}"
+          - condition: state
+            entity_id: input_boolean.notify_tv_prio_alert
+            state: "on"
+        then:
+          # - service: notify.group_tv_notify_{{ prio_name }}
+          - service: notify.android_tv_fire_tv
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              data:
+                fontsize: large
+                position: top-left
+                duration: 20
+                color: "{{ color }}"
+
+
+      # ------------------------------------------------------------------------
+      # DISPLAY (Room-Mode aware, pro Device)
+      # ------------------------------------------------------------------------
+      - if:
+          # Channel erlaubt?
+          - condition: template
+            value_template: "{{ 'display' in only }}"
+
+          # Prio für Display erlaubt?
+          - condition: template
+            value_template: >
+              {{ states('input_boolean.notify_display_prio_' ~ prio_name) == 'on' }}
+        then:
+          # Jedes Display einzeln prüfen
+          # Alle Display-Devices aus der Gruppe holen
+          - variables:
+              # display_entities: >
+              #   {{ state_attr('group.display_notify_' ~ prio_name, 'entity_id') or [] }}
+              display_entities: >
+                {{ state_attr('group.display_notify_' ~ prio_name, 'entity_id')
+                  | default([], true)
+                  | list }}
+          - repeat:
+              for_each: "{{ display_entities }}"
+              # for_each: "{{ state_attr( display_entities , 'entity_id') | default([], true) | list }}"
+              sequence:
+                - variables:
+                    display: "{{ repeat.item }}"
+                    room: "{{ area_name(display) }}"
+                    room_mode: >
+                      {% if room %}
+                        {{ states('input_select.room_mode_' ~ room | lower | replace(' ', '_')) }}
+                      {% else %}
+                        normal
+                      {% endif %}
+                # --------------------------------------------------------
+                # Media-Ausgabe: Bild oder Video
+                # --------------------------------------------------------
+                - choose:
+                  # ===============================
+                  # VIDEO
+                  # ===============================
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ media_type == 'video' }}"
+                    sequence:
+                      - alias: "turn media player on"
+                        service: media_player.turn_on
+                        target:
+                          entity_id: media_player.info_3
+                      - alias: "Play video on target media player"
+                        service: media_player.play_media
+                        target:
+                          entity_id: media_player.info_3
+                        data:
+                          media_content_type: video
+                          media_content_id: "{{ media_url }}"
+                          extra:
+                            metadata:
+                              metadataType: 1
+                              title: "{{ title }}"
+                              subtitle: "{{ message }}"
+                              images:
+                                - url: "{{ media_url_png }}"    ## because we play the video
+
+
+                  # ===============================
+                  # MP3
+                  # ===============================
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ media_type == 'mp3' }}"
+                    sequence:
+                      - alias: "turn media player on"
+                        service: media_player.turn_on
+                        target:
+                          entity_id: media_player.info_3
+                      - alias: "Play mp3 on target media player"
+                        service: media_player.play_media
+                        target:
+                          entity_id: media_player.info_3
+                        data:
+                          media_content_type: audio/mp3
+                          media_content_id: "{{ media_url }}"
+                          extra:
+                            metadata:
+                              metadataType: 1
+                              title: "{{ title }}"
+                              subtitle: "{{ message }}"
+                              images:
+                                - url: "{{ media_url_png }}"    ## because we play the mp3
+
+                  # ===============================
+                  # IMAGE
+                  # ===============================
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ media_type == 'image' }}"
+                    sequence:
+                      - alias: "turn media player on"
+                        service: media_player.turn_on
+                        target:
+                          entity_id: media_player.info_3
+                      - alias: "Call Google Home TTS screen with image"
+                        service: script.turn_on
+                        target:
+                          entity_id: script.notify_google_home_tts_screen
+                        data:
+                          variables:
+                            dummy_player: media_player.vlc_telnet
+                            target: media_player.info_3
+                            large_text: "{{ title }}"
+                            small_text: "{{ message }}"
+                            picture_url: "{{ media_url }}"
+                      - alias: "Send the TTS service call to the dummy player"
+                        # service: tts.google_cloud_say
+                        service: tts.cloud_say
+                        target: 
+                          entity_id: media_player.vlc_telnet
+                        data:
+                          message: "{{ title }}! {{ message }}"
+
+
+      # ------------------------------------------------------------------------
+      # TTS ALERT (ignoriert DND!)
+      # ------------------------------------------------------------------------
+      - if:
+          - condition: template
+            value_template: "{{ 'tts' in only }}"
+          - condition: state
+            entity_id: input_boolean.notify_tts_prio_alert
+            state: "on"
+        then:
+        - service: script.turn_on
+          entity_id: script.notify_tts_speak
+          data:
+            variables:
+              volume: "{{ volume }}"
+              speakers: group.tts_notify_speaker_alert
+              language: "de-CH"
+              message:  "{{ message }}"
+
+################################################################################
+################################################################################
+################################################################################
+
+
+
+  notify_tts_speak:
+    alias: "Notify TTS speak - queued!!!! (core_ha_notify_settings)"
+    mode: queued
+
+    sequence:
+      # ------------------------------------------------------------------------
+      # Gruppe → Einzelne Speaker auflösen
+      # ------------------------------------------------------------------------
+      - variables:
+          speakers_group: "{{ speakers }}"
+          base_volume: "{{ volume | float }}"
+          speaker_entities: >
+            {{ state_attr(speakers_group, 'entity_id') | default([], true) | list }}
+
+      # ------------------------------------------------------------------------
+      # Jeden Speaker einzeln prüfen & bedienen
+      # ------------------------------------------------------------------------
+      - repeat:
+          for_each: "{{ speaker_entities }}"
+#          for_each: "{{ state_attr('group.tts_notify_speaker_medium', 'entity_id') }}"
+          sequence:
+            - variables:
+                speaker: "{{ repeat.item }}"
+                room: "{{ area_name(speaker) }}"
+                room_mode: >
+                  {% if room %}
+                    {{ states('input_select.room_mode_' ~ room | lower | replace(' ', '_')) }}
+                  {% else %}
+                    normal
+                  {% endif %}
+
+                # finale Lautstärke pro Speaker
+                speaker_volume: >
+                  {% if room_mode == 'quiet' %}
+                    {{ (base_volume * 0.5) | round(2) }}
+                  {% else %}
+                    {{ base_volume }}
+                  {% endif %}
+
+            # -------------------------------------------------
+            # SILENT → komplett überspringen
+            # -------------------------------------------------
+            - if:
+                - condition: template
+                  value_template: "{{ room_mode != 'silent' }}"
+              then:
+                # Speaker einschalten
+                - service: media_player.turn_on
+                  target:
+                    entity_id: "{{ speaker }}"
+
+                - delay: "00:00:01"
+
+                # Lautstärke setzen
+                - service: media_player.volume_set
+                  target:
+                    entity_id: "{{ speaker }}"
+                  data:
+                    volume_level: "{{ speaker_volume }}"
+
+                # TTS nur auf diesem Speaker
+                - service: tts.speak
+                  data:
+                    cache: true
+                    message: "{{ message }}"
+                    media_player_entity_id: "{{ speaker }}"
+                    language: "{{ language }}"
+                  target:
+                    entity_id: tts.home_assistant_cloud
+
+
+  notify_google_home_tts_screen:
+    alias: "Notify Google Home - Send TTS with picture and information (core_ha_notify_settings)"
+    description: Script to send a TTS with picture and text to a player with screen
+    icon: mdi:cast-audio
+    mode: parallel
+    max: 20
+    sequence:
+      - alias: "Version number"
+        variables:
+          version: 2.0.1
+      - wait_for_trigger:
+          - platform: event
+            event_type: call_service
+            event_data:
+              domain: media_player
+              service: play_media
+              service_data:
+                media_content_type: music
+                entity_id: "{{ [ dummy_player ] }}"
+
+      - service: media_player.volume_set
+        data:
+          entity_id: "{{ target }}"
+          volume_level: 0.3
+
+      - alias: "Send TTS message with picture"
+        service: media_player.play_media
+        target: 
+          entity_id: "{{ target }}"
+        data:
+          media_content_type: "music"
+          media_content_id: "{{ wait.trigger.event.data.service_data.media_content_id }}"
+          extra:
+            metadata:
+              metadataType: 3
+              title: "{{ large_text }}"
+              artist: "{{ small_text }}"
+              images:
+                - url: "{{ picture_url }}"
+
+      - alias: "Send TTS message with picture"
+        service: media_player.play_media
+        target: 
+          entity_id: "{{ target }}"
+        data:
+          media_content_type: "music"
+          media_content_id: "{{ wait.trigger.event.data.service_data.media_content_id }}"
+          extra:
+            metadata:
+              metadataType: 3
+              title: "{{ large_text }}"
+              artist: "{{ small_text }}"
+              images:
+                - url: "{{ picture_url }}"
+
+  notify_dispatch_sms:
+    alias: "Notify Dispatch SMS Alarm per Free senden (core_ha_notify_settings)"
+    icon: "mdi:sms"
+    
+    # Hier definieren wir die Eingabefelder für die HA-Oberfläche
+    fields:
+      title:
+        name: "Titel"
+        description: "Optionaler Titel für die SMS (wird der Nachricht vorangestellt)"
+        example: "⚠️ ALARM"
+        required: false
+        selector:
+          text:
+      message:
+        name: "Nachricht"
+        description: "Der eigentliche Inhalt der SMS"
+        example: "Einbruchsalarm in Cazaugitat. Bewegung im Wohnzimmer erkannt!"
+        required: true
+        selector:
+          text:
+    # Hier wird die Logik ausgeführt
+    sequence:
+      - action: notify.free_sms_home
+        data:
+          # Die Free-API hat ein hartes Limit: Bei Texten, die extrem lang sind (meistens ab etwa 
+          # 480 Zeichen, was ca. 3 verketteten SMS entspricht), schneidet Free entweder eiskalt ab oder wirft einen Fehler.
+          # Falls ein Titel angegeben wurde, setzt das Skript ihn mit einem Doppelpunkt vor die Nachricht
+          # AUF 475 gesetzt - das sind dann DREI SMS die zusammengesetzt werden.
+          message: >
+            {% set limit = 475 %}
+            {% if title is defined and title | length > 0 %}
+              {% set full_msg = title ~ ": " ~ message %}
+            {% else %}
+              {% set full_msg = message %}
+            {% endif %}
+            
+            {# Hier wird geprüft, ob die Nachricht gekürzt werden muss #}
+            {% if full_msg | length > limit %}
+              {{ full_msg[:limit - 3] }}...
+            {% else %}
+              {{ full_msg }}
+            {% endif %}
+
+
+
+#  type: custom:auto-entities
+#  card:
+#    type: entities
+#    title: 🏠 Raum-Steuerung
+#  filter:
+#    template: >
+#      {% set ns = namespace(rows=[]) %}
+#  
+#      {# Wir sortieren die Liste der Entitäten hier direkt nach dem Namen
+#      (friendly_name) #}
+#  
+#      {% for state in states.input_select 
+#         | selectattr('entity_id', 'search', 'room_mode_') 
+#         | sort(attribute='attributes.friendly_name') %}
+#         
+#        {% set id = state.entity_id.split('room_mode_')[1] %}
+#        
+#        {% set ns.rows = ns.rows + [{
+#          "type": "custom:fold-entity-row",
+#          "head": {
+#            "type": "custom:multiple-entity-row",
+#            "entity": state.entity_id,
+#            "name": state.attributes.friendly_name | replace('Room Mode ', '') | replace('Modus ', ''),
+#            "icon": "mdi:star-settings",
+#            "show_state": false,
+#            "entities": [
+#              {
+#                "entity": "input_boolean.motion_eval_enabled_" ~ id,
+#                "name": "Motion",
+#                "toggle": true
+#              },
+#              {
+#                "entity": "input_boolean.manual_timer_enabled_" ~ id,
+#                "name": "Timer",
+#                "toggle": true
+#              }
+#            ]
+#          },
+#          "entities": [
+#            {
+#              "entity": "input_boolean.motion_eval_enabled_" ~ id,
+#              "name": "Bewegungssensor aktiv",
+#              "icon": "mdi:motion-sensor"
+#            },
+#            {
+#              "entity": "input_boolean.manual_timer_enabled_" ~ id,
+#              "name": "Timer aktiv",
+#              "icon": "mdi:timer-outline"
+#            },
+#            {
+#              "entity": state.entity_id,
+#              "name": "Modus wählen:",
+#              "icon": "mdi:speaker-message"
+#            }
+#          ]
+#        }] %}
+#      {% endfor %}
+#      {{ ns.rows }}
+#  
+#  
+#  
+#  type: custom:auto-entities
+#  card:
+#    type: vertical-stack
+#  card_param: cards
+#  filter:
+#    include:
+#      - entity_id: input_select.room_mode_*
+#        options:
+#          type: custom:mushroom-select-card
+#          layout: horizontal
+#          option_display: segmented
+#          secondary_info: none
+#          icon_type: none
+#          card_mod:
+#            style: |
+#              ha-card {
+#                background: none;
+#                border-bottom: 1px solid rgba(255,255,255,0.1);
+#                border-radius: 0;
+#                padding: 5px 0;
+#              }
+#    exclude: []
+#  sort:
+#    method: friendly_name
+#    ignore_case: true
+#  
+#  
+#  
+#  type: custom:auto-entities
+#  card:
+#    type: entities
+#    title: On heisst kein Trigger!!
+#  filter:
+#    include:
+#      - options: {}
+#        entity_id: input_boolean.motion_eval_enabled_*
+#        sort:
+#          method: friendly_name
+#          ignore_case: true
+#    exclude: []
+#  
+#  
+#  type: custom:auto-entities
+#  card:
+#    type: entities
+#    title: On heisst kein timer!!
+#  filter:
+#    include:
+#      - options: {}
+#        entity_id: input_boolean.manual_timer_enabled_*
+#        sort:
+#          method: friendly_name
+#          ignore_case: true
+#    exclude: []
+#  
+#  
+#  
+#  
+#  
+#  
+
