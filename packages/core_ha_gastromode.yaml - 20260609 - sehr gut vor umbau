@@ -1,0 +1,392 @@
+##########################################################################################
+##
+##  Gastromode in den Räumen ............. by usto
+##
+##########################################################################################
+
+
+##########################################################################################
+##
+##  Gastromode in den Räumen ............. by usto
+##
+##########################################################################################
+
+template:
+  - unique_id: gastro_structure
+    binary_sensor:
+      - name: "Gastro Sensoren Gruppe"
+        unique_id: gastro_sensoren_gruppe
+        state: >-
+          {% set gastro_entities = label_entities('GASTRO') | select('match', '^binary_sensor\.') | list %}
+          {{ states.binary_sensor | selectattr('entity_id', 'in', gastro_entities) | selectattr('state', 'eq', 'on') | list | length > 0 }}
+        attributes:
+          all_sensors: >-
+            {{ label_entities('GASTRO') | select('match', '^binary_sensor\.') | list }}
+
+input_select:
+  gastro_mode_guests:
+    name: "Gastro-Modus Gästewahl"
+    icon: mdi:account-group
+    options:
+      - "Nur wir"
+      - "Schweizer Gäste"
+      - "Französische Gäste"
+      - "Gemischte Gäste"
+
+# DER NEUE QUELLEN-WÄHLER:
+  gastro_mode_quelle:
+    name: "Gastro-Modus Audioquelle"
+    icon: mdi:music-box-multiple
+    options:
+      - "Radio Stream"
+      - "Lokale MP3-Ordner"
+
+sensor:
+  - platform: folder
+    folder: /config/www/mp3/_gastromode/wir
+  - platform: folder
+    folder: /config/www/mp3/_gastromode/schweizer
+  - platform: folder
+    folder: /config/www/mp3/_gastromode/french
+  - platform: folder
+    folder: /config/www/mp3/_gastromode/mixed
+  - platform: folder
+    folder: /config/www/mp3/_gastromode/nacht
+
+
+script:
+  gastro_play_and_monitor:
+    alias: "Gastro: Musik abspielen und überwachen (core_ha_gastromode)"
+    description: "Dieses Skript wird vom Gastro-Modus Automationstrigger gestartet. Es spielt Musik auf dem Ziel-Speaker ab, basierend auf der ausgewählten Quelle und den Gästepräferenzen. Während die Musik läuft, überwacht es kontinuierlich den Auslöser (Bewegungsmelder) und stoppt die Musik sofort, wenn der Raum leer wird. Es enthält auch ein sanftes Fade-Out, bevor die Musik gestoppt wird."
+    mode: parallel
+    max: 10
+    
+    sequence:
+      # 1. INITIALISIERUNG & START
+      - service: media_player.volume_set
+        target:
+          entity_id: "{{ ziel_speaker }}"
+        data:
+          volume_level: 0.01
+
+      - choose:
+          # WEICHE A: RADIO STREAM
+          # ----------------------------------------------------------------
+          # WEICHE A: REINER RADIO STREAM (Bleibt unverändert)
+          # https://www.radio-browser.info/history/f7afd469-77b0-4950-b17e-ff82eaa291d8
+          # ----------------------------------------------------------------
+          - conditions:
+              - condition: template
+                value_template: "{{ audio_quelle == 'Radio Stream' }}"
+            sequence:
+              - variables:
+                  radio_url: >-
+                    {% if now().hour >= 22 or now().hour < 6 %} https://radio4.vip-radios.fm:18054/stream-128kmp3-BuddhaBeach
+                    {% elif gaeste_status == 'Nur wir' %} https://chmedia.streamabc.net/79-r24-mp3-192-6659699
+                    {% elif gaeste_status == 'Schweizer Gäste' %} http://livestreaming-node-4.srg-ssr.ch/srgssr/rsp/mp3/128
+                    {% elif gaeste_status == 'Französische Gäste' %} https://icecast.radiofrance.fr/fbchansonfrancaise-hifi.aac
+                    {% else %} https://0nlineradio.stream13.radiohost.de/lounge-hotel-lounge {% endif %}
+
+              - service: media_player.play_media
+                target:
+                  entity_id: "{{ ziel_speaker }}"
+                data:
+                  media_content_id: "{{ radio_url }}"
+                  media_content_type: "music"
+              # 20s Fade-In
+              - repeat:
+                  count: 20
+                  sequence:
+                    - delay: "00:00:01"
+                    - service: media_player.volume_set
+                      target:
+                        entity_id: "{{ ziel_speaker }}"
+                      data:
+                        volume_level: "{{ (0.01 + (repeat.index * ((ziel_volume - 0.01) / 20))) | round(2) }}"
+
+              # WÄCHTER FÜR RADIO (Wartet bis Raum LEER ist)
+              - repeat:
+                  until:
+                    - condition: template
+                      value_template: "{{ is_state(ausloeser_entity, 'off') }}"
+                  sequence:
+                    - delay: "00:00:05"
+
+          # WEICHE B: LOKALE MP3-PLAYLIST
+          # ----------------------------------------------------------------
+          # WEICHE B: DYNAMISCHE MP3-PLAYLIST (MINIMAL 4 SONGS)
+          # ----------------------------------------------------------------
+          - conditions:
+              - condition: template
+                value_template: "{{ audio_quelle == 'Lokale MP3-Ordner' }}"
+            sequence:
+              - repeat:
+                  until:
+                    - condition: template
+                      value_template: "{{ repeat.index >= 6 or is_state(ausloeser_entity, 'off') }}"
+                  sequence:
+                    - variables:
+                        sensor_id: "sensor.{{ ordner }}"
+                        songs: "{{ state_attr(sensor_id, 'file_list') }}"
+                        zufalls_song: >-
+                          {% if songs is not none and songs | length > 0 %}
+                            {{ (songs | random).split('/') | last }}
+                          {% else %}
+                            none
+                          {% endif %}
+                        media_url: "http://10.231.9.100:8123/local/mp3/_gastromode/{{ ordner }}/{{ zufalls_song | urlencode }}"
+
+                    - condition: template
+                      value_template: "{{ zufalls_song != 'none' }}"
+
+                    - service: media_player.play_media
+                      target:
+                        entity_id: "{{ ziel_speaker }}"
+                      data:
+                        media_content_id: "{{ media_url }}"
+                        media_content_type: "music"
+
+                    # Fade-In nur beim ersten Song
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ repeat.index == 1 }}"
+                          sequence:
+                            - repeat:
+                                count: 20
+                                sequence:
+                                  - delay: "00:00:01"
+                                  - service: media_player.volume_set
+                                    target:
+                                      entity_id: "{{ ziel_speaker }}"
+                                    data:
+                                      volume_level: "{{ (0.05 + (repeat.index * ((ziel_volume - 0.05) / 20))) | round(2) }}"
+                      default:
+                        - service: media_player.volume_set
+                          target:
+                            entity_id: "{{ ziel_speaker }}"
+                          data:
+                            volume_level: "{{ ziel_volume }}"
+
+                    # MP3 WARTESCHLEIFE (Prüft alle 5s auf Songende ODER 'off')
+                    - variables:
+                        max_wartezeit: >-
+                          {% set dur = state_attr(ziel_speaker, 'media_duration') | float(0) %}
+                          {{ [dur - 2, 360] | min | int if dur > 5 else 180 }}
+                    - repeat:
+                        until:
+                          - condition: template
+                            value_template: "{{ (repeat.index * 5) >= max_wartezeit or is_state(ausloeser_entity, 'off') }}"
+                        sequence:
+                          - delay: "00:00:05"
+
+      # ========================================================================
+      # GEMEINSAMES SCHONZEIT- & AUSSCHALT-MANAGEMENT (Jetzt mit 5-Min-Garantie)
+      # ========================================================================
+      # 1. MINDESTLAUFZEIT-SCHUTZ: Fängt nervöse PIR-Sensoren ab.
+      # Wir prüfen, wie lange dieses Skript läuft. Wenn es jünger als 5 Min ist,
+      # warten wir die verbleibende Differenz ab, bevor überhaupt abgeschaltet werden darf.
+      - variables:
+          letzter_start: >-
+            {% if this.last_triggered is defined and this.last_triggered not in [none, '', 'unknown'] %}
+              {{ this.last_triggered }}
+            {% else %}
+              {{ now() }}
+            {% endif %}      
+          laufzeit_sekunden: "{{ (as_timestamp(now()) - as_timestamp(letzter_start)) | int(0) }}"
+          rest_wartezeit: "{{ [300 - laufzeit_sekunden, 0] | max }}"
+      # Wir wandeln die Sekunden mathematisch in das von HA verlangte Format (HH:MM:SS) um
+      - delay: >-
+          {% if rest_wartezeit > 0 %}
+            {% set hours = (rest_wartezeit // 3600) | int %}
+            {% set minutes = ((rest_wartezeit % 3600) // 60) | int %}
+            {% set seconds = (rest_wartezeit % 60) | int %}
+            {{ "%02d:%02d:%02d" | format(hours, minutes, seconds) }}
+          {% else %}
+            00:00:01
+          {% endif %}
+
+      # 2. ZUSÄTZLICHE GASTRO-SCHONZEIT: Die normalen 10 Sekunden Nachlaufzeit nach Ablauf der 5 Minuten
+      - delay: "00:00:10"
+      
+      - choose:
+          # FALL 1: DAS WC IST IMMER NOCH LEER -> FADE-OUT UND AUSSCHALTEN
+          - conditions:
+              - condition: template
+                value_template: "{{ is_state(ausloeser_entity, 'off') }}"
+            sequence:
+              - variables:
+                  start_volume_fadeout: "{{ state_attr(ziel_speaker, 'volume_level') | default(0.35) | float }}"
+
+              - repeat:
+                  count: 30
+                  sequence:
+                    - condition: template
+                      value_template: "{{ is_state(ausloeser_entity, 'off') }}"
+                    - delay: "00:00:01"
+                    - service: media_player.volume_set
+                      target:
+                        entity_id: "{{ ziel_speaker }}"
+                      data:
+                        volume_level: "{{ [start_volume_fadeout - (repeat.index * (start_volume_fadeout / 30)), 0.01] | max | round(2) }}"
+
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ is_state(ausloeser_entity, 'off') }}"
+                    sequence:
+                      - service: media_player.media_stop
+                        target:
+                          entity_id: "{{ ziel_speaker }}"
+                      - delay: "00:00:02"
+                      - service: media_player.media_stop
+                        target:
+                          entity_id: "{{ ziel_speaker }}"
+                      - delay: "00:00:02"
+                      - service: media_player.turn_off
+                        target:
+                          entity_id: "{{ ziel_speaker }}"
+                      - delay: "00:00:01"
+                      - service: media_player.turn_off
+                        target:
+                          entity_id: "{{ ziel_speaker }}"
+                      - delay: "00:00:01"
+                      - service: media_player.turn_off
+                        target:
+                          entity_id: "{{ ziel_speaker }}"
+
+          # --------------------------------------------------------------------
+          # FALL 2: JEMAND IST WIEDER REINGEKOMMEN! -> LAUTSTÄRKE RETTEN & SKRIPT REBOOTEN
+          # --------------------------------------------------------------------
+          - conditions:
+              - condition: template
+                value_template: "{{ is_state(ausloeser_entity, 'on') }}"
+            sequence:
+              # Jetzt rufen wir das Skript einfach selbst wieder im "Hintergrund" auf, 
+              # damit es wieder von vorne anfängt zu überwachen (Rekursion).
+              - service: script.gastro_play_and_monitor
+                data:
+                  ausloeser_entity: "{{ ausloeser_entity }}"
+                  ziel_speaker: "{{ ziel_speaker }}"
+                  ziel_volume: "{{ ziel_volume }}"
+                  audio_quelle: "{{ audio_quelle }}"
+                  ordner: "{{ ordner }}"
+                  gaeste_status: "{{ gaeste_status }}"
+
+
+
+automation:
+- id: gastro_mode_trigger_script
+  alias: "Gastro-Modus: Musik-Skript starten (core_ha_gastromode)"
+  description: "Startet das Gastro-Musikskript, wenn einer der Bewegungsmelder im Gastro-Bereich auf 'on' schaltet. Die Musik wird nur gestartet, wenn der entsprechende Speaker aktuell nicht läuft. Die Lautstärke und die Musikquelle werden dynamisch anhand der Tageszeit und der Gästeauswahl bestimmt."
+  mode: parallel # MUSS parallel sein, damit WC 1 und WC 2 gleichzeitig starten können!
+  max: 10
+
+  trigger:
+    - platform: event
+      event_type: state_changed
+
+  condition:
+    - condition: template
+      value_template: >-
+        {% set sensors = state_attr('binary_sensor.gastro_sensoren_gruppe', 'all_sensors') %}
+        {{ trigger.event.data.entity_id is defined and sensors is not none and trigger.event.data.entity_id in sensors }}
+    # WICHTIG: Reagiert NUR auf das Einschalten!
+    - condition: template
+      value_template: "{{ trigger.event.data.new_state.state == 'on' and trigger.event.data.old_state.state != 'on' }}"
+
+  action:
+    - variables:
+        ausloeser_entity: "{{ trigger.event.data.entity_id }}"
+        ziel_raum: "{{ area_id(ausloeser_entity) }}"
+        ziel_speaker: '{{ area_entities(ziel_raum) | select("match", "^media_player\.") | select("in", label_entities("GASTRO")) | first }}'
+
+    # Nur starten, wenn der Speaker nicht ohnehin schon läuft
+    - condition: template
+      value_template: "{{ states(ziel_speaker) in ['off', 'idle', 'unknown', 'unavailable'] }}"
+
+    - variables:
+        ziel_volume: >-
+          {% if now().hour >= 6 and now().hour < 9 %} 0.25
+          {% elif now().hour >= 9 and now().hour < 22 %} 0.35
+          {% else %} 0.10 {% endif %}
+        gaeste_status: "{{ states('input_select.gastro_mode_guests') }}"
+        audio_quelle: "{{ states('input_select.gastro_mode_quelle') }}"
+        ordner: >-
+          {% if now().hour >= 22 or now().hour < 6 %} nacht
+          {% elif gaeste_status == 'Nur wir' %} wir
+          {% elif gaeste_status == 'Schweizer Gäste' %} schweizer
+          {% elif gaeste_status == 'Französische Gäste' %} french
+          {% else %} mixed {% endif %}
+
+    # JETZT RUFEN WIR DAS SCRIPT AUF UND ÜBERGEBEN DIE VARIABLEN
+    - service: script.gastro_play_and_monitor
+      data:
+        ausloeser_entity: "{{ ausloeser_entity }}"
+        ziel_speaker: "{{ ziel_speaker }}"
+        ziel_volume: "{{ ziel_volume }}"
+        audio_quelle: "{{ audio_quelle }}"
+        ordner: "{{ ordner }}"
+        gaeste_status: "{{ gaeste_status }}"
+
+
+- id: gastro_mode_hard_wächter
+  alias: "Gastro-Modus: Sicherheits-Ausschalter Hard-Kill (core_ha_gastromode)"
+  description: "Überwacht alle Instanzen des Musik-Skripts und killt sie, falls sie länger als 15 Minuten durchgehend laufen. Zusätzlich werden alle Speaker sofort stumm geschaltet. So stellen wir sicher, dass kein Skript außer Kontrolle gerät und die Speaker dauerhaft beschallt."
+  mode: single
+
+  trigger:
+    # Triggert, wenn das Skript länger als 15 Minuten durchgehend läuft
+    - platform: state
+      entity_id: script.gastro_play_and_monitor
+      to: "on"
+      for: "00:20:00"
+
+  action:
+    # 1. Wir killen das Amok laufende Skript sofort
+    - service: script.turn_off
+      target:
+        entity_id: script.gastro_play_and_monitor
+
+
+    # 2a. STOPP: Nur an Speaker senden, die im Moment ECHT Musik abspielen
+    - service: media_player.media_stop
+      continue_on_error: true
+      target:
+        entity_id: >-
+          {% set all_gastro = label_entities("GASTRO") | select("match", "^media_player\.") | list %}
+          {{ states.media_player | selectattr('entity_id', 'in', all_gastro) | selectattr('state', 'eq', 'playing') | map(attribute='entity_id') | list }}
+    - delay: "00:00:03"
+    # 2b. STOPP: Nur an Speaker senden, die im Moment ECHT Musik abspielen
+    - service: media_player.media_stop
+      continue_on_error: true
+      target:
+        entity_id: >-
+          {% set all_gastro = label_entities("GASTRO") | select("match", "^media_player\.") | list %}
+          {{ states.media_player | selectattr('entity_id', 'in', all_gastro) | selectattr('state', 'eq', 'playing') | map(attribute='entity_id') | list }}
+    - delay: "00:00:02"
+    # 3. TURN_OFF: Nur an Speaker senden, die nicht eh schon ausgeschaltet sind
+    - service: media_player.turn_off
+      continue_on_error: true
+      target:
+        entity_id: >-
+          {% set all_gastro = label_entities("GASTRO") | select("match", "^media_player\.") | list %}
+          {{ states.media_player | selectattr('entity_id', 'in', all_gastro) | selectattr('state', 'not in', ['off', 'unavailable', 'unknown']) | map(attribute='entity_id') | list }}
+    - delay: "00:00:02"
+    # 3. TURN_OFF: Nur an Speaker senden, die nicht eh schon ausgeschaltet sind
+    - service: media_player.turn_off
+      continue_on_error: true
+      target:
+        entity_id: >-
+          {% set all_gastro = label_entities("GASTRO") | select("match", "^media_player\.") | list %}
+          {{ states.media_player | selectattr('entity_id', 'in', all_gastro) | selectattr('state', 'not in', ['off', 'unavailable', 'unknown']) | map(attribute='entity_id') | list }}
+
+    # 3. Benachrichtigung im Dashboard hinterlassen, damit du Bescheid weißt
+    - service: notify.persistent_notification
+      data:
+        title: "🛡️ GASTRO SECURITY KILL"
+        message: "Das Musik-Skript lief länger als 15 Minuten am Stück. Skript wurde zwangsbeendet und alle Speaker ausgeschaltet."
+
+
+
+
