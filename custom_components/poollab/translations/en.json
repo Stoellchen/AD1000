@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Poollab Account",
+        "description": "Enter your personal LabCom API token\n\nEach account has a unique token. Get yours from: {token_url}\n\n1. Open the link above\n2. Navigate to 'GraphiQL API'\n3. Generate a new token\n4. Copy and paste the entire token\n\n⚠️ Never share your personal token!",
+        "data": {
+          "token": "Personal API Token"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Poollab",
+        "description": "Update your personal LabCom API token.\n\nGet it from: {token_url}",
+        "data": {
+          "token": "Personal API Token"
+        }
+      },
+      "sanitation": {
+        "title": "Sanitation Method",
+        "description": "Choose the sanitation method for {device_name}.\n\nChlorine mode exposes chlorine sensors and Stabilizer (CYA). Bromine + Active Oxygen mode exposes bromine and active oxygen sensors only.\n\nDevice {current_index} of {total_devices}",
+        "data": {
+          "sanitation_mode": "Sanitation Method"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API token",
+      "cannot_connect": "Failed to connect to Poollab API",
+      "no_devices": "No devices found",
+      "unknown": "An unknown error occurred"
+    },
+    "abort": {
+      "already_configured": "Integration is already configured",
+      "reconfigure_successful": "Reconfiguration was successful",
+      "unknown": "An unknown error occurred"
+    }
+  }
+}

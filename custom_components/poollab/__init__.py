@@ -1,0 +1,168 @@
+"""The Poollab integration."""
+
+import asyncio
+import logging
+from typing import Final
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_TOKEN, Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+from .api import PoollabApiClient
+from .coordinator import PoollabDataUpdateCoordinator
+from .const import (
+    CONF_OPTION_DEVICES,
+    CONF_SANITATION_MODE,
+    DOMAIN,
+    SANITATION_MODE_CHLORINE,
+)
+
+_LOGGER = logging.getLogger(__name__)
+
+PLATFORMS: Final = [Platform.SENSOR]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up Poollab from a config entry."""
+
+    hass.data.setdefault(DOMAIN, {})
+
+    session = async_get_clientsession(hass)
+    token = entry.data[CONF_TOKEN]
+
+    _LOGGER.info("Initializing Poollab API client from token")
+    api_client = PoollabApiClient(
+        token,
+        session,
+    )
+
+    # Verify token is valid
+    _LOGGER.debug("Verifying Poollab API token")
+    try:
+        if not await asyncio.wait_for(api_client.verify_token(), timeout=30.0):
+            _LOGGER.error("Invalid Poollab API token")
+            return False
+    except asyncio.TimeoutError:
+        _LOGGER.error("Timeout verifying Poollab API token")
+        return False
+    except Exception as err:
+        _LOGGER.error("Error verifying API token: %s", err, exc_info=True)
+        return False
+
+    _LOGGER.info("Poollab API token verified successfully")
+
+    # Get all devices/accounts (pools)
+    _LOGGER.debug("Fetching devices from Poollab API")
+    try:
+        devices = await asyncio.wait_for(api_client.get_devices(), timeout=30.0)
+    except asyncio.TimeoutError:
+        _LOGGER.error("Timeout fetching devices from Poollab API")
+        return False
+    except Exception as err:
+        _LOGGER.error("Error fetching devices: %s", err, exc_info=True)
+        return False
+
+    if not devices:
+        _LOGGER.error("No devices found in Poollab account")
+        return False
+
+    _LOGGER.info("Found %d device(s) in Poollab account", len(devices))
+
+    configured_devices = entry.options.get(CONF_OPTION_DEVICES, {})
+
+    # Set up data update coordinator for each device
+    coordinators = {}
+    for device_idx, device in enumerate(devices):
+        primary_id = device.get("account") or device.get("id")
+        fallback_id = device.get("serialNumber") or device.get("id")
+        device_id = str(primary_id) if primary_id is not None else None
+        fallback_id_str = str(fallback_id) if fallback_id is not None else None
+        if not device_id and fallback_id_str:
+            device_id = fallback_id_str
+
+        # Avoid key collisions when multiple pools share the same account name.
+        # This ensures all pools are preserved after token updates/reloads.
+        if device_id in coordinators and fallback_id_str:
+            device_id = fallback_id_str
+
+        device_name = device.get("name", f"Pool {device_idx + 1}")
+
+        if not device_id:
+            _LOGGER.warning("Could not determine device ID for %s", device_name)
+            continue
+
+        _LOGGER.info("Setting up device: %s (Account: %s)", device_name, device_id)
+
+        sanitation_mode = (
+            configured_devices.get(device_id, {}).get(CONF_SANITATION_MODE)
+            if isinstance(configured_devices.get(device_id), dict)
+            else None
+        )
+        if not sanitation_mode:
+            sanitation_mode = SANITATION_MODE_CHLORINE
+
+        # Create coordinator for this device
+        coordinator = PoollabDataUpdateCoordinator(hass, api_client, device_id)
+
+        # Initial data fetch with timeout
+        try:
+            await asyncio.wait_for(
+                coordinator.async_config_entry_first_refresh(),
+                timeout=30.0
+            )
+        except asyncio.TimeoutError:
+            _LOGGER.warning(
+                "Timeout during initial refresh for device %s, continuing anyway",
+                device_id
+            )
+        except Exception as err:
+            _LOGGER.warning(
+                "Error during initial refresh for device %s: %s, continuing anyway",
+                device_id,
+                err
+            )
+
+        coordinators[device_id] = {
+            "coordinator": coordinator,
+            "device": device,
+            "name": device_name,
+            "sanitation_mode": sanitation_mode,
+        }
+
+    if not coordinators:
+        _LOGGER.error("No valid devices found to set up")
+        return False
+
+    # Store all device data
+    hass.data[DOMAIN][entry.entry_id] = {
+        "api_client": api_client,
+        "coordinators": coordinators,
+        "devices": devices,
+    }
+
+    # Set up platforms
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+    if unload_ok:
+        api_client = hass.data[DOMAIN][entry.entry_id]["api_client"]
+        await api_client.close()
+        hass.data[DOMAIN].pop(entry.entry_id)
+
+    return unload_ok
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the Poollab component."""
+    hass.data.setdefault(DOMAIN, {})
+    return True

@@ -1,0 +1,446 @@
+# ==============================================================================
+# DATEINAME: weather_ha_weinkeller.yaml
+# ZWECK: Intelligente Weinkeller-Lüftung für 33790 Cazaugitat via Home Assistant
+# ANBIETER: Gledopto GL-C-301P (Dimmer-Modus) & Netatmo Sensoren
+#
+# LOGIK-OPTIMIERUNG:
+# - Zentrale Variablen-Definition der Sensoren ganz oben in der Automation.
+# - Keine unnötige Feuchtigkeit: Lüfter schaltet bei zu hohem Taupunkt komplett AUS.
+# - Zielwert-Abschaltung: Stoppt die Kühlung, sobald der Zielwert (12°C) erreicht ist.
+# ==============================================================================
+
+## ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
+## light.e4 umbenennen in light.weinkeller_fan, damit die Automatisierung funktioniert!
+
+# ==============================================================================
+# LÜFTUNGSKONZEPT & SENSOR-POSITIONIERUNG (DOKUMENTATION)
+# ==============================================================================
+# 
+# 1. STRÖMUNGSRICHTUNG (Unterdruck-Verfahren / Querlüftung):
+# ------------------------------------------------------------------------------
+# - Der Ventilator drückt die Luft AKTIV durch das ABLUFTROHR nach draußen.
+# - Dadurch entsteht im Weinkeller ein minimaler, gewünschter Unterdruck.
+# - Frischluft strömt PASSIV durch das Eintrittsrohr auf der Gegenseite nach.
+# - VORTEIL: Verhindert, dass feucht-warme Luft unkontrolliert in Ritzen oder 
+#   hinter Weinregale gepresst wird (Schutz vor verstecktem Kondenswasser).
+# - THERMIK-TIPP: Das Abluftrohr sollte idealerweise OBEN an der Decke sitzen 
+#   (saugt warme Stauluft ab). Das Eintrittsrohr sollte UNTEN nahe am Boden 
+#   enden (bringt kühle Nachtluft an den tiefsten Punkt).
+# - WICHTIG: Das Eintrittsrohr benötigt eine mechanische Rückschlagklappe, 
+#   damit bei stehendem Lüfter (Standby/Sperre) keine Warmluft nachströmt!
+#
+# 2. POSITIONIERUNG DES EM-KOMBI-SENSORS (Temperatur, Feuchte & 24GHz Präsenz):
+# ------------------------------------------------------------------------------
+# - HÖHE: Auf ca. 1,40m bis 1,60m (Augenhöhe) anbringen.
+#   * Zu tief (Boden): Misst zu kalt / zu feucht -> Automation stoppt zu früh.
+#   * Zu hoch (Decke): Misst warme Stauluft -> Automation lüftet fälschlicherweise.
+#   * Augenhöhe liefert die perfekte Mischtemperatur und ist die ideale Höhe 
+#     für die 24-GHz-Präsenzerkennung.
+#
+# - HORIZONTAL: Mittig im Raum oder im hinteren Drittel (nahe den Weinregalen).
+#   * ABSOLUTES TABU: Niemals in die Nähe des Frischluft-Eintrittsrohrs hängen! 
+#     Der Sensor würde sonst sofort nach dem Einschalten die reingezogene 
+#     Außenluft messen und die Automation verfälschen, bevor der Raum 
+#     überhaupt durchge kühlt ist.
+#
+# - UMGEBUNG: 
+#   * Nicht flach auf unisolierte Außenwände schrauben (Gefahr von Verfälschung 
+#     durch Mauerwerk-Kälte). Ggf. auf Holz oder mit kleinem Abstandshalter montieren.
+#   * Freies Sichtfeld in den Raum wahren, damit die 24-GHz-Belegung nicht durch 
+#     massive Weinboxen oder Säulen blockiert wird.
+# ==============================================================================
+
+# LoveLace Dashboard (DOKUMENTATION - NICHT AKTIV, siehe weather_ha_weinkeller_lovelace.yaml)
+# type: vertical-stack
+# cards:
+#   - type: heading
+#     heading: Weinkeller Klimatisierung
+#     icon: mdi:wine-cellar
+#   - type: grid
+#     columns: 2
+#     square: false
+#     cards:
+#       - type: entities
+#         title: Garten
+#         icon: mdi:tree
+#         entities:
+#           - entity: sensor.zg204zx005_temperature
+#             name: Temp
+#             icon: mdi:thermometer
+#           - entity: sensor.zg204zx005_humidity
+#             name: Feuchtigkeit
+#             icon: mdi:water-percent
+#           - entity: sensor.taupunkt_garten
+#             name: Taupunkt (Absolut)
+#             icon: mdi:weather-fog
+#             card_mod:
+#               style: |
+#                 :host {
+#                   --paper-item-icon-color: #64b5f6;
+#                 }
+#       - type: entities
+#         title: Hobbit
+#         icon: mdi:home-wine
+#         entities:
+#           - entity: sensor.zg204zx004_temperature
+#             name: Temp
+#             icon: mdi:thermometer
+#           - entity: sensor.zg204zx004_humidity
+#             name: Feuchtigkeit
+#             icon: mdi:water-percent
+#           - entity: sensor.taupunkt_weinkeller
+#             name: Taupunkt (Absolut)
+#             icon: mdi:weather-fog
+#             card_mod:
+#               style: |
+#                 :host {
+#                   --paper-item-icon-color: #64b5f6;
+#                 }
+# 
+# 
+# type: vertical-stack
+# cards:
+#   - type: heading
+#     heading: Weinkeller Klimatisierung
+#     icon: mdi:wine-cellar
+#   - type: entities
+#     entities:
+#       - entity: light.e4
+#         name: Belüftungs-Status (Gledopto)
+#         icon: mdi:fan
+#         secondary_info: last-changed
+#         features:
+#           - type: light-brightness
+#       - entity: sensor.taupunkt_wetter_prognose_nacht_minimum
+#         name: Prognostiziertes Nacht-Minimum (Meteo France)
+#         icon: mdi:weather-night
+#   - type: vertical-stack
+#     cards:
+#       - type: entities
+#         title: Lüfter Steuerung & Diagnose
+#         show_header_toggle: false
+#         entities:
+#           - entity: input_boolean.weinkeller_lueftung_manuell_aus
+#             name: Lüfterautomatik sperren
+#           - entity: sensor.weinkeller_lueftungs_status
+#             name: Aktueller System-Modus
+#       - type: markdown
+#         content: >
+#           **Letzter Log-Status:** ℹ️ {{
+#           states('input_text.weinkeller_lueftung_letzte_aktion') }}
+# 
+#           **Effektive Temperaturen:** 🌡️ Außen: {{
+#           states('sensor.zg204zx005_temperature') }}°C | Innen: {{
+#           states('sensor.zg204zx004_temperature') }}°C
+# 
+#           **Dauer:** ⏱️ Seit {{
+#           relative_time(states.input_text.weinkeller_lueftung_letzte_aktion.last_changed)
+#           }} (aktiviert um {{
+#           as_timestamp(states.input_text.weinkeller_lueftung_letzte_aktion.last_changed)
+#           | timestamp_custom('%H:%M:%S Uhr') }})
+#   - type: tile
+#     entity: sensor.weinkeller_lueftungs_status
+#     name: Belüftungs-Freigabe
+#     color: >
+#       {% if 'Rot' in states('sensor.weinkeller_lueftungs_status') %} red {% elif
+#       'Gruen' in states('sensor.weinkeller_lueftungs_status') %} green {% elif
+#       'Orange' in states('sensor.weinkeller_lueftungs_status') %} orange {% else
+#       %} grey {% endif %}
+# 
+
+# ------------------------------------------------------------------------------
+# HELFER FÜR DIE DASHBOARD-STEUERUNG UND DIAGNOSE
+# ------------------------------------------------------------------------------
+input_boolean:
+  weinkeller_lueftung_manuell_aus:
+    name: "Weinkeller Lüftung manuell DEAKTIVIEREN"
+    icon: mdi:fan-off
+
+input_text:
+  weinkeller_lueftung_letzte_aktion:
+    name: "Letzte Lüfter-Aktion & Begründung"
+    max: 255
+    icon: mdi:comment-text-outline
+
+# ------------------------------------------------------------------------------
+# 1. TEMPLATE SENSOREN (Berechnungen für Taupunkte und Wetter-Prognose)
+# ------------------------------------------------------------------------------
+template:
+  - sensor:
+      # Liest die reale Prozentstufe des Lüfter-Dimmers aus
+      - name: "Weinkeller Fan Speed Effektiv"
+        unique_id: weinkeller_fan_speed_effektiv
+        icon: mdi:fan
+        unit_of_measurement: "%"
+        state: >
+          {% if is_state('light.e4', 'on') %}
+            {% set brightness = state_attr('light.e4', 'brightness') %}
+            {% if brightness is not none %}
+              {{ ((brightness | float / 255) * 100) | round(0) }}
+            {% else %}
+              0
+            {% endif %}
+          {% else %}
+            0
+          {% endif %}
+
+
+      # Taupunkt Draussen (Garten)
+      - name: "Taupunkt Garten"
+        unique_id: taupunkt_garten
+        unit_of_measurement: "°C"
+        state: >
+          {% set T = states('sensor.zg204zx005_temperature') | float(default=0) %}
+          {% set H = states('sensor.zg204zx005_humidity') | float(default=0) %}
+          {% set a = 17.625 %}
+          {% set b = 243.04 %}
+          {% set alpha = ((a * T) / (b + T)) + log(H / 100.0) %}
+          {{ ((b * alpha) / (a - alpha)) | round(1) }}
+
+      # Taupunkt Drinnen (Weinkeller)
+      - name: "Taupunkt Weinkeller"
+        unique_id: taupunkt_weinkeller
+        unit_of_measurement: "°C"
+        state: >
+          {% set T = states('sensor.zg204zx004_temperature') | float(default=0) %}
+          {% set H = states('sensor.zg204zx004_humidity') | float(default=0) %}
+          {% set a = 17.625 %}
+          {% set b = 243.04 %}
+          {% set alpha = ((a * T) / (b + T)) + log(H / 100.0) %}
+          {{ ((b * alpha) / (a - alpha)) | round(1) }}
+
+      # Holt die prognostizierte Tiefsttemperatur der kommenden Nacht
+      - name: "Taupunkt Wetter Prognose Nacht Minimum"
+        unique_id: taupunkt_wetter_prognose_nacht_minimum
+        unit_of_measurement: "°C"
+        state: >
+          {% set forecast = state_attr('weather.cazaugitat', 'forecast') %}
+          {% if forecast and forecast | length > 0 %}
+            {{ forecast[0].datetime, forecast[0].low | float }}
+          {% else %}
+            {{ states('sensor.zg204zx005_temperature') | float - 5 }}
+          {% endif %}
+
+      # Neue Lüftungs-Ampel für das Lovelace Dashboard (Synchronisiert mit Automation)
+      - name: "Weinkeller Lueftungs Status"
+        unique_id: weinkeller_lueftungs_status
+        state: >
+          {% set tp_outside = states('sensor.taupunkt_garten') | float(default=0) %}
+          {% set temp_inside = states('sensor.zg204zx004_temperature') | float(default=0) %}
+          {% set temp_outside = states('sensor.zg204zx005_temperature') | float(default=0) %}
+          {% set prog_min = states('sensor.taupunkt_wetter_prognose_nacht_minimum') | float(default=0) %}
+          {% set hum_inside = states('sensor.zg204zx004_humidity') | float(default=0) %}
+          
+          {% if tp_outside > temp_inside %}
+            Rot - Schwül (Kondenswassergefahr)
+          {% elif temp_inside <= 12.0 %}
+            Weiss - Zielwert erreicht
+          {% elif tp_outside <= temp_inside and temp_outside < temp_inside and temp_outside <= (prog_min + 2.5) %}
+            Gruen - Optimale Nachtkuehlung
+          {% elif tp_outside <= temp_inside and hum_inside > 75.0 %}
+            Orange - Trocknung aktiv
+          {% else %}
+            Standard - Standby
+          {% endif %}
+        icon: >
+          {% if 'Rot' in this.state %} mdi:alert-circle
+          {% elif 'Gruen' in this.state %} mdi:check-circle
+          {% elif 'Orange' in this.state %} mdi:arrow-up-bold-circle
+          {% else %} mdi:minus-circle {% endif %}
+
+# ------------------------------------------------------------------------------
+# 2. AUTOMATION (Die intelligente Steuerungs-Logik mit zentralen Variablen)
+# ------------------------------------------------------------------------------
+automation:
+  - id: weinkeller_intelligente_lueftung_v2
+    alias: "Weinkeller Intelligente Lueftung (weather_ha_weinkeller.yaml) v2"
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      - platform: state
+        entity_id: sensor.zg204zx005_temperature
+    
+    variables:
+      fan_entity: "light.e4"
+      val_outside_temp: "{{ states('sensor.zg204zx005_temperature') | float(default=0) }}"
+      val_outside_hum: "{{ states('sensor.zg204zx005_humidity') | float(default=0) }}"
+      val_outside_tau:  "{{ states('sensor.taupunkt_garten') | float(default=0) }}"
+      val_inside_temp:  "{{ states('sensor.zg204zx004_temperature') | float(default=0) }}"
+      val_inside_hum:   "{{ states('sensor.zg204zx004_humidity') | float(default=0) }}"
+      val_inside_tau:  "{{ states('sensor.taupunkt_weinkeller') | float(default=0) }}"
+      val_prognose_min: "{{ states('sensor.taupunkt_wetter_prognose_nacht_minimum') | float(default=0) }}"
+
+      keller_ziel_temperatur: 12.0        # Bis zu dieser Temperatur wird nachts gekühlt
+      keller_ziel_temperatur_over: 2.5    # 2.5 Grad über dem Nacht-Minimum wird die maximale Nachtkühlung aktiviert (präzise Steuerung am Tiefpunkt)
+      keller_feuchtigkeit_max: 75.0       # Ab dieser Feuchtigkeit drinnen wird tagsüber getrocknet
+      keller_feuchtigkeit_min: 55.0       # NEU: Unter diesem Wert wird der Keller geschützt
+      keller_frischluft_intervall_min: 5  # Minuten pro Stunde Laufzeit bei Sperre
+      keller_frischluft_fan_max: 100      # 100% Lüfterleistung bei maximaler Nachtkühlung
+      keller_frischluft_fan_hourly: 10    # hier wird die Lüfterleistung pro Stunde bei Sperre auf 10% gesetzt, um die Luft zu bewegen und den Keller zu trocknen
+      keller_frischluft_fan_drying: 40    # wenn die Luft draussen trocken ist, aber der Keller zu feucht, wird der Lüfter auf 40% gesetzt, um die Luft zu bewegen und den Keller zu trocknen
+
+      # 📈 DYNAMISCHE BERECHNUNGEN (STUFENLOSE REGELUNG 15% - 100%)
+      # Fall 3: Je größer das Temperaturgefälle nach draußen, desto mehr Power (Skaliert von 20% bis 100%)
+      dyn_cooling_speed: >
+        {% set delta_t = val_inside_temp - val_outside_temp %}
+        {% set speed = (delta_t * 20) | int %}
+        {{ [15, [speed, 100] | min] | max }}
+
+      # Fall 4A: Je feuchter der Keller über dem Limit, desto stärker die Trocknung
+      dyn_drying_speed: >
+        {% set delta_h = val_inside_hum - keller_feuchtigkeit_max %}
+        {% set speed = 20 + (delta_h * 5) | int %}
+        {{ [15, [speed, 80] | min] | max }}
+
+      # Fall 4B: Je trockener der Keller unter dem Limit, desto stärker die Befeuchtung
+      dyn_humidifying_speed: >
+        {% set delta_h = keller_feuchtigkeit_min - val_inside_hum %}
+        {% set speed = 20 + (delta_h * 5) | int %}
+        {{ [15, [speed, 60] | min] | max }}
+
+    action:
+      - choose:
+          # ====================================================================
+          # HAUPTSCHALTER: MANUELLE DEAKTIVIERUNG (Erzwungenes AUS)
+          # ====================================================================
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.weinkeller_lueftung_manuell_aus
+                state: "on"
+            sequence:
+              - service: light.turn_off
+                target:
+                  entity_id: "{{ fan_entity }}"
+              - service: input_text.set_value
+                target:
+                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                data:
+                  value: "AUS (0%) - System manuell über Dashboard deaktiviert."
+
+          # ====================================================================
+          # FALL 1: SPERRE & INTERVALL-FRISCHLUFT (Draussen zu schwül)
+          # ====================================================================
+          - conditions:
+              - condition: template
+                value_template: "{{ val_outside_tau > val_inside_temp }}"
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ now().minute < keller_frischluft_intervall_min | int }}"
+                    sequence:
+                      - service: light.turn_on
+                        target:
+                          entity_id: "{{ fan_entity }}"
+                        data:
+                          brightness_pct: "{{ keller_frischluft_fan_hourly }}"
+                      - service: input_text.set_value
+                        target:
+                          entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                        data:
+                          value: "MINIMAL ({{ keller_frischluft_fan_hourly }}%) - Schwüle-Sperre aktiv. Kurzes Frischluftintervall läuft."
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ now().minute >= keller_frischluft_intervall_min | int }}"
+                    sequence:
+                      - service: light.turn_off
+                        target:
+                          entity_id: "{{ fan_entity }}"
+                      - service: input_text.set_value
+                        target:
+                          entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                        data:
+                          value: "AUS (0%) - Schwüle-Sperre aktiv (Draußen-Taupunkt {{ val_outside_tau }}°C > Keller {{ val_inside_temp }}°C)."
+
+          # ====================================================================
+          # FALL 2: ZIELWERT ERREICHT (Keller ist bereits kalt genug)
+          # ====================================================================
+          - conditions:
+              - condition: template
+                value_template: "{{ val_inside_temp <= keller_ziel_temperatur }}"
+            sequence:
+              - service: light.turn_off
+                target:
+                  entity_id: "{{ fan_entity }}"
+              - service: input_text.set_value
+                target:
+                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                data:
+                  value: "AUS (0%) - Keller-Zieltemperatur ({{ keller_ziel_temperatur }}°C) erreicht oder unterschritten."
+
+          # ====================================================================
+          # FALL 3: DYNAMISCHE NACHTKÜHLUNG (Bedarfsgesteuerte Intensität)
+          # ====================================================================
+          - conditions:
+              - condition: template
+                value_template: "{{ val_outside_tau <= val_inside_temp }}"
+              - condition: template
+                value_template: "{{ val_outside_temp < val_inside_temp }}"
+              - condition: template
+                value_template: "{{ val_outside_temp <= (val_prognose_min + keller_ziel_temperatur_over) }}"
+            sequence:
+              - service: light.turn_on
+                target:
+                  entity_id: "{{ fan_entity }}"
+                data:
+                  brightness_pct: "{{ dyn_cooling_speed }}"
+              - service: input_text.set_value
+                target:
+                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                data:
+                  value: "DYNAMIC COOLING ({{ dyn_cooling_speed }}%) - Nachtkühlung läuft bedarfsangepasst (Draußen: {{ val_outside_temp }}°C)."
+
+          # ====================================================================
+          # FALL 4: DYNAMISCHER ERHALTUNGSMODUS (Trocknen ODER Befeuchten)
+          # ====================================================================
+          - conditions:
+              # UNTERFALL A: Keller ist zu feucht -> Dynamisch Trocknen
+              - condition: template
+                value_template: >
+                  {{ val_inside_hum > keller_feuchtigkeit_max and val_outside_tau <= val_inside_temp }}
+            sequence:
+              - service: light.turn_on
+                target:
+                  entity_id: "{{ fan_entity }}"
+                data:
+                  brightness_pct: "{{ dyn_drying_speed }}"
+              - service: input_text.set_value
+                target:
+                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                data:
+                  value: "DYNAMIC DRYING ({{ dyn_drying_speed }}%) - Kellerfeuchte ({{ val_inside_hum }}%) über Limit. Intensität skaliert."
+
+          - conditions:
+              # UNTERFALL B: Keller ist zu trocken -> Dynamisch Befeuchten
+              - condition: template
+                value_template: >
+                  {{ val_inside_hum < keller_feuchtigkeit_min and val_outside_tau > val_inside_tau and val_outside_tau <= val_inside_temp }}
+            sequence:
+              - service: light.turn_on
+                target:
+                  entity_id: "{{ fan_entity }}"
+                data:
+                  brightness_pct: "{{ dyn_humidifying_speed }}"
+              - service: input_text.set_value
+                target:
+                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                data:
+                  value: "DYNAMIC HUMIDIFYING ({{ dyn_humidifying_speed }}%) - Kellerfeuchte ({{ val_inside_hum }}%) zu niedrig. Sanfte Befeuchtung aktiv."
+
+          # ====================================================================
+          # FALL 5: STANDBY / ABSCHALTUNG (Wenn kein anderer Fall zutrifft)
+          # ====================================================================
+          - conditions:
+              - condition: template
+                value_template: "{{ true }}"
+            sequence:
+              - service: light.turn_off
+                target:
+                  entity_id: "{{ fan_entity }}"
+              - service: input_text.set_value
+                target:
+                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                data:
+                  value: "STANDBY (0%) - Klima stabil ({{ val_inside_hum }}% rF, {{ val_inside_temp }}°C). Kein Lüftungsbedarf."
+
+

@@ -1,0 +1,222 @@
+"""Constants for the Poollab integration."""
+
+DOMAIN = "poollab"
+DEFAULT_NAME = "Poollab"
+
+# Config option keys
+CONF_OPTION_DEVICES = "devices"
+CONF_SANITATION_MODE = "sanitation_mode"
+
+# Sanitation modes
+SANITATION_MODE_CHLORINE = "chlorine"
+SANITATION_MODE_BROMINE_ACTIVE_OXYGEN = "bromine_active_oxygen"
+
+# API
+API_URL = "https://backend.labcom.cloud/graphql"
+API_TIMEOUT = 30  # seconds
+
+# API Throttling & Rate Limiting
+MIN_TIME_BETWEEN_UPDATES = 60  # 1 minute - minimum time between API calls
+MAX_API_RETRIES = 3  # maximum retry attempts for failed API calls
+RETRY_BACKOFF_MULTIPLIER = 2  # exponential backoff multiplier (1s -> 2s -> 4s)
+RATE_LIMIT_RETRY_WAIT = 60  # seconds to wait when API reports rate limit (429)
+
+# Update intervals
+SCAN_INTERVAL = 300  # 5 minutes - how often to update device data
+
+# Attributes
+ATTR_DEVICE_ID = "device_id"
+ATTR_DEVICE_NAME = "device_name"
+ATTR_LAST_UPDATE = "last_update"
+
+# Sensor types
+SENSOR_TYPE_PH = "ph"
+SENSOR_TYPE_CL = "chlorine"  # General chlorine (backward compatibility)
+SENSOR_TYPE_FREE_CL = "free_chlorine"  # Free/Active chlorine
+SENSOR_TYPE_TOTAL_CL = "total_chlorine"  # Total chlorine
+SENSOR_TYPE_COMBINED_CL = "combined_chlorine"  # Combined chlorine (calculated)
+SENSOR_TYPE_BROMINE = "bromine"
+SENSOR_TYPE_ACTIVE_OXYGEN = "active_oxygen"
+SENSOR_TYPE_TEMP = "temperature"
+SENSOR_TYPE_ALK = "alkalinity"
+SENSOR_TYPE_CYA = "cya"
+SENSOR_TYPE_SALT = "salt"
+
+# ActiveChlorine calculated values
+SENSOR_TYPE_UNBOUND_CL = "unbound_chlorine"  # Free chlorine available for sanitization
+SENSOR_TYPE_BOUND_CYA = "bound_to_cya"  # Chlorine bound to CYA
+
+# Device diagnostic sensors
+SENSOR_TYPE_MEASUREMENT_COUNT = "measurement_count"  # Total number of measurements for the device
+SENSOR_TYPE_LAST_MEASUREMENT = "last_measurement"  # Timestamp of the most recent measurement
+
+# Sensor configurations
+SENSOR_CONFIGS = {
+    SENSOR_TYPE_PH: {
+        "name": "pH",
+        "unit": None,
+        "icon": "mdi:water-opacity",
+        "precision": 2,
+        "min": 0,
+        "max": 14,
+    },
+    SENSOR_TYPE_CL: {
+        "name": "Chlorine",
+        "unit": "ppm",
+        "icon": "mdi:water-check",
+        "precision": 2,
+        "min": 0,
+        "max": 10,
+    },
+    SENSOR_TYPE_FREE_CL: {
+        "name": "Free Chlorine",
+        "unit": "ppm",
+        "icon": "mdi:water-check",
+        "precision": 2,
+        "min": 0,
+        "max": 10,
+        "description": "Active chlorine available for sanitization",
+    },
+    SENSOR_TYPE_TOTAL_CL: {
+        "name": "Total Chlorine",
+        "unit": "ppm",
+        "icon": "mdi:water-plus",
+        "precision": 2,
+        "min": 0,
+        "max": 10,
+        "description": "Total chlorine in the pool (free + combined)",
+    },
+    SENSOR_TYPE_COMBINED_CL: {
+        "name": "Combined Chlorine",
+        "unit": "ppm",
+        "icon": "mdi:water-alert",
+        "precision": 2,
+        "min": 0,
+        "max": 5,
+        "description": "Chlorine bound to contaminants (chloramines)",
+        "calculated": True,
+    },
+    SENSOR_TYPE_BROMINE: {
+        "name": "Bromine",
+        "unit": "ppm",
+        "icon": "mdi:water-check",
+        "precision": 2,
+        "min": 0,
+        "max": 13.5,
+        "description": "Bromine residual for sanitization",
+    },
+    SENSOR_TYPE_ACTIVE_OXYGEN: {
+        "name": "Active Oxygen",
+        "unit": "ppm",
+        "icon": "mdi:molecule",
+        "precision": 2,
+        "min": 0,
+        "max": 30,
+        "description": "Active oxygen residual",
+    },
+    SENSOR_TYPE_TEMP: {
+        "name": "Temperature",
+        "unit": "°C",
+        "icon": "mdi:thermometer",
+        "precision": 1,
+        "min": 0,
+        "max": 50,
+    },
+    SENSOR_TYPE_ALK: {
+        "name": "Alkalinity",
+        "unit": "ppm",
+        "icon": "mdi:beaker",
+        "precision": 0,
+        "min": 0,
+        "max": 300,
+    },
+    SENSOR_TYPE_CYA: {
+        "name": "Stabilizer (CYA)",
+        "unit": "ppm",
+        "icon": "mdi:shield-check",
+        "precision": 0,
+        "min": 0,
+        "max": 200,
+    },
+    SENSOR_TYPE_SALT: {
+        "name": "Salt Level",
+        "unit": "ppm",
+        "icon": "mdi:shaker",
+        "precision": 0,
+        "min": 0,
+        "max": 3600,
+    },
+    SENSOR_TYPE_UNBOUND_CL: {
+        "name": "Unbound Chlorine",
+        "unit": "ppm",
+        "icon": "mdi:water-check",
+        "precision": 2,
+        "min": 0,
+        "max": 10,
+        "description": "Free chlorine available for sanitization (calculated)",
+        "calculated": True,
+    },
+    SENSOR_TYPE_BOUND_CYA: {
+        "name": "Chlorine Bound to CYA",
+        "unit": "ppm",
+        "icon": "mdi:water-alert",
+        "precision": 2,
+        "min": 0,
+        "max": 10,
+        "description": "Chlorine bound to stabilizer (CYA)",
+        "calculated": True,
+    },
+    SENSOR_TYPE_MEASUREMENT_COUNT: {
+        "name": "Measurement Count",
+        "unit": None,
+        "icon": "mdi:counter",
+    },
+    SENSOR_TYPE_LAST_MEASUREMENT: {
+        "name": "Last Measurement",
+        "unit": None,
+        "icon": "mdi:clock-outline",
+    },
+}
+
+_COMMON_SENSOR_TYPES = (
+    SENSOR_TYPE_PH,
+    SENSOR_TYPE_TEMP,
+    SENSOR_TYPE_ALK,
+    SENSOR_TYPE_SALT,
+    SENSOR_TYPE_MEASUREMENT_COUNT,
+    SENSOR_TYPE_LAST_MEASUREMENT,
+)
+
+_CHLORINE_SENSOR_TYPES = (
+    SENSOR_TYPE_CL,
+    SENSOR_TYPE_FREE_CL,
+    SENSOR_TYPE_TOTAL_CL,
+    SENSOR_TYPE_COMBINED_CL,
+    SENSOR_TYPE_CYA,
+    SENSOR_TYPE_UNBOUND_CL,
+    SENSOR_TYPE_BOUND_CYA,
+)
+
+_BROMINE_ACTIVE_OXYGEN_SENSOR_TYPES = (
+    SENSOR_TYPE_BROMINE,
+    SENSOR_TYPE_ACTIVE_OXYGEN,
+)
+
+
+def get_sensor_types_for_sanitation(mode: str) -> tuple[str, ...]:
+    """Return the enabled sensor types for a sanitation mode."""
+    if mode == SANITATION_MODE_BROMINE_ACTIVE_OXYGEN:
+        return _COMMON_SENSOR_TYPES + _BROMINE_ACTIVE_OXYGEN_SENSOR_TYPES
+    return _COMMON_SENSOR_TYPES + _CHLORINE_SENSOR_TYPES
+
+
+def is_measurement_value_in_range(sensor_type: str, value: float) -> bool:
+    """Return True if value is within the configured min/max range for this sensor type."""
+    config = SENSOR_CONFIGS.get(sensor_type, {})
+    min_val = config.get("min")
+    max_val = config.get("max")
+    if min_val is not None and value < min_val:
+        return False
+    if max_val is not None and value > max_val:
+        return False
+    return True
