@@ -1,5 +1,5 @@
 # ==============================================================================
-# DATEINAME: weather_ha_weinkeller.yaml
+# DATEINAME: weather_ha_hobbit.yaml
 # ZWECK: Intelligente Weinkeller-Lüftung für 33790 Cazaugitat via Home Assistant
 # ANBIETER: Gledopto GL-C-301P (Dimmer-Modus) & Netatmo Sensoren
 #
@@ -10,7 +10,7 @@
 # ==============================================================================
 
 ## ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
-## light.e4 umbenennen in light.weinkeller_fan, damit die Automatisierung funktioniert!
+## light.glc301p001 umbenennen in light.hobbit_fan, damit die Automatisierung funktioniert!
 
 # ==============================================================================
 # LÜFTUNGSKONZEPT & SENSOR-POSITIONIERUNG (DOKUMENTATION)
@@ -50,7 +50,7 @@
 #     massive Weinboxen oder Säulen blockiert wird.
 # ==============================================================================
 
-# LoveLace Dashboard (DOKUMENTATION - NICHT AKTIV, siehe weather_ha_weinkeller_lovelace.yaml)
+# LoveLace Dashboard (DOKUMENTATION - NICHT AKTIV, siehe weather_ha_hobbit_lovelace.yaml)
 # type: vertical-stack
 # cards:
 #   - type: heading
@@ -77,7 +77,7 @@
 #               style: |
 #                 :host {
 #                   --paper-item-icon-color: #64b5f6;
-#                 }
+#                 }                
 #       - type: entities
 #         title: Hobbit
 #         icon: mdi:home-wine
@@ -88,7 +88,7 @@
 #           - entity: sensor.zg204zx004_humidity
 #             name: Feuchtigkeit
 #             icon: mdi:water-percent
-#           - entity: sensor.taupunkt_weinkeller
+#           - entity: sensor.taupunkt_hobbit
 #             name: Taupunkt (Absolut)
 #             icon: mdi:weather-fog
 #             card_mod:
@@ -96,6 +96,12 @@
 #                 :host {
 #                   --paper-item-icon-color: #64b5f6;
 #                 }
+#           - entity: binary_sensor.zg204zx004_presence
+#             name: bewohnt
+# grid_options:
+#   columns: 24
+#   rows: auto
+# 
 # 
 # 
 # type: vertical-stack
@@ -105,13 +111,13 @@
 #     icon: mdi:wine-cellar
 #   - type: entities
 #     entities:
-#       - entity: light.e4
+#       - entity: light.glc301p001
 #         name: Belüftungs-Status (Gledopto)
 #         icon: mdi:fan
 #         secondary_info: last-changed
 #         features:
 #           - type: light-brightness
-#       - entity: sensor.taupunkt_wetter_prognose_nacht_minimum
+#       - entity: input_number.hobbit_wetter_prognose_nacht_minimum
 #         name: Prognostiziertes Nacht-Minimum (Meteo France)
 #         icon: mdi:weather-night
 #   - type: vertical-stack
@@ -120,61 +126,170 @@
 #         title: Lüfter Steuerung & Diagnose
 #         show_header_toggle: false
 #         entities:
-#           - entity: input_boolean.weinkeller_lueftung_manuell_aus
+#           - entity: input_boolean.hobbit_lueftung_manuell_aus
 #             name: Lüfterautomatik sperren
-#           - entity: sensor.weinkeller_lueftungs_status
+#           - entity: sensor.hobbit_lueftungs_status
 #             name: Aktueller System-Modus
 #       - type: markdown
 #         content: >
 #           **Letzter Log-Status:** ℹ️ {{
-#           states('input_text.weinkeller_lueftung_letzte_aktion') }}
+#           states('input_text.hobbit_lueftung_letzte_aktion') }}
 # 
 #           **Effektive Temperaturen:** 🌡️ Außen: {{
 #           states('sensor.zg204zx005_temperature') }}°C | Innen: {{
 #           states('sensor.zg204zx004_temperature') }}°C
 # 
 #           **Dauer:** ⏱️ Seit {{
-#           relative_time(states.input_text.weinkeller_lueftung_letzte_aktion.last_changed)
+#           relative_time(states.input_text.hobbit_lueftung_letzte_aktion.last_changed)
 #           }} (aktiviert um {{
-#           as_timestamp(states.input_text.weinkeller_lueftung_letzte_aktion.last_changed)
+#           as_timestamp(states.input_text.hobbit_lueftung_letzte_aktion.last_changed)
 #           | timestamp_custom('%H:%M:%S Uhr') }})
 #   - type: tile
-#     entity: sensor.weinkeller_lueftungs_status
+#     entity: sensor.hobbit_lueftungs_status
 #     name: Belüftungs-Freigabe
 #     color: >
-#       {% if 'Rot' in states('sensor.weinkeller_lueftungs_status') %} red {% elif
-#       'Gruen' in states('sensor.weinkeller_lueftungs_status') %} green {% elif
-#       'Orange' in states('sensor.weinkeller_lueftungs_status') %} orange {% else
-#       %} grey {% endif %}
+#       {% if 'Rot' in states('sensor.hobbit_lueftungs_status') %} red {% elif
+#       'Gruen' in states('sensor.hobbit_lueftungs_status') %} green {% elif
+#       'Orange' in states('sensor.hobbit_lueftungs_status') %} orange {% else %}
+#       grey {% endif %}
+# grid_options:
+#   columns: 24
+#   rows: auto
+# 
+# 
+# 
+# type: markdown
+# title: 📜 Die letzten 10 Aktionen
+# content: |
+#   {{ state_attr('sensor.hobbit_lueftung_verlaufskette', 'history') }}
+# grid_options:
+#   columns: 24
+#   rows: auto
+# 
+# 
+# type: vertical-stack
+# cards:
+#   - type: heading
+#     heading: Klima- und Lüftungsverlauf 6h
+#     icon: mdi:history
+#     heading_style: title
+#   - type: history-graph
+#     entities:
+#       - entity: sensor.zg204zx004_temperature
+#         name: Hobbit
+#         color: lightgreen
+#       - entity: sensor.zg204zx005_temperature
+#         name: Garten
+#         color: darkgreen
+#       - entity: input_number.hobbit_wetter_prognose_nacht_minimum
+#         name: Minimum
+#         color: blue
+#       - entity: sensor.taupunkt_hobbit
+#         name: Hobbit τ
+#         color: yellow
+#       - entity: sensor.taupunkt_garten
+#         name: Garten τ
+#         color: orange
+#     hours_to_show: 6
+#     refresh_interval: 0
+#   - type: history-graph
+#     entities:
+#       - entity: sensor.zg204zx004_humidity
+#         name: Hobbit rF
+#         color: yellow
+#       - entity: sensor.zg204zx005_humidity
+#         name: Garten rF
+#         color: orange
+#       - entity: sensor.hobbit_fan_speed_direct
+#         name: Lüfter-Speed
+#         color: purple
+#     hours_to_show: 6
+#     refresh_interval: 0
+# grid_options:
+#   columns: 24
+#   rows: auto
+# 
+# 
+# type: vertical-stack
+# cards:
+#   - type: heading
+#     heading: Klima- und Lüftungsverlauf 6h
+#     icon: mdi:history
+#     heading_style: title
+#   - type: history-graph
+#     entities:
+#       - entity: sensor.zg204zx004_temperature
+#         name: Hobbit
+#         color: lightgreen
+#       - entity: sensor.zg204zx005_temperature
+#         name: Garten
+#         color: darkgreen
+#       - entity: input_number.hobbit_wetter_prognose_nacht_minimum
+#         name: Minimum
+#         color: blue
+#       - entity: sensor.taupunkt_hobbit
+#         name: Hobbit τ
+#         color: yellow
+#       - entity: sensor.taupunkt_garten
+#         name: Garten τ
+#         color: orange
+#     hours_to_show: 192
+#     refresh_interval: 0
+#   - type: history-graph
+#     entities:
+#       - entity: sensor.zg204zx004_humidity
+#         name: Hobbit rF
+#         color: yellow
+#       - entity: sensor.zg204zx005_humidity
+#         name: Garten rF
+#         color: orange
+#       - entity: sensor.hobbit_fan_speed_direct
+#         name: Lüfter-Speed
+#         color: purple
+#     hours_to_show: 192
+#     refresh_interval: 0
+# grid_options:
+#   columns: 24
+#   rows: auto
+# 
 # 
 
 # ------------------------------------------------------------------------------
 # HELFER FÜR DIE DASHBOARD-STEUERUNG UND DIAGNOSE
 # ------------------------------------------------------------------------------
 input_boolean:
-  weinkeller_lueftung_manuell_aus:
-    name: "Weinkeller Lüftung manuell DEAKTIVIEREN"
+  hobbit_lueftung_manuell_aus:
+    name: "Hobbit Lüftung manuell DEAKTIVIEREN"
     icon: mdi:fan-off
 
 input_text:
-  weinkeller_lueftung_letzte_aktion:
+  hobbit_lueftung_letzte_aktion:
     name: "Letzte Lüfter-Aktion & Begründung"
     max: 255
     icon: mdi:comment-text-outline
 
+input_number:
+  hobbit_wetter_prognose_nacht_minimum:
+    name: "Hobbit Wetter Prognose Nacht Minimum"
+    min: -20
+    max: 55
+    step: 0.1
+    unit_of_measurement: "°C"
+    icon: mdi:weather-night
+
 # ------------------------------------------------------------------------------
 # 1. TEMPLATE SENSOREN (Berechnungen für Taupunkte und Wetter-Prognose)
 # ------------------------------------------------------------------------------
-template:
+template:        
   - sensor:
       # Liest die reale Prozentstufe des Lüfter-Dimmers aus
-      - name: "Weinkeller Fan Speed Effektiv"
-        unique_id: weinkeller_fan_speed_effektiv
+      - name: "Hobbit Fan Speed direct"
+        unique_id: hobbit_fan_speed_direct
         icon: mdi:fan
         unit_of_measurement: "%"
         state: >
-          {% if is_state('light.e4', 'on') %}
-            {% set brightness = state_attr('light.e4', 'brightness') %}
+          {% if is_state('light.glc301p001', 'on') %}
+            {% set brightness = state_attr('light.glc301p001', 'brightness') %}
             {% if brightness is not none %}
               {{ ((brightness | float / 255) * 100) | round(0) }}
             {% else %}
@@ -184,6 +299,27 @@ template:
             0
           {% endif %}
 
+      # Speichert die Historie der letzten 10 Aktionen als HTML/Markdown-Text
+      - name: "Hobbit Lueftung Verlaufskette"
+        unique_id: hobbit_lueftung_verlaufskette
+        state: >
+          {{ states('input_text.hobbit_lueftung_letzte_aktion') }}
+        attributes:
+          history: >
+            {% set current = states('input_text.hobbit_lueftung_letzte_aktion') %}
+            {% set timestamp = as_timestamp(states.input_text.hobbit_lueftung_letzte_aktion.last_changed) | timestamp_custom('%H:%M:%S Uhr') %}
+            {% set new_entry = '• <b>' ~ timestamp ~ ':</b> ' ~ current %}
+            
+            {% set p_hist = state_attr('sensor.hobbit_lueftung_verlaufskette', 'history') %}
+            {% if p_hist is not none and p_hist != '' %}
+              {% set items = p_hist.split('<br>') %}
+              {% if current != states('sensor.hobbit_lueftung_verlaufskette') %}
+                {% set items = [new_entry] + items %}
+              {% endif %}
+              {{ items[:10] | join('<br>') }}
+            {% else %}
+              {{ new_entry }}
+            {% endif %}
 
       # Taupunkt Draussen (Garten)
       - name: "Taupunkt Garten"
@@ -198,8 +334,8 @@ template:
           {{ ((b * alpha) / (a - alpha)) | round(1) }}
 
       # Taupunkt Drinnen (Weinkeller)
-      - name: "Taupunkt Weinkeller"
-        unique_id: taupunkt_weinkeller
+      - name: "Taupunkt Hobbit"
+        unique_id: taupunkt_hobbit  
         unit_of_measurement: "°C"
         state: >
           {% set T = states('sensor.zg204zx004_temperature') | float(default=0) %}
@@ -210,25 +346,25 @@ template:
           {{ ((b * alpha) / (a - alpha)) | round(1) }}
 
       # Holt die prognostizierte Tiefsttemperatur der kommenden Nacht
-      - name: "Taupunkt Wetter Prognose Nacht Minimum"
-        unique_id: taupunkt_wetter_prognose_nacht_minimum
-        unit_of_measurement: "°C"
-        state: >
-          {% set forecast = state_attr('weather.cazaugitat', 'forecast') %}
-          {% if forecast and forecast | length > 0 %}
-            {{ forecast[0].datetime, forecast[0].low | float }}
-          {% else %}
-            {{ states('sensor.zg204zx005_temperature') | float - 5 }}
-          {% endif %}
+      # - name: "Taupunkt Wetter Prognose Nacht Minimum"
+      #   unique_id: taupunkt_wetter_prognose_nacht_minimum
+      #   unit_of_measurement: "°C"
+      #   state: >
+      #     {% set forecast = state_attr('weather.cazaugitat', 'forecast') %}
+      #     {% if forecast and forecast | length > 0 %}
+      #       {{ forecast[0].datetime, forecast[0].low | float }}
+      #     {% else %}
+      #       {{ states('sensor.zg204zx005_temperature') | float - 5 }}
+      #     {% endif %}
 
       # Neue Lüftungs-Ampel für das Lovelace Dashboard (Synchronisiert mit Automation)
-      - name: "Weinkeller Lueftungs Status"
-        unique_id: weinkeller_lueftungs_status
+      - name: "Hobbit Lueftungs Status"
+        unique_id: hobbit_lueftungs_status
         state: >
           {% set tp_outside = states('sensor.taupunkt_garten') | float(default=0) %}
           {% set temp_inside = states('sensor.zg204zx004_temperature') | float(default=0) %}
           {% set temp_outside = states('sensor.zg204zx005_temperature') | float(default=0) %}
-          {% set prog_min = states('sensor.taupunkt_wetter_prognose_nacht_minimum') | float(default=0) %}
+          {% set prog_min = states('input_number.hobbit_wetter_prognose_nacht_minimum') | float(default=0) %}
           {% set hum_inside = states('sensor.zg204zx004_humidity') | float(default=0) %}
           
           {% if tp_outside > temp_inside %}
@@ -248,12 +384,40 @@ template:
           {% elif 'Orange' in this.state %} mdi:arrow-up-bold-circle
           {% else %} mdi:minus-circle {% endif %}
 
+
 # ------------------------------------------------------------------------------
 # 2. AUTOMATION (Die intelligente Steuerungs-Logik mit zentralen Variablen)
 # ------------------------------------------------------------------------------
 automation:
-  - id: weinkeller_intelligente_lueftung_v2
-    alias: "Weinkeller Intelligente Lueftung (weather_ha_weinkeller.yaml) v2"
+  - id: hobbit_wetter_prognose_aktualisieren
+    alias: "Hobbit Wetter Prognose aktualisieren"
+    trigger:
+      - platform: time_pattern
+        hours: "/2"
+      - platform: homeassistant
+        event: start
+    action:
+      - action: weather.get_forecasts
+        target:
+          entity_id: weather.cazaugitat
+        data:
+          type: daily
+        response_variable: wetter_daten
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hobbit_wetter_prognose_nacht_minimum
+        data:
+          value: >
+            {% set f = wetter_daten['weather.cazaugitat'].forecast %}
+            {% if f and f | length > 0 %}
+              {{ f[0].templow | float }}
+            {% else %}
+              10.0
+            {% endif %}
+
+
+  - id: hobbit_intelligente_lueftung
+    alias: "Hobbit Intelligente Lueftung (weather_ha_hobbit.yaml)"
     trigger:
       - platform: time_pattern
         minutes: "/1"
@@ -261,23 +425,23 @@ automation:
         entity_id: sensor.zg204zx005_temperature
     
     variables:
-      fan_entity: "light.e4"
+      fan_entity: "light.glc301p001"
       val_outside_temp: "{{ states('sensor.zg204zx005_temperature') | float(default=0) }}"
       val_outside_hum: "{{ states('sensor.zg204zx005_humidity') | float(default=0) }}"
       val_outside_tau:  "{{ states('sensor.taupunkt_garten') | float(default=0) }}"
       val_inside_temp:  "{{ states('sensor.zg204zx004_temperature') | float(default=0) }}"
       val_inside_hum:   "{{ states('sensor.zg204zx004_humidity') | float(default=0) }}"
-      val_inside_tau:  "{{ states('sensor.taupunkt_weinkeller') | float(default=0) }}"
-      val_prognose_min: "{{ states('sensor.taupunkt_wetter_prognose_nacht_minimum') | float(default=0) }}"
+      val_inside_tau:  "{{ states('sensor.taupunkt_hobbit') | float(default=0) }}"
+      val_prognose_min: "{{ states('input_number.hobbit_wetter_prognose_nacht_minimum') | float(default=0) }}"
 
-      keller_ziel_temperatur: 12.0        # Bis zu dieser Temperatur wird nachts gekühlt
-      keller_ziel_temperatur_over: 2.5    # 2.5 Grad über dem Nacht-Minimum wird die maximale Nachtkühlung aktiviert (präzise Steuerung am Tiefpunkt)
-      keller_feuchtigkeit_max: 75.0       # Ab dieser Feuchtigkeit drinnen wird tagsüber getrocknet
-      keller_feuchtigkeit_min: 55.0       # NEU: Unter diesem Wert wird der Keller geschützt
-      keller_frischluft_intervall_min: 5  # Minuten pro Stunde Laufzeit bei Sperre
-      keller_frischluft_fan_max: 100      # 100% Lüfterleistung bei maximaler Nachtkühlung
-      keller_frischluft_fan_hourly: 10    # hier wird die Lüfterleistung pro Stunde bei Sperre auf 10% gesetzt, um die Luft zu bewegen und den Keller zu trocknen
-      keller_frischluft_fan_drying: 40    # wenn die Luft draussen trocken ist, aber der Keller zu feucht, wird der Lüfter auf 40% gesetzt, um die Luft zu bewegen und den Keller zu trocknen
+      hobbit_ziel_temperatur: 12.0        # Bis zu dieser Temperatur wird nachts gekühlt
+      hobbit_ziel_temperatur_over: 2.5    # 2.5 Grad über dem Nacht-Minimum wird die maximale Nachtkühlung aktiviert (präzise Steuerung am Tiefpunkt)
+      hobbit_feuchtigkeit_max: 75.0       # Ab dieser Feuchtigkeit drinnen wird tagsüber getrocknet
+      hobbit_feuchtigkeit_min: 55.0       # NEU: Unter diesem Wert wird der Keller geschützt
+      hobbit_frischluft_intervall_min: 5  # Minuten pro Stunde Laufzeit bei Sperre
+      hobbit_frischluft_fan_max: 100      # 100% Lüfterleistung bei maximaler Nachtkühlung
+      hobbit_frischluft_fan_hourly: 10    # hier wird die Lüfterleistung pro Stunde bei Sperre auf 10% gesetzt, um die Luft zu bewegen und den Keller zu trocknen
+      hobbit_frischluft_fan_drying: 40    # wenn die Luft draussen trocken ist, aber der Keller zu feucht, wird der Lüfter auf 40% gesetzt, um die Luft zu bewegen und den Keller zu trocknen
 
       # 📈 DYNAMISCHE BERECHNUNGEN (STUFENLOSE REGELUNG 15% - 100%)
       # Fall 3: Je größer das Temperaturgefälle nach draußen, desto mehr Power (Skaliert von 20% bis 100%)
@@ -288,13 +452,13 @@ automation:
 
       # Fall 4A: Je feuchter der Keller über dem Limit, desto stärker die Trocknung
       dyn_drying_speed: >
-        {% set delta_h = val_inside_hum - keller_feuchtigkeit_max %}
+        {% set delta_h = val_inside_hum - hobbit_feuchtigkeit_max %}
         {% set speed = 20 + (delta_h * 5) | int %}
         {{ [15, [speed, 80] | min] | max }}
 
       # Fall 4B: Je trockener der Keller unter dem Limit, desto stärker die Befeuchtung
       dyn_humidifying_speed: >
-        {% set delta_h = keller_feuchtigkeit_min - val_inside_hum %}
+        {% set delta_h = hobbit_feuchtigkeit_min - val_inside_hum %}
         {% set speed = 20 + (delta_h * 5) | int %}
         {{ [15, [speed, 60] | min] | max }}
 
@@ -305,15 +469,16 @@ automation:
           # ====================================================================
           - conditions:
               - condition: state
-                entity_id: input_boolean.weinkeller_lueftung_manuell_aus
+                entity_id: input_boolean.hobbit_lueftung_manuell_aus
                 state: "on"
             sequence:
-              - service: light.turn_off
-                target:
-                  entity_id: "{{ fan_entity }}"
+              # kein ein oder ausschalten wenn auf manuell aus steht, nur die letzte Aktion loggen
+              # - service: light.turn_off
+              #  target:
+              #    entity_id: "{{ fan_entity }}"
               - service: input_text.set_value
                 target:
-                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                  entity_id: input_text.hobbit_lueftung_letzte_aktion
                 data:
                   value: "AUS (0%) - System manuell über Dashboard deaktiviert."
 
@@ -327,28 +492,28 @@ automation:
               - choose:
                   - conditions:
                       - condition: template
-                        value_template: "{{ now().minute < keller_frischluft_intervall_min | int }}"
+                        value_template: "{{ now().minute < hobbit_frischluft_intervall_min | int }}"
                     sequence:
                       - service: light.turn_on
                         target:
                           entity_id: "{{ fan_entity }}"
                         data:
-                          brightness_pct: "{{ keller_frischluft_fan_hourly }}"
+                          brightness_pct: "{{ hobbit_frischluft_fan_hourly }}"
                       - service: input_text.set_value
                         target:
-                          entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                          entity_id: input_text.hobbit_lueftung_letzte_aktion
                         data:
-                          value: "MINIMAL ({{ keller_frischluft_fan_hourly }}%) - Schwüle-Sperre aktiv. Kurzes Frischluftintervall läuft."
+                          value: "MINIMAL ({{ hobbit_frischluft_fan_hourly }}%) - Schwüle-Sperre aktiv. Kurzes Frischluftintervall läuft."
                   - conditions:
                       - condition: template
-                        value_template: "{{ now().minute >= keller_frischluft_intervall_min | int }}"
+                        value_template: "{{ now().minute >= hobbit_frischluft_intervall_min | int }}"
                     sequence:
                       - service: light.turn_off
                         target:
                           entity_id: "{{ fan_entity }}"
                       - service: input_text.set_value
                         target:
-                          entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                          entity_id: input_text.hobbit_lueftung_letzte_aktion
                         data:
                           value: "AUS (0%) - Schwüle-Sperre aktiv (Draußen-Taupunkt {{ val_outside_tau }}°C > Keller {{ val_inside_temp }}°C)."
 
@@ -357,16 +522,16 @@ automation:
           # ====================================================================
           - conditions:
               - condition: template
-                value_template: "{{ val_inside_temp <= keller_ziel_temperatur }}"
+                value_template: "{{ val_inside_temp <= hobbit_ziel_temperatur }}"
             sequence:
               - service: light.turn_off
                 target:
                   entity_id: "{{ fan_entity }}"
               - service: input_text.set_value
                 target:
-                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                  entity_id: input_text.hobbit_lueftung_letzte_aktion
                 data:
-                  value: "AUS (0%) - Keller-Zieltemperatur ({{ keller_ziel_temperatur }}°C) erreicht oder unterschritten."
+                  value: "AUS (0%) - Hobbit-Zieltemperatur ({{ hobbit_ziel_temperatur }}°C) erreicht oder unterschritten."
 
           # ====================================================================
           # FALL 3: DYNAMISCHE NACHTKÜHLUNG (Bedarfsgesteuerte Intensität)
@@ -377,7 +542,7 @@ automation:
               - condition: template
                 value_template: "{{ val_outside_temp < val_inside_temp }}"
               - condition: template
-                value_template: "{{ val_outside_temp <= (val_prognose_min + keller_ziel_temperatur_over) }}"
+                value_template: "{{ val_outside_temp <= (val_prognose_min + hobbit_ziel_temperatur_over) }}"
             sequence:
               - service: light.turn_on
                 target:
@@ -386,7 +551,7 @@ automation:
                   brightness_pct: "{{ dyn_cooling_speed }}"
               - service: input_text.set_value
                 target:
-                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                  entity_id: input_text.hobbit_lueftung_letzte_aktion
                 data:
                   value: "DYNAMIC COOLING ({{ dyn_cooling_speed }}%) - Nachtkühlung läuft bedarfsangepasst (Draußen: {{ val_outside_temp }}°C)."
 
@@ -397,7 +562,7 @@ automation:
               # UNTERFALL A: Keller ist zu feucht -> Dynamisch Trocknen
               - condition: template
                 value_template: >
-                  {{ val_inside_hum > keller_feuchtigkeit_max and val_outside_tau <= val_inside_temp }}
+                  {{ val_inside_hum > hobbit_feuchtigkeit_max and val_outside_tau <= val_inside_temp }}
             sequence:
               - service: light.turn_on
                 target:
@@ -406,15 +571,15 @@ automation:
                   brightness_pct: "{{ dyn_drying_speed }}"
               - service: input_text.set_value
                 target:
-                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                  entity_id: input_text.hobbit_lueftung_letzte_aktion
                 data:
-                  value: "DYNAMIC DRYING ({{ dyn_drying_speed }}%) - Kellerfeuchte ({{ val_inside_hum }}%) über Limit. Intensität skaliert."
+                  value: "DYNAMIC DRYING ({{ dyn_drying_speed }}%) - Hobbit-Feuchte ({{ val_inside_hum }}%) über Limit. Intensität skaliert."
 
           - conditions:
               # UNTERFALL B: Keller ist zu trocken -> Dynamisch Befeuchten
               - condition: template
                 value_template: >
-                  {{ val_inside_hum < keller_feuchtigkeit_min and val_outside_tau > val_inside_tau and val_outside_tau <= val_inside_temp }}
+                  {{ val_inside_hum < hobbit_feuchtigkeit_min and val_outside_tau > val_inside_tau and val_outside_tau <= val_inside_temp }}
             sequence:
               - service: light.turn_on
                 target:
@@ -423,9 +588,9 @@ automation:
                   brightness_pct: "{{ dyn_humidifying_speed }}"
               - service: input_text.set_value
                 target:
-                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                  entity_id: input_text.hobbit_lueftung_letzte_aktion
                 data:
-                  value: "DYNAMIC HUMIDIFYING ({{ dyn_humidifying_speed }}%) - Kellerfeuchte ({{ val_inside_hum }}%) zu niedrig. Sanfte Befeuchtung aktiv."
+                  value: "DYNAMIC HUMIDIFYING ({{ dyn_humidifying_speed }}%) - Hobbit-Feuchte ({{ val_inside_hum }}%) zu niedrig. Sanfte Befeuchtung aktiv."
 
           # ====================================================================
           # FALL 5: STANDBY / ABSCHALTUNG (Wenn kein anderer Fall zutrifft)
@@ -439,7 +604,7 @@ automation:
                   entity_id: "{{ fan_entity }}"
               - service: input_text.set_value
                 target:
-                  entity_id: input_text.weinkeller_lueftung_letzte_aktion
+                  entity_id: input_text.hobbit_lueftung_letzte_aktion
                 data:
                   value: "STANDBY (0%) - Klima stabil ({{ val_inside_hum }}% rF, {{ val_inside_temp }}°C). Kein Lüftungsbedarf."
 
