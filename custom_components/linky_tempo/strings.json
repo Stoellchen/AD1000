@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuration Linky Tempo",
+        "description": "Entrez vos identifiants pour récupérer votre consommation Tempo.",
+        "data": {
+          "prm": "Numéro de PRM (14 chiffres)",
+          "token": "Token d'accès Enedis/Bokub"
+        }
+      }
+    },
+    "error": {
+      "invalid_prm_format": "Le PRM doit contenir exactement 14 chiffres.",
+      "cannot_connect": "Impossible de se connecter à l'API."
+    },
+    "abort": {
+      "already_configured": "Ce compteur Linky est déjà configuré."
+    }
+  }
+}

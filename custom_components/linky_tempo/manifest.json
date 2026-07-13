@@ -1,0 +1,13 @@
+{
+  "domain": "linky_tempo",
+  "name": "Linky Tempo",
+  "after_dependencies": ["recorder"],
+  "codeowners": ["@alltoon"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/alltoon/LinkyTempo",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/alltoon/LinkyTempo/issues",
+  "requirements": ["requests"],
+  "version": "1.0.0"
+}
